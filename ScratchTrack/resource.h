@@ -23,7 +23,7 @@
 #define IDI_ACCOUNT                     141
 #define IDR_GROUP_MENU                  142
 #define IDR_ENVELOPE_MENU               143
-#define IDD_Transaction_DIALOG          144
+#define IDD_TRANSACTION_DIALOG          144
 #define IDR_MENU_Transaction            145
 #define IDI_ADD_MONEYICON               150
 #define IDI_SUBTRACT_MONEY_ICON         151
@@ -42,6 +42,8 @@
 #define IDC_COMBO_PAYEE                 1009
 #define IDC_EDIT_CAT_NAME               1009
 #define IDC_EDIT_CAT_MONTHLY_BUDGET     1010
+#define IDC_COMBO_ACCOUNT2              1010
+#define IDC_COMBO_ACCOUNT_TO            1010
 #define IDC_COMBO_CAT_PAYEE             1012
 #define IDC_COMBO_CAT_ACCOUNT           1013
 #define IDC_EDIT_CAT_AMOUNT             1014
@@ -49,6 +51,7 @@
 #define IDC_CHECK_BUDGETED              1016
 #define IDC_EDIT_ACCOUNT_BALANCE        1017
 #define IDC_CHECK_VIRTUAL_ACCOUNT       1017
+#define IDC_CHECK1                      1018
 #define ID_ROOT_ADD_GROUP               32771
 #define ID_ROOT_RENAMEACCOUNT           32772
 #define ID_ROOT_SETBALANCE              32773
@@ -91,7 +94,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        155
 #define _APS_NEXT_COMMAND_VALUE         33021
-#define _APS_NEXT_CONTROL_VALUE         1018
+#define _APS_NEXT_CONTROL_VALUE         1019
 #define _APS_NEXT_SYMED_VALUE           113
 #endif
 #endif

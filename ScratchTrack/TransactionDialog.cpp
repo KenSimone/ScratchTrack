@@ -19,7 +19,7 @@ TransactionDialog::~TransactionDialog()
 bool TransactionDialog::ShowDialog()
 {
     THIS_PTR = this;
-    INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_Transaction_DIALOG), g_hTopWindow, TransactionDialogProc);
+    INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_TRANSACTION_DIALOG), g_hTopWindow, TransactionDialogProc);
     THIS_PTR = nullptr;
 
     return result == IDOK;
