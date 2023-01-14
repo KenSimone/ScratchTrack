@@ -166,39 +166,7 @@ int deserialize(const char* szFilename, std::vector<AccountBase*>& topLevelItems
 
 	_curId = UINT_MAX;
 
-	
-	_Transactions.clear();
-	tinyxml2::XMLElement* pTransactions = pRoot->FirstChildElement("transactions");
-	if (pTransactions) {
-		tinyxml2::XMLElement* pTransaction = pTransactions->FirstChildElement("transaction");
-		while (pTransaction) {
-			// deserialize
-			int categoryId = 0, accountId = 0;
-			pTransaction->QueryIntAttribute("category", &categoryId);
-			pTransaction->QueryIntAttribute("account", &accountId);
-
-
-			const char* szPayee, *szDescription;
-			wchar_t szPayeeW[1024] = { 0 }, szDescriptionW[1024] = { 0 };
-			pTransaction->QueryStringAttribute("payee", &szPayee);
-			pTransaction->QueryStringAttribute("description", &szDescription);
-
-			MultiByteToWideChar(CP_UTF8, 0, szPayee, -1, szPayeeW, 1024);
-			MultiByteToWideChar(CP_UTF8, 0, szDescription, -1, szDescriptionW, 1024);
-
-			uint64_t timestamp = 0;
-			SYSTEMTIME st = { 0 };
-			pTransaction->QueryUnsigned64Attribute("timestamp", &timestamp);
-			FileTimeToSystemTime((FILETIME*)&timestamp, &st);
-
-			int amount = 0;
-			pTransaction->QueryIntAttribute("amount", &amount);
-			Transaction::addTransaction(amount, accountId, categoryId, szPayeeW, szDescriptionW, &st);
-				
-			// next
-			pTransaction = pTransaction->NextSiblingElement("transaction");
-		}
-	}
+	Transaction::deserialize(pRoot);
 
 	topLevelItems.clear();
 	tinyxml2::XMLElement* pAccounts = pRoot->FirstChildElement("accounts");

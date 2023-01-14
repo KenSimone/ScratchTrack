@@ -12,14 +12,16 @@ class AccountBase;
 class Transaction
 {
 public:
-	static Transaction* addTransaction(int amount, unsigned int accountId, unsigned int categoryId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp = nullptr);
+	static Transaction* addTransaction(int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int categoryId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp = nullptr);
+	static int deserialize(tinyxml2::XMLElement* pRoot);
 
 	static std::vector<Transaction*> getTransactionsForItem(AccountBase* pItem);
 	static std::vector<Transaction*> getAllTransactions();
 
 	int getAmount() { return _amount; }
 	unsigned int getCategoryId() { return _categoryId; }
-	unsigned int getAccountId() { return _accountId; }
+	unsigned int getAccountFromId() { return _payFromAccountId; }
+	unsigned int getAccountToId() { return _payToAccountId; }
 	const wchar_t* getPayee() { return _payee.c_str(); }
 	const wchar_t* getDescription() { return _description.c_str(); }
 
@@ -45,7 +47,7 @@ public:
 	virtual int serialize(tinyxml2::XMLElement* pParent);
 
 protected:
-	Transaction(int amount, unsigned int accountId, unsigned int categoryId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp = nullptr)
+	Transaction(int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int categoryId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp = nullptr)
 	{
 		if (pTimeStamp) {
 			_timestamp = *pTimeStamp;
@@ -56,7 +58,8 @@ protected:
 
 		_amount = amount;
 		_categoryId = categoryId;
-		_accountId = accountId;
+		_payFromAccountId = payFromAccountId;
+		_payToAccountId = payToAccountId;
 		if (szPayee) {
 			_payee = szPayee;
 		}
@@ -69,7 +72,8 @@ protected:
 protected:
 	int _amount;
 	unsigned int _categoryId;
-	unsigned int _accountId;
+	unsigned int _payFromAccountId;
+	unsigned int _payToAccountId;
 	std::wstring _payee;
 	std::wstring _description;
 	SYSTEMTIME _timestamp;

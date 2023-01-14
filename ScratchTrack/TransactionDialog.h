@@ -19,7 +19,8 @@ public:
 	void setPayee(const wchar_t* szPayee) { _payee = szPayee; }
 	void setDescription(const wchar_t* szDescription) { _description = szDescription; }
 	void setCategoryId(unsigned int categoryId) { _categoryId = categoryId; }
-	void setAccountId(unsigned int accountId) { _accountId = accountId; }
+	void setAccountFromId(unsigned int accountId) { _accountFromId = accountId; }
+	void setAccountToId(unsigned int accountToId) { _accountToId = accountToId; }
 
 	// Only used if transaction amount is zero
 	void setIsExpense(bool isExpense) { _isExpense = isExpense; }
@@ -29,7 +30,8 @@ public:
 	const wchar_t* getPayee() { return _payee.c_str(); }
 	const wchar_t* getDescription() { return _description.c_str(); }
 	unsigned int getCategoryId() { return _categoryId; }
-	unsigned int getAccountId() { return _accountId; }
+	unsigned int getAccountFromId() { return _accountFromId; }
+	unsigned int getAccountToId() { return _accountToId; }
 	bool getIsExpense() { return _isExpense; }
 
 protected:
@@ -38,7 +40,8 @@ protected:
 	std::wstring _payee;
 	std::wstring _description;
 
-	unsigned int _accountId;
+	unsigned int _accountFromId;
+	unsigned int _accountToId;
 	unsigned int _categoryId;
 
 	static INT_PTR CALLBACK TransactionDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);

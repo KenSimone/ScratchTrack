@@ -8,7 +8,7 @@
 extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 
-TransactionDialog::TransactionDialog() : _amount(0), _accountId(0), _categoryId(0)
+TransactionDialog::TransactionDialog() : _amount(0), _accountFromId(0), _categoryId(0), _accountToId(MAXINT)
 {
 }
 
@@ -40,7 +40,7 @@ INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT messag
                 AccountBase* pAccount = *itr;
                 int pos = (int)SendMessage(hAccounts, CB_ADDSTRING, 0, (LPARAM)pAccount->getName());
                 SendMessage(hAccounts, CB_SETITEMDATA, pos, (LPARAM)pAccount);
-                if (pAccount->getId() == THIS_PTR->getAccountId()) {
+                if (pAccount->getId() == THIS_PTR->getAccountFromId()) {
                     selSet = true;
                     ComboBox_SetCurSel(hAccounts, pos);
                 }

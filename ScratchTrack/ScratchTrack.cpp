@@ -524,19 +524,19 @@ bool addTransaction(HTREEITEM hItem)
         transactionDlg.setAmount(pCategory->getDefaultTransactionAmount());
         transactionDlg.setIsExpense(pCategory->isExpense());
         if (pCategory->getDefaultTransactionPayFromAccount()) {
-            transactionDlg.setAccountId(pCategory->getDefaultTransactionPayFromAccount()->getId());
+            transactionDlg.setAccountFromId(pCategory->getDefaultTransactionPayFromAccount()->getId());
         }
     }
 
     if (transactionDlg.ShowDialog())
     {
-        Transaction::addTransaction(transactionDlg.getAmount(), transactionDlg.getAccountId(), transactionDlg.getCategoryId(), transactionDlg.getPayee(), transactionDlg.getDescription());
+        Transaction::addTransaction(transactionDlg.getAmount(), transactionDlg.getAccountFromId(), transactionDlg.getAccountToId(), transactionDlg.getCategoryId(), transactionDlg.getPayee(), transactionDlg.getDescription());
 
         // Add the amount to the category
         pCategory->addBalance(transactionDlg.getAmount());
 
         // Add the amount to the account
-        AccountBase* acct = AccountBase::lookupById(transactionDlg.getAccountId());
+        AccountBase* acct = AccountBase::lookupById(transactionDlg.getAccountFromId());
         if (acct) {
             acct->addBalance(transactionDlg.getAmount());
         }
@@ -680,14 +680,15 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
     dlg.setAmount(pTransaction->getAmount());
     dlg.setPayee(pTransaction->getPayee());
     dlg.setDescription(pTransaction->getDescription());
-    dlg.setAccountId(pTransaction->getAccountId());
+    dlg.setAccountFromId(pTransaction->getAccountFromId());
+    dlg.setAccountToId(pTransaction->getAccountToId());
     dlg.setCategoryId(pTransaction->getCategoryId());
 
     if (dlg.ShowDialog())
     {
         // Get the account
         AccountBase* pCategory = AccountBase::lookupById(pTransaction->getCategoryId());
-        AccountBase* pAccount = AccountBase::lookupById(pTransaction->getAccountId());
+        AccountBase* pAccount = AccountBase::lookupById(pTransaction->getAccountFromId());
 
         // Adjust category balance
         int origAmount = pTransaction->getAmount();

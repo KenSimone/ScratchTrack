@@ -8,9 +8,9 @@
 std::vector<Transaction*> _Transactions;
 
 
-Transaction* Transaction::addTransaction(int amount, unsigned int accountId, unsigned int categoryId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp /*= nullptr*/)
+Transaction* Transaction::addTransaction(int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int categoryId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp /*= nullptr*/)
 {
-	Transaction* pTransaction = new Transaction(amount, accountId, categoryId, szPayee, szDescription, pTimeStamp);
+	Transaction* pTransaction = new Transaction(amount, payFromAccountId, payToAccountId, categoryId, szPayee, szDescription, pTimeStamp);
 
 	_Transactions.push_back(pTransaction);
 
@@ -43,7 +43,8 @@ int Transaction::serialize(tinyxml2::XMLElement* pParent)
 	tinyxml2::XMLElement* pElement = pParent->GetDocument()->NewElement("transaction");
 
 	pElement->SetAttribute("category", _categoryId);
-	pElement->SetAttribute("account", _accountId);
+	pElement->SetAttribute("accountFrom", _payFromAccountId);
+	pElement->SetAttribute("accountTo", _payToAccountId);
 
 	char szBuff[1024] = { 0 };
 	WideCharToMultiByte(CP_UTF8, 0, _payee.c_str(), -1, szBuff, 1024, nullptr, nullptr);
@@ -64,3 +65,42 @@ int Transaction::serialize(tinyxml2::XMLElement* pParent)
 
 }
 
+int Transaction::deserialize(tinyxml2::XMLElement* pRoot)
+{
+	_Transactions.clear();
+	tinyxml2::XMLElement* pTransactions = pRoot->FirstChildElement("transactions");
+	if (pTransactions) {
+		tinyxml2::XMLElement* pTransaction = pTransactions->FirstChildElement("transaction");
+		while (pTransaction) {
+			// deserialize
+			int categoryId = 0, fromAccountId = 0, toAccountId = MAXINT;
+			pTransaction->QueryIntAttribute("category", &categoryId);
+			pTransaction->QueryIntAttribute("accountFrom", &fromAccountId);
+			pTransaction->QueryIntAttribute("accountTo", &toAccountId);
+
+
+			const char* szPayee, * szDescription;
+			wchar_t szPayeeW[1024] = { 0 }, szDescriptionW[1024] = { 0 };
+			pTransaction->QueryStringAttribute("payee", &szPayee);
+			pTransaction->QueryStringAttribute("description", &szDescription);
+
+			MultiByteToWideChar(CP_UTF8, 0, szPayee, -1, szPayeeW, 1024);
+			MultiByteToWideChar(CP_UTF8, 0, szDescription, -1, szDescriptionW, 1024);
+
+			uint64_t timestamp = 0;
+			SYSTEMTIME st = { 0 };
+			pTransaction->QueryUnsigned64Attribute("timestamp", &timestamp);
+			FileTimeToSystemTime((FILETIME*)&timestamp, &st);
+
+			int amount = 0;
+			pTransaction->QueryIntAttribute("amount", &amount);
+			Transaction::addTransaction(amount, fromAccountId, toAccountId, categoryId, szPayeeW, szDescriptionW, &st);
+
+			// next
+			pTransaction = pTransaction->NextSiblingElement("transaction");
+		}
+	}
+
+	return ERROR_SUCCESS;
+
+}
