@@ -46,12 +46,12 @@ struct TREE_COLUMN_SIZES
 {
     TREE_COLUMN_SIZES()
     {
-        _name = _budgeted = _inEnvelopes = _balance = _available = _endSpot = 0;
+        _name = _budgeted = _inCategories = _balance = _available = _endSpot = 0;
     }
 
     int _name;
     int _budgeted;
-    int _inEnvelopes;
+    int _inCategories;
     int _balance;
     int _available;
     int _endSpot;
@@ -122,8 +122,8 @@ const char* getPersistFile()
     return szBuff;
 }
 
-// Finds an AccountTreeItem associated with a tree item
-AccountTreeItem* accountFromItem(HTREEITEM item)
+// Finds an AccountBase associated with a tree item
+AccountBase* accountFromItem(HTREEITEM item)
 {
     TVITEMEX tvi = { 0 };
     tvi.hItem = item;
@@ -131,10 +131,10 @@ AccountTreeItem* accountFromItem(HTREEITEM item)
 
     TreeView_GetItem(g_hwndTV, &tvi);
 
-    return (AccountTreeItem*)tvi.lParam;
+    return (AccountBase*)tvi.lParam;
 }
 
-HTREEITEM treeItemFromAccount(AccountTreeItem* pItem, HTREEITEM hItem = TVI_ROOT )
+HTREEITEM treeItemFromAccount(AccountBase* pItem, HTREEITEM hItem = TVI_ROOT )
 {
     if (hItem == TVI_ROOT) {
         hItem = TreeView_GetRoot(g_hwndTV);
@@ -165,32 +165,32 @@ HTREEITEM treeItemFromAccount(AccountTreeItem* pItem, HTREEITEM hItem = TVI_ROOT
 }
 
 // Adds an account item to the tree
-HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountTreeItem* pAccount, HTREEITEM hInsertAfter = TVI_LAST)
+HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountBase* pAccount, HTREEITEM hInsertAfter = TVI_LAST)
 {
     static const DWORD IMG_ACCOUNT = 0;
     static const DWORD IMG_FOLDER = 1;
-    static const DWORD IMG_ENVELOPE = 2;
+    static const DWORD IMG_CATEGORY = 2;
     static const DWORD IMG_ADDMONEY = 3;
     static const DWORD IMG_SUBTRACTMONEY = 4;
 
 
     TVINSERTSTRUCT tvi = { 0 };
     tvi.itemex.mask = TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
-    tvi.itemex.pszText = const_cast<wchar_t*>(pAccount->getDisplayName());
+    tvi.itemex.pszText = const_cast<wchar_t*>(pAccount->getName());
     tvi.hParent = hParentItem;
     tvi.itemex.lParam = (LPARAM)pAccount;
     tvi.hInsertAfter = hInsertAfter;
 
     switch (pAccount->getType())
     {
-    case AccountTreeItem::ACCOUNT:
+    case AccountBase::ACCOUNT:
         tvi.itemex.iSelectedImage = tvi.itemex.iImage = IMG_ACCOUNT;
         break;
-    case AccountTreeItem::GROUP:
+    case AccountBase::GROUP:
         tvi.itemex.iSelectedImage = tvi.itemex.iImage = IMG_FOLDER;
         break;
-    case AccountTreeItem::ENVELOPE:
-        if (((Envelope*)pAccount)->isExpense()) {
+    case AccountBase::CATEGORY:
+        if (((AccountCategory*)pAccount)->isExpense()) {
             tvi.itemex.iSelectedImage = tvi.itemex.iImage = IMG_SUBTRACTMONEY;
         }
         else {
@@ -200,7 +200,7 @@ HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountTreeItem* pAccount, HTREEITE
     };
 
     HTREEITEM ret = TVI_ROOT;
-    if (pAccount->getType() == AccountTreeItem::ACCOUNT) {
+    if (pAccount->getType() == AccountBase::ACCOUNT) {
         addAccount((Account*)pAccount);
     }
     else {
@@ -208,7 +208,7 @@ HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountTreeItem* pAccount, HTREEITE
     }
 
     // Add any children
-    if (pAccount->getType() == AccountTreeItem::GROUP)
+    if (pAccount->getType() == AccountBase::GROUP)
     {
         AccountGroup* pGroup = (AccountGroup*)pAccount;
         auto children = pGroup->getChildren();
@@ -363,7 +363,7 @@ void CreateTreeControl()
     Header_InsertItem(g_hwndHeader, 99, &item);
 
     item.pszText = const_cast<wchar_t*>(L"Actual cashflow");
-    item.cxy = g_columnSizes._inEnvelopes;
+    item.cxy = g_columnSizes._inCategories;
     Header_InsertItem(g_hwndHeader, 99, &item);
 
     item.pszText = const_cast<wchar_t*>(L"Virtual balance");
@@ -400,7 +400,7 @@ void CreateTreeControl()
 
     DWORD dwAttribs = ::GetFileAttributesA(getPersistFile());
     if (dwAttribs != INVALID_FILE_ATTRIBUTES) {
-        std::vector<AccountTreeItem*> topLevelItems;
+        std::vector<AccountBase*> topLevelItems;
         deserialize(getPersistFile(), topLevelItems);
         for (size_t i = 0; i < topLevelItems.size(); i++)
         {
@@ -514,18 +514,17 @@ INT_PTR CALLBACK OneInputProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 bool addTransaction(HTREEITEM hItem)
 {
     bool didSimonthing = false;
-    AccountTreeItem* pItem = accountFromItem(hItem);
+    AccountBase* pItem = accountFromItem(hItem);
     TransactionDialog transactionDlg;
-    AccountTreeItem* pCategory = accountFromItem(hItem);
     transactionDlg.setCategoryId(pItem->getId());
-    Envelope* pEnvelope = nullptr;
-    if (pItem->getType() == AccountTreeItem::ENVELOPE) {
-        pEnvelope = (Envelope*)pItem;
-        transactionDlg.setPayee(pEnvelope->getDefaultPayee());
-        transactionDlg.setAmount(pEnvelope->getDefaultAmount());
-        transactionDlg.setIsExpense(pEnvelope->isExpense());
-        if (pEnvelope->getDefaultAccount()) {
-            transactionDlg.setAccountId(pEnvelope->getDefaultAccount()->getId());
+    AccountCategory* pCategory = nullptr;
+    if (pItem->getType() == AccountBase::CATEGORY) {
+        pCategory = (AccountCategory*)pItem;
+        transactionDlg.setPayee(pCategory->getDefaultTransactionPayee());
+        transactionDlg.setAmount(pCategory->getDefaultTransactionAmount());
+        transactionDlg.setIsExpense(pCategory->isExpense());
+        if (pCategory->getDefaultTransactionPayFromAccount()) {
+            transactionDlg.setAccountId(pCategory->getDefaultTransactionPayFromAccount()->getId());
         }
     }
 
@@ -533,11 +532,11 @@ bool addTransaction(HTREEITEM hItem)
     {
         Transaction::addTransaction(transactionDlg.getAmount(), transactionDlg.getAccountId(), transactionDlg.getCategoryId(), transactionDlg.getPayee(), transactionDlg.getDescription());
 
-        // Add the amount to the envelope
-        pEnvelope->addBalance(transactionDlg.getAmount());
+        // Add the amount to the category
+        pCategory->addBalance(transactionDlg.getAmount());
 
         // Add the amount to the account
-        AccountTreeItem* acct = AccountTreeItem::lookupById(transactionDlg.getAccountId());
+        AccountBase* acct = AccountBase::lookupById(transactionDlg.getAccountId());
         if (acct) {
             acct->addBalance(transactionDlg.getAmount());
         }
@@ -555,25 +554,25 @@ bool getOneText(std::wstring& result)
     return result[0] ? true : false;
 }
 
-bool editCategory(Envelope* pEnvelope)
+bool editCategory(AccountCategory* pCategory)
 {
     CategoryDialog dlg;
-    dlg.setBudget(pEnvelope->getBudgeted());
-    dlg.setCategoryName(pEnvelope->getName());
-    dlg.setDefaultAccount(pEnvelope->getDefaultAccount());
-    dlg.setDefaultAmount(pEnvelope->getDefaultAmount());
-    dlg.setDefaultPayee(pEnvelope->getDefaultPayee());
-    dlg.setIsIncome(!pEnvelope->isExpense());
-    dlg.setIsVirtualAccount(pEnvelope->isVirtualAccount());
+    dlg.setBudget(pCategory->getBudgeted());
+    dlg.setCategoryName(pCategory->getName());
+    dlg.setDefaultTransactionPayFromAccount(pCategory->getDefaultTransactionPayFromAccount());
+    dlg.setDefaultTransactionAmount(pCategory->getDefaultTransactionAmount());
+    dlg.setDefaultTransactionPayee(pCategory->getDefaultTransactionPayee());
+    dlg.setIsIncome(!pCategory->isExpense());
+    dlg.setIsVirtualAccount(pCategory->isVirtualAccount());
     if (dlg.ShowDialog())
     {
-        pEnvelope->setBudgeted(dlg.getBudget());
-        pEnvelope->setDefaultAccount(dlg.getDefaultAccount());
-        pEnvelope->setDefaultAmount(dlg.getDefaultTransactionAmount());
-        pEnvelope->setDefaultPayee(dlg.getDefaultPayee());
-        pEnvelope->setIsExpense(!dlg.getIsIncome());
-        pEnvelope->setIsVirtualAccount(dlg.getIsVirtual());
-        pEnvelope->setName(dlg.getCategoryName());
+        pCategory->setBudgeted(dlg.getBudget());
+        pCategory->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
+        pCategory->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
+        pCategory->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
+        pCategory->setIsExpense(!dlg.getIsIncome());
+        pCategory->setIsVirtualAccount(dlg.getIsVirtual());
+        pCategory->setName(dlg.getCategoryName());
         updateGuiValues();
 
         return true;
@@ -581,12 +580,12 @@ bool editCategory(Envelope* pEnvelope)
     return false;
 }
 
-bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountTreeItem* pItem)
+bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
 {
     std::wstring temp;
     bool didSomething = false;
     AccountGroup* pParentGroup = nullptr;
-    if (pItem->getType() == AccountTreeItem::GROUP){
+    if (pItem->getType() == AccountBase::GROUP){
         pParentGroup = (AccountGroup*)pItem;
     }
     switch (dwCommand)
@@ -603,7 +602,7 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountTreeItem* pItem
         break;
     case ID_ROOT_EDITCATEGORY:
         //zzzz
-        didSomething = editCategory((Envelope*)pItem);
+        didSomething = editCategory((AccountCategory*)pItem);
         break;
     case ID_ROOT_ADD_TOP_LEVEL_ACCOUNT:
         if (pItem && getOneText(temp)) {
@@ -633,17 +632,17 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountTreeItem* pItem
     {
         CategoryDialog dlg;
         if (pParentGroup && dlg.ShowDialog()) {
-            Envelope* pEnvelope = new Envelope;
-            pEnvelope->setName(dlg.getCategoryName());
-            pEnvelope->setDefaultAccount(dlg.getDefaultAccount());
-            pEnvelope->setDefaultAmount(dlg.getDefaultTransactionAmount());
-            pEnvelope->setDefaultPayee(dlg.getDefaultPayee());
-            pEnvelope->setIsExpense(!dlg.getIsIncome());
-            pEnvelope->setIsVirtualAccount(dlg.getIsVirtual());
-            pEnvelope->setBudgeted(dlg.getBudget());
+            AccountCategory* pCategory = new AccountCategory;
+            pCategory->setName(dlg.getCategoryName());
+            pCategory->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
+            pCategory->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
+            pCategory->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
+            pCategory->setIsExpense(!dlg.getIsIncome());
+            pCategory->setIsVirtualAccount(dlg.getIsVirtual());
+            pCategory->setBudgeted(dlg.getBudget());
 
-            pParentGroup->addChild(pEnvelope);
-            addTreeItem(hItem, pEnvelope);
+            pParentGroup->addChild(pCategory);
+            addTreeItem(hItem, pCategory);
             didSomething = true;
         }
         break;
@@ -657,8 +656,8 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountTreeItem* pItem
 
     if (dwCommand >= ID_ROOT_ENVELOPE_MOVE_TO_START && dwCommand < ID_ROOT_ENVELOPE_MOVE_TO_END) {
         // This is a "move to" command. Remove from current parent and add to new parent
-        AccountTreeItem* pParent = pItem->getParent();
-        AccountTreeItem* pNewParent = AccountTreeItem::lookupById(dwCommand - ID_ROOT_ENVELOPE_MOVE_TO_START);
+        AccountBase* pParent = pItem->getParent();
+        AccountBase* pNewParent = AccountBase::lookupById(dwCommand - ID_ROOT_ENVELOPE_MOVE_TO_START);
 
         HTREEITEM hNewParent = treeItemFromAccount(pNewParent);
         HTREEITEM hSelf = treeItemFromAccount(pItem);
@@ -687,13 +686,13 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
     if (dlg.ShowDialog())
     {
         // Get the account
-        AccountTreeItem* pEnvelope = AccountTreeItem::lookupById(pTransaction->getCategoryId());
-        AccountTreeItem* pAccount = AccountTreeItem::lookupById(pTransaction->getAccountId());
+        AccountBase* pCategory = AccountBase::lookupById(pTransaction->getCategoryId());
+        AccountBase* pAccount = AccountBase::lookupById(pTransaction->getAccountId());
 
-        // Adjust envelope balance
+        // Adjust category balance
         int origAmount = pTransaction->getAmount();
-        pEnvelope->addBalance(-origAmount);
-        pEnvelope->addBalance(dlg.getAmount());
+        pCategory->addBalance(-origAmount);
+        pCategory->addBalance(dlg.getAmount());
 
         // Adjust account balance
         pAccount->addBalance(-origAmount);
@@ -709,7 +708,7 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
         ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 1, const_cast<wchar_t*>(pTransaction->getPayee()));
 
         // Category
-        AccountTreeItem* ati = AccountTreeItem::lookupById(pTransaction->getCategoryId());
+        AccountBase* ati = AccountBase::lookupById(pTransaction->getCategoryId());
         if (ati) {
             ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 2, const_cast<wchar_t*>(ati->getName()));
         }
@@ -762,7 +761,7 @@ LRESULT customDrawListControl(NMLVCUSTOMDRAW* pCustomDrawItem)
 void calcColumnSpots()
 {
     static const wchar_t* szMaxNameLength = L"WWWWWWWWWWWWWWWWWWWWWWW";
-    static const wchar_t* szMaxValueLength = L"In envelope(s): $1,000,000,000";
+    static const wchar_t* szMaxValueLength = L"In cagtegory(s): $1,000,000,000";
 
     HDC dc = GetDC(g_hwndTV);
     SIZE textSizeA = { 0 }, textSizeB = { 0 };
@@ -774,7 +773,7 @@ void calcColumnSpots()
     //textSizeA.cx *= 2;
     g_columnSizes._name = (int)(textSizeA.cx * 1.5);
     g_columnSizes._budgeted = textSizeB.cx;
-    g_columnSizes._inEnvelopes = textSizeB.cx;
+    g_columnSizes._inCategories = textSizeB.cx;
     g_columnSizes._balance = textSizeB.cx;
     g_columnSizes._available = textSizeB.cx;
     g_columnSizes._endSpot = textSizeB.cx;;
@@ -792,7 +791,7 @@ void getColumnSpots()
     g_columnSizes._budgeted = hdi.cxy;
 
     Header_GetItem(g_hwndHeader, 2, &hdi);
-    g_columnSizes._inEnvelopes = hdi.cxy;
+    g_columnSizes._inCategories = hdi.cxy;
 
     Header_GetItem(g_hwndHeader, 3, &hdi);
     g_columnSizes._balance = hdi.cxy;
@@ -826,10 +825,10 @@ COLORREF setTextColorForAmount(HDC hDC, int iAmount, bool bSelected, bool colori
 LRESULT customDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
 {
     LRESULT ret = CDRF_NOTIFYITEMDRAW;
-    AccountTreeItem* pItem = (AccountTreeItem*)pCustomDrawItem->nmcd.lItemlParam;
+    AccountBase* pItem = (AccountBase*)pCustomDrawItem->nmcd.lItemlParam;
 
     static const wchar_t* szMaxNameLength = L"WWWWWWWWWWWWWWWWWWWWWWW";
-    static const wchar_t* szMaxValueLength = L"In envelope(s): $1,000,000,000";
+    static const wchar_t* szMaxValueLength = L"In categories: $1,000,000,000";
 
     static const COLORREF ACCOUNT_COLOR = RGB(230, 240, 250);
     static const COLORREF GROUP_COLOR = RGB(230, 240, 250);
@@ -847,18 +846,18 @@ LRESULT customDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
 
         switch (pItem->getType())
         {
-        case AccountTreeItem::ACCOUNT:
+        case AccountBase::ACCOUNT:
             cr = ACCOUNT_COLOR;
             break;
-        case AccountTreeItem::GROUP:
+        case AccountBase::GROUP:
             cr = GROUP_COLOR;
             break;
-        case AccountTreeItem::ENVELOPE:
+        case AccountBase::CATEGORY:
             cr = ENVELOPE_COLOR;
             break;
         }
         
-        pItem->getType() == AccountTreeItem::ACCOUNT ? ACCOUNT_COLOR : GROUP_COLOR;
+        pItem->getType() == AccountBase::ACCOUNT ? ACCOUNT_COLOR : GROUP_COLOR;
         bool selected = hItem == hSelItem;
 
         if (selected) {
@@ -899,11 +898,11 @@ LRESULT customDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             int iBalance = pItem->getBalance();
             std::wstring balance = Utils::penniesToDollarsString(iBalance);
 
-            int iBudget = pItem->getType() == AccountTreeItem::ENVELOPE ? pItem->getBudgeted() : pItem->budgetedToSubAccounts();
+            int iBudget = pItem->getType() == AccountBase::CATEGORY ? pItem->getBudgeted() : pItem->budgetedToSubAccounts();
             iBudget *= -1;
             std::wstring budgeted = Utils::penniesToDollarsString(iBudget);
 
-            int iEnvelopes = pItem->getType() == AccountTreeItem::ENVELOPE ? pItem->getBalance() : pItem->allocatedToSubAccounts();
+            int iEnvelopes = pItem->getType() == AccountBase::CATEGORY ? pItem->getBalance() : pItem->allocatedToSubAccounts();
             std::wstring allocated = Utils::penniesToDollarsString(iEnvelopes);
 
             int iAvailable = pItem->getBalance() - abs(pItem->allocatedToSubAccounts());
@@ -916,7 +915,7 @@ LRESULT customDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
 
             int budgetedSpot = g_columnSizes._name;
             int inEnvelopes = budgetedSpot + g_columnSizes._budgeted;
-            int balanceSpot = inEnvelopes + g_columnSizes._inEnvelopes;
+            int balanceSpot = inEnvelopes + g_columnSizes._inCategories;
             int availableBalanceSpot = balanceSpot + g_columnSizes._balance;
             int endSpot = availableBalanceSpot + g_columnSizes._endSpot;
 
@@ -929,16 +928,16 @@ LRESULT customDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             TextOut(pCustomDrawItem->nmcd.hdc, inEnvelopes, pCustomDrawItem->nmcd.rc.top, transactionSum.c_str(), (int)transactionSum.length());
 
 
-            if (pItem->getType() == AccountTreeItem::ENVELOPE)
+            if (pItem->getType() == AccountBase::CATEGORY)
             {
-                Envelope* pEnvelope = (Envelope*)pItem;
-                if (pEnvelope->isVirtualAccount()) {
+                AccountCategory* pCategory = (AccountCategory*)pItem;
+                if (pCategory->isVirtualAccount()) {
                     setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iBalance, selected, true);
                     TextOut(pCustomDrawItem->nmcd.hdc, balanceSpot, pCustomDrawItem->nmcd.rc.top, balance.c_str(), (int)balance.length());
                 }
             }
 
-            //if (pItem->getType() == AccountTreeItem::ACCOUNT)
+            //if (pItem->getType() == AccountBase::ACCOUNT)
             //{
             //    setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iAvailable, selected, true);
             //    TextOut(pCustomDrawItem->nmcd.hdc, availableBalanceSpot, pCustomDrawItem->nmcd.rc.top, availableBalance.c_str(), (int)availableBalance.length());
@@ -1314,7 +1313,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             else if (pHeader->code == NM_DBLCLK)
             {
-                AccountTreeItem* pItem = nullptr, * pParentItem = nullptr;
+                AccountBase* pItem = nullptr, * pParentItem = nullptr;
                 POINT pt = { 0 };
                 TVHITTESTINFO tvhi = { 0 };
                 GetCursorPos(&pt);
@@ -1326,13 +1325,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 auto envelope = accountFromItem(hItem);
                 if (envelope)
                 {
-                    addTransaction(hItem);
+                    if (addTransaction(hItem)){
+                        serializeState();
+                    }
                 }
 
             }
             else if (pHeader->code == NM_RCLICK)
             {
-                AccountTreeItem* pItem = nullptr, *pParentItem = nullptr;
+                AccountBase* pItem = nullptr, *pParentItem = nullptr;
                 POINT pt = { 0 };
                 TVHITTESTINFO tvhi = { 0 };
                 GetCursorPos(&pt);
@@ -1352,17 +1353,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 if (pItem)
                 {
                     HMENU hMenu = nullptr;
-                    if (pItem->getType() == AccountTreeItem::GROUP) {
+                    if (pItem->getType() == AccountBase::GROUP) {
                         hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_GROUP_MENU));
                         hMenu = GetSubMenu(hMenu, 0);
                     }
-                    else if (pItem->getType() == AccountTreeItem::ENVELOPE) {
+                    else if (pItem->getType() == AccountBase::CATEGORY) {
                         hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_ENVELOPE_MENU));
                         hMenu = GetSubMenu(hMenu, 0);
 
                         // Add the "move to group" option
                         bool added = false;
-                        std::vector<AccountTreeItem*> groups = AccountTreeItem::getAllAccountsOfType(AccountTreeItem::GROUP);
+                        std::vector<AccountBase*> groups = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
                         HMENU groupMenu = CreatePopupMenu();
                         for (size_t i = 0; i < groups.size(); i++) {
                             if (pParentItem && groups[i]->getId() != pParentItem->getId()) {
@@ -1376,7 +1377,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         }
 
                         // Add the "move to account" option
-                        groups = AccountTreeItem::getAllAccountsOfType(AccountTreeItem::ACCOUNT);
+                        groups = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
                         HMENU accountMenu = CreatePopupMenu();
                         for (size_t i = 0; i < groups.size(); i++) {
                             if (pParentItem && groups[i]->getId() != pParentItem->getId()) {
@@ -1510,7 +1511,7 @@ void updateGuiValues(HTREEITEM item /*= NULL*/)
         TreeView_GetItem(g_hwndTV, &tvi);
 
         Account* pAccount = (Account*)tvi.lParam;
-        setItemText(item, pAccount->getDisplayName());
+        setItemText(item, pAccount->getName());
 
         // Get children
         HTREEITEM child = TreeView_GetChild(g_hwndTV, item);
@@ -1531,8 +1532,8 @@ void updateGuiValues(HTREEITEM item /*= NULL*/)
     {
         // Calc new window caption;
         int iReservedDollars = 0, iBalance = 0;
-        static std::vector<AccountTreeItem*> accounts = AccountTreeItem::getAllAccountsOfType(AccountTreeItem::ACCOUNT);
-        static std::vector<AccountTreeItem*> envelopes = AccountTreeItem::getAllAccountsOfType(AccountTreeItem::ENVELOPE);
+        static std::vector<AccountBase*> accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
+        static std::vector<AccountBase*> envelopes = AccountBase::getAllAccountsOfType(AccountBase::CATEGORY);
 
         for (size_t i = 0; i < accounts.size(); i++) {
             Account* pAccount = (Account * )accounts[i];
@@ -1570,7 +1571,7 @@ void populateTransactions()
         return;
     }
 
-    AccountTreeItem* pItem = accountFromItem(hItem);
+    AccountBase* pItem = accountFromItem(hItem);
     if (!pItem){
         return;
     }
@@ -1597,7 +1598,7 @@ void populateTransactions()
         ListView_SetItemText(g_hwndTransactionLV, 0, 1, const_cast<wchar_t*>((*itr)->getPayee()));
 
         // Category
-        AccountTreeItem* ati = AccountTreeItem::lookupById((*itr)->getCategoryId());
+        AccountBase* ati = AccountBase::lookupById((*itr)->getCategoryId());
         if (ati) {
             ListView_SetItemText(g_hwndTransactionLV, 0, 2, const_cast<wchar_t*>(ati->getName()));
         }
@@ -1656,7 +1657,7 @@ void addAccount(Account* pAccount)
 
 int serializeState()
 {
-    std::vector<AccountTreeItem*> topItems;
+    std::vector<AccountBase*> topItems;
 
     // Serialize accounts
     for (int i = 0; i < ListView_GetItemCount(g_hwndAccountLV); i++)
@@ -1672,7 +1673,7 @@ int serializeState()
     // Serialize Categories and subcategories
     HTREEITEM hItem = TreeView_GetChild(g_hwndTV, TVI_ROOT);
     while (hItem){
-        AccountTreeItem* item = accountFromItem(hItem);
+        AccountBase* item = accountFromItem(hItem);
         topItems.push_back(item);
         hItem = TreeView_GetNextSibling(g_hwndTV, hItem);
     }

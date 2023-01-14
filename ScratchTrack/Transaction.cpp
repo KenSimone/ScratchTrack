@@ -17,7 +17,7 @@ Transaction* Transaction::addTransaction(int amount, unsigned int accountId, uns
 	return pTransaction;
 }
 
-std::vector<Transaction*> Transaction::getTransactionsForItem(AccountTreeItem* pItem)
+std::vector<Transaction*> Transaction::getTransactionsForItem(AccountBase* pItem)
 {
 	std::vector<Transaction*> ret;
 	std::set<unsigned int> ids;

@@ -5,7 +5,7 @@
 #include <vector>
 #include "TinyXml2.h"
 
-class AccountTreeItem;
+class AccountBase;
 
 
 // Transaction class
@@ -14,7 +14,7 @@ class Transaction
 public:
 	static Transaction* addTransaction(int amount, unsigned int accountId, unsigned int categoryId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp = nullptr);
 
-	static std::vector<Transaction*> getTransactionsForItem(AccountTreeItem* pItem);
+	static std::vector<Transaction*> getTransactionsForItem(AccountBase* pItem);
 	static std::vector<Transaction*> getAllTransactions();
 
 	int getAmount() { return _amount; }

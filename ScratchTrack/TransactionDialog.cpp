@@ -34,10 +34,10 @@ INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT messag
         if (THIS_PTR) {
             // Accounts
             HWND hAccounts = GetDlgItem(hDlg, IDC_COMBO_ACCOUNT);
-            auto accounts = AccountTreeItem::getAllAccountsOfType(AccountTreeItem::ACCOUNT);
+            auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
             bool selSet = false;
             for (auto itr = accounts.begin(); itr != accounts.end(); itr++){
-                AccountTreeItem* pAccount = *itr;
+                AccountBase* pAccount = *itr;
                 int pos = (int)SendMessage(hAccounts, CB_ADDSTRING, 0, (LPARAM)pAccount->getName());
                 SendMessage(hAccounts, CB_SETITEMDATA, pos, (LPARAM)pAccount);
                 if (pAccount->getId() == THIS_PTR->getAccountId()) {
@@ -52,11 +52,11 @@ INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT messag
 
             // Categories
             HWND hCategories = GetDlgItem(hDlg, IDC_COMBO_CATEGORY);
-            auto categories = AccountTreeItem::getAllAccountsOfType(AccountTreeItem::ENVELOPE);
+            auto categories = AccountBase::getAllAccountsOfType(AccountBase::CATEGORY);
             for (auto itr = categories.begin(); itr != categories.end(); itr++) {
                 int pos = (int)SendMessage(hCategories, CB_ADDSTRING, 0, (LPARAM)(*itr)->getName());
                 SendMessage(hCategories, CB_SETITEMDATA, pos, (LPARAM)*itr);
-                AccountTreeItem* pAccount = *itr;
+                AccountBase* pAccount = *itr;
                 if (pAccount->getId() == THIS_PTR->getCategoryId()) {
                     ComboBox_SetCurSel(hCategories, pos);
                 }

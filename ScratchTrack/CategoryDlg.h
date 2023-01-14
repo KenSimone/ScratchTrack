@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-class AccountTreeItem;
+class AccountBase;
 class Account;
 
 class CategoryDialog
@@ -18,9 +18,9 @@ public:
 	// Pre-show functions
 	void setCategoryName(const wchar_t* szCategory) { _name = szCategory;  }
 	void setBudget(int budget) { _budget = budget; }
-	void setDefaultAmount(int defTransAmt) { _amount = defTransAmt; }
-	void setDefaultAccount(Account* pDefaultAccount) { _pDefaultAccount = pDefaultAccount; }
-	void setDefaultPayee(const wchar_t* szPayee) { _payee = szPayee; }
+	void setDefaultTransactionAmount(int defTransAmt) { _amount = defTransAmt; }
+	void setDefaultTransactionPayFromAccount(Account* pDefaultAccount) { _pDefaultTransactionPayFromAccount = pDefaultAccount; }
+	void setDefaultTransactionPayee(const wchar_t* szPayee) { _payee = szPayee; }
 	void setIsIncome(bool isIncome) { _isIncome = isIncome;  }
 	void setIsVirtualAccount(bool isVirtual) { _isVirtual = isVirtual; }
 
@@ -28,8 +28,8 @@ public:
 	const wchar_t* getCategoryName() { return _name.c_str(); }
 	int getBudget() { return _budget; }
 	int getDefaultTransactionAmount() { return _amount; }
-	Account* getDefaultAccount() { return _pDefaultAccount; }
-	const wchar_t* getDefaultPayee() { return _payee.c_str(); }
+	Account* getDefaultTransactionPayFromAccount() { return _pDefaultTransactionPayFromAccount; }
+	const wchar_t* getDefaultTransactionPayee() { return _payee.c_str(); }
 	bool getIsIncome() { return _isIncome; }
 	bool getIsVirtual() { return _isVirtual; }
 
@@ -37,7 +37,7 @@ public:
 protected:
 	std::wstring _name;
 	int _amount;
-	Account* _pDefaultAccount;
+	Account* _pDefaultTransactionPayFromAccount;
 	std::wstring _payee;
 	std::wstring _category;
 	int _budget;

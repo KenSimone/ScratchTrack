@@ -4,15 +4,15 @@
 #include <limits.h>
 
 static unsigned int _curId = 0;
-std::map<unsigned int, AccountTreeItem*> _idToItem;
+std::map<unsigned int, AccountBase*> _idToItem;
 extern std::vector<Transaction*> _Transactions;
 
 using namespace tinyxml2;
 
-AccountTreeItem* AccountItemFromXmlElement(tinyxml2::XMLElement* pAccount);
+AccountBase* AccountItemFromXmlElement(tinyxml2::XMLElement* pAccount);
 
 
-AccountTreeItem::AccountTreeItem(accountItemType type) : _type(type), _balance(0), _budgeted(0)
+AccountBase::AccountBase(accountItemType type) : _balance(0), _budgeted(0)
 {
 	if (_curId != UINT_MAX) {
 		_id = _curId;
@@ -23,7 +23,7 @@ AccountTreeItem::AccountTreeItem(accountItemType type) : _type(type), _balance(0
 };
 
 // Look up the tree item by ID
-AccountTreeItem* AccountTreeItem::lookupById(unsigned int id)
+AccountBase* AccountBase::lookupById(unsigned int id)
 {
 	auto itr = _idToItem.find(id);
 	if (itr != _idToItem.end()) {
@@ -32,7 +32,7 @@ AccountTreeItem* AccountTreeItem::lookupById(unsigned int id)
 	return nullptr;
 }
 
-void AccountTreeItem::setId(unsigned int id) 
+void AccountBase::setId(unsigned int id) 
 { 
 	_id = id;
 	_idToItem[_id] = this;
@@ -40,7 +40,7 @@ void AccountTreeItem::setId(unsigned int id)
 
 
 // Subclasses should always call base first thing and then add to ppSerializedElement as needed
-int AccountTreeItem::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement)
+int AccountBase::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement)
 {
 	int ret = ERROR_SUCCESS;
 
@@ -52,7 +52,7 @@ int AccountTreeItem::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLEleme
 	WideCharToMultiByte(CP_UTF8, 0, _name.c_str(), -1, szBuff, 1024, nullptr, nullptr);
 
 	pElement->SetAttribute("name", szBuff);
-	pElement->SetAttribute("type", _type);
+	pElement->SetAttribute("type", getType());
 	pElement->SetAttribute("id", _id);
 	pElement->SetAttribute("balance", _balance);
 	pElement->SetAttribute("budgeted", _budgeted);
@@ -77,7 +77,7 @@ int AccountTreeItem::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLEleme
 	return ret;
 }
 
-int serialize(std::vector<AccountTreeItem*>& topLevelItems, const char* szFilename)
+int serialize(std::vector<AccountBase*>& topLevelItems, const char* szFilename)
 {
 	tinyxml2::XMLDocument* pDoc = new tinyxml2::XMLDocument;
 	tinyxml2::XMLElement* pRoot = pDoc->NewElement("root");
@@ -104,7 +104,7 @@ int serialize(std::vector<AccountTreeItem*>& topLevelItems, const char* szFilena
 	return ERROR_SUCCESS;
 }
 
-int AccountTreeItem::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
+int AccountBase::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 {
 	// deserialize
 	unsigned int id = 0;
@@ -126,23 +126,23 @@ int AccountTreeItem::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	return ERROR_SUCCESS;
 }
 
-AccountTreeItem* AccountItemFromXmlElement(tinyxml2::XMLElement* pAccount)
+AccountBase* AccountItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 {
-	AccountTreeItem* pItem = nullptr;
+	AccountBase* pItem = nullptr;
 
 	// deserialize
 	unsigned int type = 999;
 	pAccount->QueryUnsignedAttribute("type", &type);
 	switch (type)
 	{
-	case AccountTreeItem::ACCOUNT:
+	case AccountBase::ACCOUNT:
 		pItem = new Account;
 		break;
-	case AccountTreeItem::GROUP:
+	case AccountBase::GROUP:
 		pItem = new AccountGroup;
 		break;
-	case AccountTreeItem::ENVELOPE:
-		pItem = new Envelope;
+	case AccountBase::CATEGORY:
+		pItem = new AccountCategory;
 		break;
 	}
 
@@ -152,7 +152,7 @@ AccountTreeItem* AccountItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 
 }
 
-int deserialize(const char* szFilename, std::vector<AccountTreeItem*>& topLevelItems)
+int deserialize(const char* szFilename, std::vector<AccountBase*>& topLevelItems)
 {
 	tinyxml2::XMLDocument doc;
 	if (XML_SUCCESS != doc.LoadFile(szFilename)) {
@@ -228,9 +228,9 @@ int deserialize(const char* szFilename, std::vector<AccountTreeItem*>& topLevelI
 	return ERROR_SUCCESS;
 }
 
-std::vector<AccountTreeItem*> AccountTreeItem::getAllAccountsOfType(accountItemType type)
+std::vector<AccountBase*> AccountBase::getAllAccountsOfType(accountItemType type)
 {
-	std::vector<AccountTreeItem*> results;
+	std::vector<AccountBase*> results;
 	for (auto itr = _idToItem.begin(); itr != _idToItem.end(); itr++) {
 		if (itr->second->getType() == type) {
 			results.push_back(itr->second);
@@ -240,11 +240,11 @@ std::vector<AccountTreeItem*> AccountTreeItem::getAllAccountsOfType(accountItemT
 	return results;
 }
 
-AccountTreeItem* AccountGroup::getParent()
+AccountBase* AccountGroup::getParent()
 {
-	std::vector<AccountTreeItem*> results;
+	std::vector<AccountBase*> results;
 	for (auto itr = _idToItem.begin(); itr != _idToItem.end(); itr++) {
-		if (itr->second->getType() == AccountTreeItem::GROUP)
+		if (itr->second->getType() == AccountBase::GROUP)
 		{
 			AccountGroup* pGroup = (AccountGroup*)itr->second;
 			for (auto child = pGroup->_children.begin(); child != pGroup->_children.end(); child++) {
@@ -260,7 +260,7 @@ AccountTreeItem* AccountGroup::getParent()
 }
 
 // Transaction for self and sub accounts
-int AccountTreeItem::getCurrentMonthTransacationTotal()
+int AccountBase::getCurrentMonthTransacationTotal()
 {
 	int ret = 0;
 
@@ -293,32 +293,32 @@ int AccountTreeItem::getCurrentMonthTransacationTotal()
 
 int AccountGroup::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 {
-	AccountTreeItem::initItemFromXmlElement(pAccount);
+	AccountBase::initItemFromXmlElement(pAccount);
 
 	tinyxml2::XMLElement* pChild = pAccount->FirstChildElement("accountItem");
 	while (pChild)
 	{
-		AccountTreeItem* pChildItem = AccountItemFromXmlElement(pChild);
+		AccountBase* pChildItem = AccountItemFromXmlElement(pChild);
 		addChild(pChildItem);
 		pChild = pChild->NextSiblingElement();
 	}
 	return ERROR_SUCCESS;
 }
 
-int Envelope::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
+int AccountCategory::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 {
-	AccountTreeItem::initItemFromXmlElement(pAccount);
+	AccountBase::initItemFromXmlElement(pAccount);
 
 	unsigned int accountId = -1;
 
 	pAccount->QueryUnsignedAttribute("defaultAccount", &accountId);
-	pAccount->QueryIntAttribute("defaultAmount", &_defaultAmount);
+	pAccount->QueryIntAttribute("defaultAmount", &_defaultTransactionAmount);
 	pAccount->QueryBoolAttribute("isExpense", &_isExpense);
 	pAccount->QueryBoolAttribute("virtualAccount", &_isVirtualAccount);
 
-	AccountTreeItem* pDefAcct = AccountTreeItem::lookupById(accountId);
+	AccountBase* pDefAcct = AccountBase::lookupById(accountId);
 	if (pDefAcct && pDefAcct->getType() == ACCOUNT) {
-		setDefaultAccount((Account*)pDefAcct);
+		setDefaultTransactionPayFromAccount((Account*)pDefAcct);
 	}
 
 	const char* szName;
@@ -326,11 +326,11 @@ int Envelope::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	wchar_t szNameW[1024] = { 0 };
 	MultiByteToWideChar(CP_UTF8, 0, szName, -1, szNameW, 1024);
 	
-	_defaultPayee = szNameW;
+	_defaultTransactionPayee = szNameW;
 	return ERROR_SUCCESS;
 }
 
-int Envelope::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement)
+int AccountCategory::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement)
 {
 	tinyxml2::XMLElement* pNewElement = nullptr;
 	if (!ppSerializedElement) {
@@ -338,18 +338,18 @@ int Envelope::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** pp
 	}
 
 	// Add base attributes
-	AccountTreeItem::serialize(pParent, ppSerializedElement);
+	AccountBase::serialize(pParent, ppSerializedElement);
 
 	// Add our own attributes
 	char szBuff[1024] = { 0 };
-	WideCharToMultiByte(CP_UTF8, 0, _defaultPayee.c_str(), -1, szBuff, 1024, nullptr, nullptr);
+	WideCharToMultiByte(CP_UTF8, 0, _defaultTransactionPayee.c_str(), -1, szBuff, 1024, nullptr, nullptr);
 
 	pNewElement->SetAttribute("defaultPayee", szBuff);
-	pNewElement->SetAttribute("defaultAmount", _defaultAmount);
+	pNewElement->SetAttribute("defaultAmount", _defaultTransactionAmount);
 	pNewElement->SetAttribute("isExpense", _isExpense);
 	pNewElement->SetAttribute("virtualAccount", _isVirtualAccount);
-	if (_pDefaultAccount) {
-		pNewElement->SetAttribute("defaultAccount", _pDefaultAccount->getId());
+	if (_pDefaultTransactionPayFromAccount) {
+		pNewElement->SetAttribute("defaultAccount", _pDefaultTransactionPayFromAccount->getId());
 	}
 	return ERROR_SUCCESS;
 
@@ -357,7 +357,7 @@ int Envelope::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** pp
 
 int Account::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 {
-	AccountTreeItem::initItemFromXmlElement(pAccount);
+	AccountBase::initItemFromXmlElement(pAccount);
 	pAccount->QueryBoolAttribute("isBudgeted", &_isBudgeted);
 	return ERROR_SUCCESS;
 }
@@ -370,7 +370,7 @@ int Account::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppS
 	}
 
 	// Add base attributes
-	AccountTreeItem::serialize(pParent, ppSerializedElement);
+	AccountBase::serialize(pParent, ppSerializedElement);
 
 	// Add our own attributes
 	pNewElement->SetAttribute("isBudgeted", _isBudgeted);

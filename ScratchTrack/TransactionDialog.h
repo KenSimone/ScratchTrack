@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-class AccountTreeItem;
+class AccountBase;
 
 class TransactionDialog
 {

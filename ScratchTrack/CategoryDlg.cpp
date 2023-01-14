@@ -9,7 +9,7 @@
 extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 
-CategoryDialog::CategoryDialog() : _amount(0), _isIncome(false), _pDefaultAccount(nullptr), _isVirtual(false), _budget(0)
+CategoryDialog::CategoryDialog() : _amount(0), _isIncome(false), _pDefaultTransactionPayFromAccount(nullptr), _isVirtual(false), _budget(0)
 {
 
 }
@@ -54,14 +54,14 @@ INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPA
             SetWindowText(hCatNameEdit, const_cast<wchar_t*>(PTHIS->getCategoryName()));
 
             HWND hAccountCombo = GetDlgItem(hDlg, IDC_COMBO_CAT_ACCOUNT);
-            auto accounts = AccountTreeItem::getAllAccountsOfType(AccountTreeItem::ACCOUNT);
+            auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
             bool selSet = false;
 
             for (auto itr = accounts.begin(); itr != accounts.end(); itr++) {
-                AccountTreeItem* pAccount = *itr;
+                AccountBase* pAccount = *itr;
                 int pos = (int)SendMessage(hAccountCombo, CB_ADDSTRING, 0, (LPARAM)pAccount->getName());
                 SendMessage(hAccountCombo, CB_SETITEMDATA, pos, (LPARAM)pAccount);
-                if (pAccount == PTHIS->getDefaultAccount()) {
+                if (pAccount == PTHIS->getDefaultTransactionPayFromAccount()) {
                     selSet = true;
                     ComboBox_SetCurSel(hAccountCombo, pos);
                 }
@@ -87,7 +87,7 @@ INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPA
             for (auto itr = uniquePayees.begin(); itr != uniquePayees.end(); itr++) {
                 if (!itr->empty()) {
                     int pos = (int)SendMessage(hPayeeCombo, CB_ADDSTRING, 0, (LPARAM)itr->c_str());
-                    if (_wcsicmp(itr->c_str(), PTHIS->getDefaultPayee()) == 0)
+                    if (_wcsicmp(itr->c_str(), PTHIS->getDefaultTransactionPayee()) == 0)
                     {
                         ComboBox_SetCurSel(hPayeeCombo, pos);
                     }
@@ -134,14 +134,14 @@ INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPA
                     int curSel = ComboBox_GetCurSel(hAccountCombo);
                     if (curSel >= 0) {
                         Account* pParentAccount = (Account*)ComboBox_GetItemData(hAccountCombo, curSel);
-                        PTHIS->setDefaultAccount(pParentAccount);
+                        PTHIS->setDefaultTransactionPayFromAccount(pParentAccount);
                     }
 
                     // Payee
                     szBuff[0] = 0;
                     HWND hPayeeCombo = GetDlgItem(hDlg, IDC_COMBO_CAT_PAYEE);
                     GetWindowText(hPayeeCombo, szBuff, 1024);
-                    PTHIS->setDefaultPayee(szBuff);
+                    PTHIS->setDefaultTransactionPayee(szBuff);
 
                     // Amount
                     szBuff[0] = 0;
@@ -168,7 +168,7 @@ INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPA
                         amt *= -1;
                     }
 
-                    PTHIS->setDefaultAmount(amt);                    
+                    PTHIS->setDefaultTransactionAmount(amt);
                 }
             }
 
