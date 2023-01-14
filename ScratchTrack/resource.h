@@ -1,0 +1,97 @@
+//{{NO_DEPENDENCIES}}
+// Microsoft Visual C++ generated include file.
+// Used by SimpleBudget.rc
+//
+#define IDC_MYICON                      2
+#define IDD_ONE_INPUT                   9
+#define IDD_SIMPLEBUDGET_DIALOG         102
+#define IDS_APP_TITLE                   103
+#define IDD_ABOUTBOX                    103
+#define IDM_ABOUT                       104
+#define IDM_EXIT                        105
+#define IDI_SIMPLEBUDGET                107
+#define IDC_SIMPLEBUDGET                109
+#define IDC_SIMPLEBUDGET_TREE           110
+#define IDC_SIMPLEBUDGET_TRANSACTION_LIST 111
+#define IDC_SIMPLEBUDGET_TREEHEADER     112
+#define IDC_SIMPLEBUDGET_ACCOUNT_LIST   113
+#define IDR_MAINFRAME                   128
+#define IDR_MENU1                       130
+#define IDR_MENU_TREEVIEW               130
+#define IDI_ENVELOPE                    136
+#define IDI_FOLDER                      138
+#define IDI_ACCOUNT                     141
+#define IDR_GROUP_MENU                  142
+#define IDR_ENVELOPE_MENU               143
+#define IDD_Transaction_DIALOG          144
+#define IDR_MENU_Transaction            145
+#define IDI_ADD_MONEYICON               150
+#define IDI_SUBTRACT_MONEY_ICON         151
+#define IDR_MENU_ACCOUNT                152
+#define IDD_CATEGORY_DIALOG             153
+#define IDD_ACCOUNT_DIALOG              154
+#define IDC_ONE_INPUT_TEXT              1000
+#define IDC_EDIT_Transaction_AMOUNT     1001
+#define IDC_RADIO1                      1002
+#define IDC_RADIO_INCOME                1002
+#define IDC_RADIO_EXPENSE               1003
+#define IDC_EDIT_Transaction_DESCRIPTION 1004
+#define IDC_EDIT_Transaction_PAYEE      1005
+#define IDC_COMBO_CATEGORY              1007
+#define IDC_COMBO_ACCOUNT               1008
+#define IDC_COMBO_PAYEE                 1009
+#define IDC_EDIT_CAT_NAME               1009
+#define IDC_EDIT_CAT_MONTHLY_BUDGET     1010
+#define IDC_COMBO_CAT_PAYEE             1012
+#define IDC_COMBO_CAT_ACCOUNT           1013
+#define IDC_EDIT_CAT_AMOUNT             1014
+#define IDC_EDIT_ACCOUNT_NAME           1015
+#define IDC_CHECK_BUDGETED              1016
+#define IDC_EDIT_ACCOUNT_BALANCE        1017
+#define IDC_CHECK_VIRTUAL_ACCOUNT       1017
+#define ID_ROOT_ADD_GROUP               32771
+#define ID_ROOT_RENAMEACCOUNT           32772
+#define ID_ROOT_SETBALANCE              32773
+#define ID_ROOT_ADD_TOP_LEVEL_ACCOUNT   32774
+#define ID_ROOT_DELETEITEM              32776
+#define ID_Menu                         32777
+#define ID_ROOT_ADDENVELOPE             32778
+#define ID_ROOT_ADDENVELOPE32779        32779
+#define ID_ROOT_RENAME                  32780
+#define ID_ROOT_FUNDFROMPARENT          32781
+#define ID_ROOT_RENAME32782             32782
+#define ID_ROOT_DELETEACCOUNT           32783
+#define ID_ROOT_SETBUDGETEDAMOUNT       32784
+#define ID_ROOT_ADDTransaction          32785
+#define ID_ROOT_ADDTransaction32786     32786
+#define ID_ROOT_EDITTransaction         32787
+#define ID_ROOT_MOVETO                  32788
+#define ID_MOVETO_A                     32789
+#define ID_ROOT_ADDGROUP                32790
+#define ID_ROOT_ENVELOPE_MOVE_TO_START  32800
+#define ID_ROOT_ENVELOPE_MOVE_TO_END    32999
+#define ID_FILE_INCREASEFONTSIZE        33000
+#define ID_FILE_DECREASEFONTSIZE        33001
+#define ID_ROOT_SETBALANCE33011         33011
+#define ID_ROOT_RENAME33012             33012
+#define ID_Menu33013                    33013
+#define ID_ACCOUNT_SETBALANCE           33014
+#define ID_ACCOUNT_RENAME               33015
+#define ID_FILE_ADDACCOUNT              33016
+#define ID_FILE_ADDCATEGORY             33017
+#define ID_ROOT_EDITACCOUNT             33018
+#define ID_ENVELOPE_RESERVE_FUNDS       33019
+#define ID_ROOT_EDITCATEGORY            33020
+#define IDC_STATIC                      -1
+
+// Next default values for new objects
+// 
+#ifdef APSTUDIO_INVOKED
+#ifndef APSTUDIO_READONLY_SYMBOLS
+#define _APS_NO_MFC                     1
+#define _APS_NEXT_RESOURCE_VALUE        155
+#define _APS_NEXT_COMMAND_VALUE         33021
+#define _APS_NEXT_CONTROL_VALUE         1018
+#define _APS_NEXT_SYMED_VALUE           113
+#endif
+#endif
