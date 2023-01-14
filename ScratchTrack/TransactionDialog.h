@@ -33,6 +33,10 @@ public:
 	unsigned int getAccountFromId() { return _accountFromId; }
 	unsigned int getAccountToId() { return _accountToId; }
 	bool getIsExpense() { return _isExpense; }
+	bool isTransfer() { return _accountToId != MAXINT;  }
+
+protected:
+	static void updateUi(HWND hDlg);
 
 protected:
 	bool _isExpense;

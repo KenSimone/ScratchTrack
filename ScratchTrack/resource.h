@@ -42,7 +42,6 @@
 #define IDC_COMBO_PAYEE                 1009
 #define IDC_EDIT_CAT_NAME               1009
 #define IDC_EDIT_CAT_MONTHLY_BUDGET     1010
-#define IDC_COMBO_ACCOUNT2              1010
 #define IDC_COMBO_ACCOUNT_TO            1010
 #define IDC_COMBO_CAT_PAYEE             1012
 #define IDC_COMBO_CAT_ACCOUNT           1013
@@ -52,6 +51,7 @@
 #define IDC_EDIT_ACCOUNT_BALANCE        1017
 #define IDC_CHECK_VIRTUAL_ACCOUNT       1017
 #define IDC_CHECK1                      1018
+#define IDC_CHECK_PAY_TO_ACCOUNT        1018
 #define ID_ROOT_ADD_GROUP               32771
 #define ID_ROOT_RENAMEACCOUNT           32772
 #define ID_ROOT_SETBALANCE              32773

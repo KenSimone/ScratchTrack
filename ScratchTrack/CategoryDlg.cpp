@@ -3,6 +3,7 @@
 #include "AccountInfo.h"
 #include "Transaction.h"
 #include "Utils.h"
+#include "AutoCombo.h"
 #include <Windows.h>
 #include <windowsx.h>
 
@@ -78,6 +79,7 @@ INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPA
 
             // Payees
             HWND hPayeeCombo = GetDlgItem(hDlg, IDC_COMBO_CAT_PAYEE);
+            MakeAutocompleteCombo(hPayeeCombo);
             std::vector<Transaction*> transactions = Transaction::getAllTransactions();
             std::set<std::wstring> uniquePayees;
             for (auto itr = transactions.begin(); itr != transactions.end(); itr++) {

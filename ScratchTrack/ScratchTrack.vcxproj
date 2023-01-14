@@ -137,6 +137,7 @@
   <ItemGroup>
     <ClInclude Include="AccountDlg.h" />
     <ClInclude Include="AccountInfo.h" />
+    <ClInclude Include="AutoCombo.h" />
     <ClInclude Include="CategoryDlg.h" />
     <ClInclude Include="Transaction.h" />
     <ClInclude Include="TransactionDialog.h" />
@@ -150,6 +151,7 @@
   <ItemGroup>
     <ClCompile Include="AccountDlg.cpp" />
     <ClCompile Include="AccountInfo.cpp" />
+    <ClCompile Include="AutoCombo.cpp" />
     <ClCompile Include="CategoryDlg.cpp" />
     <ClCompile Include="Transaction.cpp" />
     <ClCompile Include="TransactionDialog.cpp" />

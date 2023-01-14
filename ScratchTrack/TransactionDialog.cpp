@@ -3,6 +3,7 @@
 #include "Utils.h"
 #include "AccountInfo.h"
 #include "Transaction.h"
+#include "AutoCombo.h"
 #include <windowsx.h>
 
 extern HINSTANCE g_hInst;
@@ -25,8 +26,18 @@ bool TransactionDialog::ShowDialog()
     return result == IDOK;
 }
 
+void TransactionDialog::updateUi(HWND hDlg)
+{
+    bool isTransfer = SendDlgItemMessage(hDlg, IDC_CHECK_PAY_TO_ACCOUNT, BM_GETCHECK, 0, 0);
+    EnableWindow(GetDlgItem(hDlg, IDC_COMBO_ACCOUNT_TO), isTransfer);
+    EnableWindow(GetDlgItem(hDlg, IDC_COMBO_PAYEE), !isTransfer);
+}
+
 INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    //IDC_CHECK_PAY_TO_ACCOUNT
+    //IDC_COMBO_ACCOUNT_TO (Combo-box Control)
+
     UNREFERENCED_PARAMETER(lParam);
     switch (message)
     {
@@ -34,21 +45,39 @@ INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT messag
         if (THIS_PTR) {
             // Accounts
             HWND hAccounts = GetDlgItem(hDlg, IDC_COMBO_ACCOUNT);
+            HWND hAccountsTo = GetDlgItem(hDlg, IDC_COMBO_ACCOUNT_TO);
             auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
-            bool selSet = false;
+            bool selSet = false, toSelSet = false;
             for (auto itr = accounts.begin(); itr != accounts.end(); itr++){
                 AccountBase* pAccount = *itr;
+
+                // Account from
                 int pos = (int)SendMessage(hAccounts, CB_ADDSTRING, 0, (LPARAM)pAccount->getName());
                 SendMessage(hAccounts, CB_SETITEMDATA, pos, (LPARAM)pAccount);
                 if (pAccount->getId() == THIS_PTR->getAccountFromId()) {
                     selSet = true;
                     ComboBox_SetCurSel(hAccounts, pos);
                 }
+
+                // Account to
+                pos = (int)SendMessage(hAccountsTo, CB_ADDSTRING, 0, (LPARAM)pAccount->getName());
+                SendMessage(hAccountsTo, CB_SETITEMDATA, pos, (LPARAM)pAccount);
+                if (pAccount->getId() == THIS_PTR->getAccountToId()) {
+                    toSelSet = true;
+                    ComboBox_SetCurSel(hAccountsTo, pos);
+                }
+
             }
             if (!selSet) {
                 ComboBox_SetCurSel(hAccounts, 0);
             }
 
+            if (!toSelSet) {
+                ComboBox_SetCurSel(hAccountsTo, 0);
+            }
+
+            // Transfer checkbox
+            SendDlgItemMessage(hDlg, IDC_CHECK_PAY_TO_ACCOUNT, BM_SETCHECK, THIS_PTR->getAccountToId() != MAXINT ? BST_CHECKED : BST_UNCHECKED, 0);
 
             // Categories
             HWND hCategories = GetDlgItem(hDlg, IDC_COMBO_CATEGORY);
@@ -64,6 +93,8 @@ INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT messag
 
             // Transactions
             HWND hPayees = GetDlgItem(hDlg, IDC_COMBO_PAYEE);
+            MakeAutocompleteCombo(hPayees);
+
             std::vector<Transaction*> transactions = Transaction::getAllTransactions();
             std::set<std::wstring> uniquePayees;
             for (auto itr = transactions.begin(); itr != transactions.end(); itr++) {
@@ -97,12 +128,18 @@ INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT messag
             SetDlgItemText(hDlg, IDC_EDIT_Transaction_AMOUNT, amount.c_str());
             ComboBox_SetText(GetDlgItem(hDlg, IDC_COMBO_PAYEE), THIS_PTR->getPayee());
             SetDlgItemText(hDlg, IDC_EDIT_Transaction_DESCRIPTION, THIS_PTR->getDescription());
+
+            updateUi(hDlg);
         }
 
         return (INT_PTR)TRUE;
 
     case WM_COMMAND:
-        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
+        if (HIWORD(wParam) == BN_CLICKED && (LOWORD(wParam) == IDC_CHECK_PAY_TO_ACCOUNT))
+        {
+            updateUi(hDlg);
+        }
+        else if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
         {
             if (LOWORD(wParam) == IDOK)
             {
