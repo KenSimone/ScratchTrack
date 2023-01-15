@@ -144,7 +144,10 @@ public:
 		for (size_t i = 0; i < _children.size(); i++)
 		{
 			AccountBase* pCurChild = _children[i];
+
 			allocated += pCurChild->getBalance();
+
+
 			if (_children[i]->getType() == GROUP)
 			{
 				AccountGroup* pAccount = (AccountGroup*)_children[i];

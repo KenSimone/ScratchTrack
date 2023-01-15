@@ -1667,7 +1667,10 @@ void updateGuiValues(HTREEITEM item /*= NULL*/)
         }
 
         for (size_t i = 0; i < envelopes.size(); i++) {
-            iReservedDollars += envelopes[i]->getBalance();
+            // This is a confusing operation. If a virtual account has a negative balance
+            // we conceptually treat it as if it had a bigger balance since the whole thing is
+            // a "how much do I deduct from what's available" operation. Hence the abs() here.
+            iReservedDollars += abs(envelopes[i]->getBalance());
         }
 
         int iAvailable = iBalance - iReservedDollars;
@@ -1676,7 +1679,7 @@ void updateGuiValues(HTREEITEM item /*= NULL*/)
         std::wstring availableDollars = Utils::penniesToDollarsString(iBalance - iReservedDollars);
 
         wchar_t szCaption[1024] = { 0 };
-        swprintf(szCaption, 1024, L"SimpleBudge - %s of %s available for spending", availableDollars.c_str(), totalDollars.c_str());
+        swprintf(szCaption, 1024, L"ScratchTrack: %s of %s available for spending", availableDollars.c_str(), totalDollars.c_str());
 
         SetWindowText(g_hTopWindow, szCaption);
 
