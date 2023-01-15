@@ -660,6 +660,7 @@ bool editCategory(AccountCategory* pCategory)
         pCategory->setIsExpense(!dlg.getIsIncome());
         pCategory->setIsVirtualAccount(dlg.getIsVirtual());
         pCategory->setName(dlg.getCategoryName());
+        
         updateGuiValues();
 
         return true;
@@ -1016,7 +1017,6 @@ LRESULT customDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             std::wstring balance = Utils::penniesToDollarsString(iBalance);
 
             int iBudget = pItem->getType() == AccountBase::CATEGORY ? pItem->getBudgeted() : pItem->budgetedToSubAccounts();
-            iBudget *= -1;
             std::wstring budgeted = Utils::penniesToDollarsString(iBudget);
 
             int iEnvelopes = pItem->getType() == AccountBase::CATEGORY ? pItem->getBalance() : pItem->allocatedToSubAccounts();
@@ -1520,6 +1520,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
                     DWORD dwCode = TrackPopupMenu(hMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hWnd, NULL);
                     if (dwCode && processContextMenu(dwCode, hItem, pItem)) {
+                        updateGuiValues();
                         serializeState();
                     }
                 }
@@ -1605,6 +1606,8 @@ void updateGuiValues(HTREEITEM item /*= NULL*/)
         // Account items
         int nAccounts = ListView_GetItemCount(g_hwndAccountLV);
         SendMessage(g_hwndAccountLV, WM_SETREDRAW, FALSE, 0);
+        SendMessage(g_hwndTV, WM_SETREDRAW, FALSE, 0);
+
 
         for (int i = 0; i < nAccounts; i++)
         {
@@ -1619,9 +1622,8 @@ void updateGuiValues(HTREEITEM item /*= NULL*/)
             ListView_SetItemText(g_hwndAccountLV, i, 1, const_cast<wchar_t*>(amount.c_str()));
 
         }
-        SendMessage(g_hwndAccountLV, WM_SETREDRAW, TRUE, 0);
 
-        // Update listview items
+        // Update treeview items
         item = TreeView_GetRoot(g_hwndTV);
     }
 
@@ -1682,6 +1684,11 @@ void updateGuiValues(HTREEITEM item /*= NULL*/)
         swprintf(szCaption, 1024, L"ScratchTrack: %s of %s available for spending", availableDollars.c_str(), totalDollars.c_str());
 
         SetWindowText(g_hTopWindow, szCaption);
+
+        InvalidateRect(g_hwndTV, NULL, true);
+        SendMessage(g_hwndAccountLV, WM_SETREDRAW, TRUE, 0);
+        SendMessage(g_hwndTV, WM_SETREDRAW, TRUE, 0);
+
 
     }
 

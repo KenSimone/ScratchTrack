@@ -33,10 +33,10 @@ bool CategoryDialog::ShowDialog()
 void enableDisableUi(HWND hDlg)
 {
     bool income = SendDlgItemMessage(hDlg, IDC_RADIO_INCOME, BM_GETCHECK, 0, 0);
-    HWND hBudget = GetDlgItem(hDlg, IDC_EDIT_CAT_MONTHLY_BUDGET);
-    HWND hVirtAcct = GetDlgItem(hDlg, IDC_CHECK_VIRTUAL_ACCOUNT);
 
-    EnableWindow(hBudget, !income);
+    //HWND hBudget = GetDlgItem(hDlg, IDC_EDIT_CAT_MONTHLY_BUDGET);
+    //EnableWindow(hBudget, !income);
+    HWND hVirtAcct = GetDlgItem(hDlg, IDC_CHECK_VIRTUAL_ACCOUNT);
     EnableWindow(hVirtAcct, !income);
 
     bool isTransfer = SendDlgItemMessage(hDlg, IDC_CHECK_PAY_TO_ACCOUNT, BM_GETCHECK, 0, 0);
@@ -97,7 +97,7 @@ INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPA
 
             // Budget
             HWND hBudget = GetDlgItem(hDlg, IDC_EDIT_CAT_MONTHLY_BUDGET);
-            std::wstring temp = Utils::penniesToDollarsString(PTHIS->getBudget());
+            std::wstring temp = Utils::penniesToDollarsString(abs(PTHIS->getBudget()));
             SetWindowText(hBudget, temp.c_str());
 
 
@@ -113,25 +113,22 @@ INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPA
             for (auto itr = uniquePayees.begin(); itr != uniquePayees.end(); itr++) {
                 if (!itr->empty()) {
                     int pos = (int)SendMessage(hPayeeCombo, CB_ADDSTRING, 0, (LPARAM)itr->c_str());
-                    if (_wcsicmp(itr->c_str(), PTHIS->getDefaultTransactionPayee()) == 0)
-                    {
-                        ComboBox_SetCurSel(hPayeeCombo, pos);
-                    }
                 }
             }
+
+            ComboBox_SetText(hPayeeCombo, PTHIS->getDefaultTransactionPayee());
 
             bool check = PTHIS->getDefaultTransactionPayToAccount() != nullptr;
 
             SendDlgItemMessage(hDlg, IDC_CHECK_PAY_TO_ACCOUNT, BM_SETCHECK, check ? BST_CHECKED : BST_UNCHECKED, 0);
 
             // Default amount
-            int iAmount = PTHIS->getDefaultTransactionAmount();
+            int iAmount = abs(PTHIS->getDefaultTransactionAmount());
             if (PTHIS->_isIncome) {
                 SendDlgItemMessage(hDlg, IDC_RADIO_INCOME, BM_SETCHECK, BST_CHECKED, 0);
             }
             else {
                 SendDlgItemMessage(hDlg, IDC_RADIO_EXPENSE, BM_SETCHECK, BST_CHECKED, 0);
-                iAmount *= -1;
             }
 
             HWND hAmount = GetDlgItem(hDlg, IDC_EDIT_CAT_AMOUNT);
@@ -199,21 +196,22 @@ INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPA
                     bool income = SendDlgItemMessage(hDlg, IDC_RADIO_INCOME, BM_GETCHECK, 0, 0);
                     PTHIS->setIsIncome(income);
 
+                    szBuff[0] = 0;
+                    HWND hBudget = GetDlgItem(hDlg, IDC_EDIT_CAT_MONTHLY_BUDGET);
+                    GetWindowText(hBudget, szBuff, 1024);
+                    int budgetedAmt = Utils::dollarsStringToPennies(szBuff);
+
                     // Budgeted amount
                     if (income) {
-                        PTHIS->setBudget(0);
                         PTHIS->setIsVirtualAccount(false);
                     }
                     else
                     {
-                        szBuff[0] = 0;
-                        HWND hBudget = GetDlgItem(hDlg, IDC_EDIT_CAT_MONTHLY_BUDGET);
-                        GetWindowText(hBudget, szBuff, 1024);
-                        PTHIS->setBudget(Utils::dollarsStringToPennies(szBuff));
                         PTHIS->setIsVirtualAccount(SendDlgItemMessage(hDlg, IDC_CHECK_VIRTUAL_ACCOUNT, BM_GETCHECK, 0, 0) == BST_CHECKED);
+                        budgetedAmt *= -1;
                         amt *= -1;
                     }
-
+                    PTHIS->setBudget(budgetedAmt);
                     PTHIS->setDefaultTransactionAmount(amt);
                 }
             }

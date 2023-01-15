@@ -111,6 +111,7 @@ public:
 
 		// Add children
 		for (size_t i = 0; i < _children.size(); i++) {
+			ids.insert(_children[i]->getId());
 			if (_children[i]->getType() == GROUP)
 			{
 				AccountGroup* pAccount = (AccountGroup*)_children[i];

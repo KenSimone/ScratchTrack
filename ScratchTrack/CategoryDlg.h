@@ -38,11 +38,11 @@ public:
 
 protected:
 	std::wstring _name;
-	int _amount;
 	Account* _pDefaultTransactionPayFromAccount;
 	Account* _pDefaultTransactionPayToAccount;
 	std::wstring _payee;
 	std::wstring _category;
+	int _amount;
 	int _budget;
 	bool _isIncome;
 	bool _isVirtual;
