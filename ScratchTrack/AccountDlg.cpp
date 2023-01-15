@@ -7,7 +7,7 @@
 extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 
-AccountDlg::AccountDlg() : _budgeted(true), _amount(0)
+AccountDlg::AccountDlg() : _budgeted(true), _amount(0), _creditCard(false)
 {
 
 }
@@ -47,6 +47,11 @@ INT_PTR CALLBACK AccountDlg::AccountDlgProc(HWND hDlg, UINT message, WPARAM wPar
             // Populate budgetd checkbox
             hWndCtrl = GetDlgItem(hDlg, IDC_CHECK_BUDGETED);
             Button_SetCheck(hWndCtrl, PTHIS->getBudgeted() ? BST_CHECKED : BST_UNCHECKED);
+
+            // Populate credit card checkbox
+            hWndCtrl = GetDlgItem(hDlg, IDC_CHECK_CREDIT_CARD);
+            Button_SetCheck(hWndCtrl, PTHIS->getCreditCard() ? BST_CHECKED : BST_UNCHECKED);
+
         }
 
         return (INT_PTR)TRUE;
@@ -70,6 +75,9 @@ INT_PTR CALLBACK AccountDlg::AccountDlgProc(HWND hDlg, UINT message, WPARAM wPar
                 hWndCtrl = GetDlgItem(hDlg, IDC_CHECK_BUDGETED);
                 PTHIS->setBudgeted(Button_GetCheck(hWndCtrl) == BST_CHECKED);
 
+                // Save credit card checkbox
+                hWndCtrl = GetDlgItem(hDlg, IDC_CHECK_CREDIT_CARD);
+                PTHIS->setCreditCard(Button_GetCheck(hWndCtrl) == BST_CHECKED);
             }
             EndDialog(hDlg, LOWORD(wParam));
             return (INT_PTR)TRUE;

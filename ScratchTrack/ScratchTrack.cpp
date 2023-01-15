@@ -70,6 +70,8 @@ void positionControls();
 void calcColumnSpots();
 void getColumnSpots();
 void addAccount(Account* pAccount);
+HTREEITEM treeItemFromAccount(AccountBase* pItem, HTREEITEM hItem = TVI_ROOT);
+HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountBase* pAccount, HTREEITEM hInsertAfter = TVI_LAST);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -122,6 +124,60 @@ const char* getPersistFile()
     return szBuff;
 }
 
+void setupPaymentCategoryForAccount(Account* pAccount)
+{
+    if (pAccount->paidFromCategoryId() == MAXINT) {
+        std::wstring catName = L"Pay ";
+        catName += pAccount->getName();
+
+        // See if already have a category 
+        auto categories = AccountBase::getAllAccountsOfType(AccountBase::CATEGORY);
+        auto groups = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
+
+        for (size_t i = 0; i < categories.size(); i++)
+        {
+            if (_wcsicmp(catName.c_str(), categories[i]->getName()) == 0) {
+                // This seems to be the right category
+                pAccount->setPaidFromCategoryId(categories[i]->getId());
+                return;
+            }
+        }
+
+        // We need to create a new category. First find a group to own it.
+        AccountGroup* pGroup = nullptr;
+        HTREEITEM hItemGroup = nullptr;
+        std::wstring groupName = L"Credit cards";
+
+        for (size_t i = 0; i < groups.size(); i++)
+        {
+            if (_wcsicmp(groupName.c_str(), groups[i]->getName()) == 0) {
+                pGroup = (AccountGroup * )groups[i];
+                hItemGroup = treeItemFromAccount(pGroup);
+            }
+        }
+
+        if (!pGroup)
+        {
+            pGroup = new AccountGroup;
+            pGroup->setName(groupName.c_str());
+            hItemGroup = addTreeItem(TVI_ROOT, pGroup);
+        }
+
+
+        // No existing category. Make one.
+        AccountCategory* pCategory = new AccountCategory;
+        pCategory->setName(catName.c_str());
+        pCategory->setDefaultTransactionPayToAccount(pAccount);
+        pCategory->setIsExpense(true);
+        pCategory->setIsVirtualAccount(true);
+
+        pAccount->setPaidFromCategoryId(pCategory->getId());
+
+        pGroup->addChild(pCategory);
+        addTreeItem(hItemGroup, pCategory);
+    }
+}
+
 // Finds an AccountBase associated with a tree item
 AccountBase* accountFromItem(HTREEITEM item)
 {
@@ -134,7 +190,7 @@ AccountBase* accountFromItem(HTREEITEM item)
     return (AccountBase*)tvi.lParam;
 }
 
-HTREEITEM treeItemFromAccount(AccountBase* pItem, HTREEITEM hItem = TVI_ROOT )
+HTREEITEM treeItemFromAccount(AccountBase* pItem, HTREEITEM hItem /*= TVI_ROOT*/ )
 {
     if (hItem == TVI_ROOT) {
         hItem = TreeView_GetRoot(g_hwndTV);
@@ -165,7 +221,7 @@ HTREEITEM treeItemFromAccount(AccountBase* pItem, HTREEITEM hItem = TVI_ROOT )
 }
 
 // Adds an account item to the tree
-HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountBase* pAccount, HTREEITEM hInsertAfter = TVI_LAST)
+HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountBase* pAccount, HTREEITEM hInsertAfter /*= TVI_LAST*/)
 {
     static const DWORD IMG_ACCOUNT = 0;
     static const DWORD IMG_FOLDER = 1;
@@ -1146,16 +1202,19 @@ void editAccount(Account* pAccount)
     dlg.setBalance(pAccount->getBalance());
     dlg.setBudgeted(pAccount->isBudgeted());
     dlg.setName(pAccount->getName());
+    dlg.setCreditCard(pAccount->paidFromCategoryId() != MAXINT);
     if (dlg.ShowDialog())
     {
         pAccount->addBalance(-pAccount->getBalance());
         pAccount->addBalance(dlg.getBalance());
         pAccount->setName(dlg.getName());
         pAccount->setIsBudgeted(dlg.getBudgeted());
+        if (dlg.getCreditCard()) {
+            setupPaymentCategoryForAccount(pAccount);
+        }
         updateGuiValues();
         serializeState();
     }
-
 }
 
 //
@@ -1204,6 +1263,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 Account* pAccount = new Account;
                 pAccount->setName(dlg.getName());
                 pAccount->addBalance(dlg.getBalance());
+                if (dlg.getCreditCard()) {
+                    setupPaymentCategoryForAccount(pAccount);
+                }
                 addTreeItem(TVI_ROOT, pAccount);
                 serializeState();
             }

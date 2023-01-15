@@ -52,6 +52,8 @@
 #define IDC_EDIT_ACCOUNT_BALANCE        1017
 #define IDC_CHECK_VIRTUAL_ACCOUNT       1017
 #define IDC_CHECK_PAY_TO_ACCOUNT        1018
+#define IDC_CHECK_BUDGETED2             1018
+#define IDC_CHECK_CREDIT_CARD           1018
 #define ID_ROOT_ADD_GROUP               32771
 #define ID_ROOT_RENAMEACCOUNT           32772
 #define ID_ROOT_SETBALANCE              32773

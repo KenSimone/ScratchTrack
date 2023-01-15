@@ -215,9 +215,27 @@ protected:
 class Account : public AccountBase
 {
 public:
-	Account() : AccountBase(ACCOUNT), _isBudgeted(true) {};
+	Account() : AccountBase(ACCOUNT), _isBudgeted(true), _paidFromCategoryId(MAXINT) {};
+
 	bool isBudgeted() { return _isBudgeted;  }
 	void setIsBudgeted(bool budgeted) { _isBudgeted = budgeted; }
+
+	// If this is a credit card account, when an expense is charged to this account,
+	// funds will be taken from the expense category and applied to '_paidFromCategoryId'.
+	// This allows "paying" for items via credit card (removing funds from a category), and
+	// still properly tracking expenses.
+	// 
+	// Example
+	// 1) Dining transaction category has a balance of $50 dollars.
+	// 2) You spend $25 dollars at McDonalds, and pay with a credit card.
+	// 3) You record the transaction against the dining category, paid with CC.
+	// 4) $25 dollars comes out of the dining category and moves to the "pay cc" category.
+	// 5) The CC account balance is deducted by $25.
+	//
+	// Later, when the credit card is paid, record an expense transaction against that 
+	// category.
+	unsigned int paidFromCategoryId() { return _paidFromCategoryId; }
+	void setPaidFromCategoryId(unsigned int paidFromCategoryId) { _paidFromCategoryId = paidFromCategoryId; }
 
 	// The item-type (account/group/envelope)
 	virtual accountItemType getType() { return AccountBase::ACCOUNT; }
@@ -227,6 +245,7 @@ public:
 
 protected:
 	bool _isBudgeted;
+	unsigned int _paidFromCategoryId;
 
 }; // class Account
 

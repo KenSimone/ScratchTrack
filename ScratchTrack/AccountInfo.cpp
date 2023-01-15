@@ -338,6 +338,7 @@ int Account::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 {
 	AccountBase::initItemFromXmlElement(pAccount);
 	pAccount->QueryBoolAttribute("isBudgeted", &_isBudgeted);
+	pAccount->QueryUnsignedAttribute("paidFromCategoryId", &_paidFromCategoryId);
 	return ERROR_SUCCESS;
 }
 
@@ -353,6 +354,7 @@ int Account::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppS
 
 	// Add our own attributes
 	pNewElement->SetAttribute("isBudgeted", _isBudgeted);
+	pNewElement->SetAttribute("paidFromCategoryId", _paidFromCategoryId);
 	return ERROR_SUCCESS;
 
 }
