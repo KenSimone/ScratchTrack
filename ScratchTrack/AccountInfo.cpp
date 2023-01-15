@@ -277,9 +277,10 @@ int AccountCategory::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 {
 	AccountBase::initItemFromXmlElement(pAccount);
 
-	unsigned int accountId = -1;
+	unsigned int accountId = MAXINT, payToAccountId = MAXINT;
 
-	pAccount->QueryUnsignedAttribute("defaultAccount", &accountId);
+	pAccount->QueryUnsignedAttribute("defaultPayFromAccount", &accountId);
+	pAccount->QueryUnsignedAttribute("defaultPayToAccount", &payToAccountId);
 	pAccount->QueryIntAttribute("defaultAmount", &_defaultTransactionAmount);
 	pAccount->QueryBoolAttribute("isExpense", &_isExpense);
 	pAccount->QueryBoolAttribute("virtualAccount", &_isVirtualAccount);
@@ -288,6 +289,12 @@ int AccountCategory::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	if (pDefAcct && pDefAcct->getType() == ACCOUNT) {
 		setDefaultTransactionPayFromAccount((Account*)pDefAcct);
 	}
+
+	AccountBase* pDefAcctTo = AccountBase::lookupById(payToAccountId);
+	if (pDefAcctTo && pDefAcctTo->getType() == ACCOUNT) {
+		setDefaultTransactionPayToAccount((Account*)pDefAcctTo);
+	}
+
 
 	const char* szName;
 	pAccount->QueryStringAttribute("defaultPayee", &szName);
@@ -317,8 +324,12 @@ int AccountCategory::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLEleme
 	pNewElement->SetAttribute("isExpense", _isExpense);
 	pNewElement->SetAttribute("virtualAccount", _isVirtualAccount);
 	if (_pDefaultTransactionPayFromAccount) {
-		pNewElement->SetAttribute("defaultAccount", _pDefaultTransactionPayFromAccount->getId());
+		pNewElement->SetAttribute("defaultPayFromAccount", _pDefaultTransactionPayFromAccount->getId());
 	}
+	if (_pDefaultTransactionPayToAccount) {
+		pNewElement->SetAttribute("defaultPayToAccount", _pDefaultTransactionPayToAccount->getId());
+	}
+
 	return ERROR_SUCCESS;
 
 }

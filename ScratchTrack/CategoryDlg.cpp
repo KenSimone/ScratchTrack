@@ -38,6 +38,11 @@ void enableDisableUi(HWND hDlg)
 
     EnableWindow(hBudget, !income);
     EnableWindow(hVirtAcct, !income);
+
+    bool isTransfer = SendDlgItemMessage(hDlg, IDC_CHECK_PAY_TO_ACCOUNT, BM_GETCHECK, 0, 0);
+    EnableWindow(GetDlgItem(hDlg, IDC_COMBO_ACCOUNT_TO2), isTransfer);
+    EnableWindow(GetDlgItem(hDlg, IDC_COMBO_CAT_PAYEE), !isTransfer);
+
 }
 
 INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -55,9 +60,12 @@ INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPA
             SetWindowText(hCatNameEdit, const_cast<wchar_t*>(PTHIS->getCategoryName()));
 
             HWND hAccountCombo = GetDlgItem(hDlg, IDC_COMBO_CAT_ACCOUNT);
+            HWND hAccountToCombo = GetDlgItem(hDlg, IDC_COMBO_ACCOUNT_TO2);
             auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
             bool selSet = false;
 
+
+            // Accounts from
             for (auto itr = accounts.begin(); itr != accounts.end(); itr++) {
                 AccountBase* pAccount = *itr;
                 int pos = (int)SendMessage(hAccountCombo, CB_ADDSTRING, 0, (LPARAM)pAccount->getName());
@@ -70,6 +78,22 @@ INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPA
             if (!selSet) {
                 ComboBox_SetCurSel(hAccountCombo, 0);
             }
+
+            // Accounts to
+            selSet = false;
+            for (auto itr = accounts.begin(); itr != accounts.end(); itr++) {
+                AccountBase* pAccount = *itr;
+                int pos = (int)SendMessage(hAccountToCombo, CB_ADDSTRING, 0, (LPARAM)pAccount->getName());
+                SendMessage(hAccountToCombo, CB_SETITEMDATA, pos, (LPARAM)pAccount);
+                if (pAccount == PTHIS->getDefaultTransactionPayToAccount()) {
+                    selSet = true;
+                    ComboBox_SetCurSel(hAccountToCombo, pos);
+                }
+            }
+            if (!selSet) {
+                ComboBox_SetCurSel(hAccountToCombo, 0);
+            }
+
 
             // Budget
             HWND hBudget = GetDlgItem(hDlg, IDC_EDIT_CAT_MONTHLY_BUDGET);
@@ -85,7 +109,7 @@ INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPA
             for (auto itr = transactions.begin(); itr != transactions.end(); itr++) {
                 uniquePayees.insert((*itr)->getPayee());
             }
-            bool selected = 0;
+
             for (auto itr = uniquePayees.begin(); itr != uniquePayees.end(); itr++) {
                 if (!itr->empty()) {
                     int pos = (int)SendMessage(hPayeeCombo, CB_ADDSTRING, 0, (LPARAM)itr->c_str());
@@ -95,6 +119,10 @@ INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPA
                     }
                 }
             }
+
+            bool check = PTHIS->getDefaultTransactionPayToAccount() != nullptr;
+
+            SendDlgItemMessage(hDlg, IDC_CHECK_PAY_TO_ACCOUNT, BM_SETCHECK, check ? BST_CHECKED : BST_UNCHECKED, 0);
 
             // Default amount
             int iAmount = PTHIS->getDefaultTransactionAmount();
@@ -114,7 +142,7 @@ INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPA
         return (INT_PTR)TRUE;
 
     case WM_COMMAND:
-        if (HIWORD(wParam) == BN_CLICKED && (LOWORD(wParam) == IDC_RADIO_EXPENSE || LOWORD(wParam) == IDC_RADIO_INCOME))
+        if (HIWORD(wParam) == BN_CLICKED)
         {
             // Income or expense
             enableDisableUi(hDlg);
@@ -131,13 +159,29 @@ INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPA
                     GetDlgItemText(hDlg, IDC_EDIT_CAT_NAME, szBuff, 1024);
                     PTHIS->setCategoryName(szBuff);
 
-                    // Account
+                    // Account from
                     HWND hAccountCombo = GetDlgItem(hDlg, IDC_COMBO_CAT_ACCOUNT);
                     int curSel = ComboBox_GetCurSel(hAccountCombo);
                     if (curSel >= 0) {
                         Account* pParentAccount = (Account*)ComboBox_GetItemData(hAccountCombo, curSel);
                         PTHIS->setDefaultTransactionPayFromAccount(pParentAccount);
                     }
+
+                    // Account to
+                    bool isTransfer = SendDlgItemMessage(hDlg, IDC_CHECK_PAY_TO_ACCOUNT, BM_GETCHECK, 0, 0);
+                    if (isTransfer) {
+                        HWND hAccountToCombo = GetDlgItem(hDlg, IDC_COMBO_ACCOUNT_TO2);
+                        int curSel = ComboBox_GetCurSel(hAccountToCombo);
+                        if (curSel >= 0) {
+                            Account* pParentAccount = (Account*)ComboBox_GetItemData(hAccountToCombo, curSel);
+                            PTHIS->setDefaultTransactionPayToAccount(pParentAccount);
+                        }
+                    }
+                    else
+                    {
+                        PTHIS->setDefaultTransactionPayToAccount(nullptr);
+                    }
+
 
                     // Payee
                     szBuff[0] = 0;

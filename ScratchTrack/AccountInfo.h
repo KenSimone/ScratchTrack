@@ -234,7 +234,8 @@ protected:
 class AccountCategory : public AccountBase
 {
 public:
-	AccountCategory() : AccountBase(CATEGORY), _pDefaultTransactionPayFromAccount(nullptr), _defaultTransactionAmount(0), _isExpense(true), _isVirtualAccount(false) {};
+	AccountCategory() : AccountBase(CATEGORY), _pDefaultTransactionPayFromAccount(nullptr), _defaultTransactionAmount(0), 
+		_isExpense(true), _isVirtualAccount(false), _pDefaultTransactionPayToAccount(nullptr) {};
 
 	virtual accountItemType getType() { return AccountBase::CATEGORY; }
 
@@ -245,6 +246,10 @@ public:
 	void setDefaultTransactionPayee(const wchar_t* szPayee) { _defaultTransactionPayee = szPayee; }
 	Account* getDefaultTransactionPayFromAccount() { return _pDefaultTransactionPayFromAccount; }
 	void setDefaultTransactionPayFromAccount(Account* pAccount) { _pDefaultTransactionPayFromAccount = pAccount; }
+
+	Account* getDefaultTransactionPayToAccount() { return _pDefaultTransactionPayToAccount; }
+	void setDefaultTransactionPayToAccount(Account* pAccount) { _pDefaultTransactionPayToAccount = pAccount; }
+
 
 	bool isExpense() { return _isExpense; }
 	bool isVirtualAccount() { return _isVirtualAccount; }
@@ -258,6 +263,7 @@ public:
 protected:
 	std::wstring _defaultTransactionPayee;
 	Account* _pDefaultTransactionPayFromAccount;
+	Account* _pDefaultTransactionPayToAccount;
 	int _defaultTransactionAmount;
 	bool _isExpense;
 	bool _isVirtualAccount;

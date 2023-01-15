@@ -522,6 +522,21 @@ bool addTransaction(HTREEITEM hItem)
         pCategory = (AccountCategory*)pItem;
         transactionDlg.setPayee(pCategory->getDefaultTransactionPayee());
         transactionDlg.setAmount(pCategory->getDefaultTransactionAmount());
+
+        if (pCategory->getDefaultTransactionPayToAccount()) {
+            transactionDlg.setAccountToId(pCategory->getDefaultTransactionPayToAccount()->getId());
+        }
+        else {
+            transactionDlg.setAccountToId(MAXINT);
+        }
+
+        if (pCategory->getDefaultTransactionPayFromAccount()) {
+            transactionDlg.setAccountFromId(pCategory->getDefaultTransactionPayFromAccount()->getId());
+        }
+        else {
+            transactionDlg.setAccountFromId(MAXINT);
+        }
+
         transactionDlg.setIsExpense(pCategory->isExpense());
         if (pCategory->getDefaultTransactionPayFromAccount()) {
             transactionDlg.setAccountFromId(pCategory->getDefaultTransactionPayFromAccount()->getId());
@@ -540,6 +555,12 @@ bool addTransaction(HTREEITEM hItem)
         if (acct) {
             acct->addBalance(transactionDlg.getAmount());
         }
+
+        AccountBase* pAccountTo = AccountBase::lookupById(transactionDlg.getAccountToId());
+        if (pAccountTo) {
+            pAccountTo->addBalance(-transactionDlg.getAmount());
+        }
+
         updateGuiValues();
         populateTransactions();
         didSimonthing = true;
@@ -560,6 +581,7 @@ bool editCategory(AccountCategory* pCategory)
     dlg.setBudget(pCategory->getBudgeted());
     dlg.setCategoryName(pCategory->getName());
     dlg.setDefaultTransactionPayFromAccount(pCategory->getDefaultTransactionPayFromAccount());
+    dlg.setDefaultTransactionPayToAccount(pCategory->getDefaultTransactionPayToAccount());
     dlg.setDefaultTransactionAmount(pCategory->getDefaultTransactionAmount());
     dlg.setDefaultTransactionPayee(pCategory->getDefaultTransactionPayee());
     dlg.setIsIncome(!pCategory->isExpense());
@@ -568,6 +590,7 @@ bool editCategory(AccountCategory* pCategory)
     {
         pCategory->setBudgeted(dlg.getBudget());
         pCategory->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
+        pCategory->setDefaultTransactionPayToAccount(dlg.getDefaultTransactionPayToAccount());
         pCategory->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
         pCategory->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
         pCategory->setIsExpense(!dlg.getIsIncome());
@@ -635,6 +658,7 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
             AccountCategory* pCategory = new AccountCategory;
             pCategory->setName(dlg.getCategoryName());
             pCategory->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
+            pCategory->setDefaultTransactionPayToAccount(dlg.getDefaultTransactionPayToAccount());
             pCategory->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
             pCategory->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
             pCategory->setIsExpense(!dlg.getIsIncome());
@@ -686,27 +710,47 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
 
     if (dlg.ShowDialog())
     {
-        // Get the account
+        // This is actually kind of complicated. 
+        // We need to undo the original transacation first.
         AccountBase* pCategory = AccountBase::lookupById(pTransaction->getCategoryId());
-        AccountBase* pAccount = AccountBase::lookupById(pTransaction->getAccountFromId());
+        AccountBase* pAccountFrom = AccountBase::lookupById(pTransaction->getAccountFromId());
+        AccountBase* pAccountTo = AccountBase::lookupById(pTransaction->getAccountToId());
 
-        // Adjust category balance
         int origAmount = pTransaction->getAmount();
         pCategory->addBalance(-origAmount);
-        pCategory->addBalance(dlg.getAmount());
+        if (pAccountFrom) {
+            pAccountFrom->addBalance(-origAmount);
+        }
+        if (pAccountTo) {
+            pAccountTo->addBalance(origAmount);
+        }
 
-        // Adjust account balance
-        pAccount->addBalance(-origAmount);
-        pAccount->addBalance(dlg.getAmount());
+        // Now this is basically the same as add
+        pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), dlg.getCategoryId(), dlg.getAccountFromId(), dlg.getAccountToId());
 
+        pCategory = AccountBase::lookupById(pTransaction->getCategoryId());
+        pAccountFrom = AccountBase::lookupById(pTransaction->getAccountFromId());
+        pAccountTo = AccountBase::lookupById(pTransaction->getAccountToId());
 
-        // Update the Transaction itself
-        pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription());
+        pCategory->addBalance(pTransaction->getAmount());
 
-        // Update this specific Transaction
+        // Add the amount to the account
+        if (pAccountFrom) {
+            pAccountFrom->addBalance(pTransaction->getAmount());
+        }
+
+        if (pAccountTo) {
+            pAccountTo->addBalance(-pTransaction->getAmount());
+        }
 
         // Payee
-        ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 1, const_cast<wchar_t*>(pTransaction->getPayee()));
+        std::wstring payee = pTransaction->getPayee();
+        if (pAccountTo) {
+            wchar_t szBuff[1024] = { 0 };
+            swprintf(szBuff, 1024, L"%s->%s", pAccountFrom->getName(), pAccountTo->getName());
+            payee = szBuff;
+        }
+        ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 1, const_cast<wchar_t*>(payee.c_str()));
 
         // Category
         AccountBase* ati = AccountBase::lookupById(pTransaction->getCategoryId());
@@ -717,19 +761,9 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
         // Description
         ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 3, const_cast<wchar_t*>(pTransaction->getDescription()));
 
-        int iAmount = pTransaction->getAmount();
-        if (iAmount < 0) {
-            // Outflow
-            std::wstring amount = Utils::penniesToDollarsString(iAmount);
-            ListView_SetItemText(g_hwndTransactionLV, 0, 4, const_cast<wchar_t*>(amount.c_str()));
-            ListView_SetItemText(g_hwndTransactionLV, 0, 5, const_cast<wchar_t*>(L""));
-        }
-        else {
-            // Inflow
-            std::wstring amount = Utils::penniesToDollarsString(-iAmount);
-            ListView_SetItemText(g_hwndTransactionLV, 0, 4, const_cast<wchar_t*>(L""));
-            ListView_SetItemText(g_hwndTransactionLV, 0, 5, const_cast<wchar_t*>(amount.c_str()));
-        }
+        std::wstring amount = Utils::penniesToDollarsString(abs(pTransaction->getAmount()));
+        ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 4, const_cast<wchar_t*>(amount.c_str()));
+        ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 5, const_cast<wchar_t*>(L""));
 
         // Recalculate dollars in tree and save
         updateGuiValues();
@@ -1596,7 +1630,18 @@ void populateTransactions()
         ListView_InsertItem(g_hwndTransactionLV, &item);
 
         // Payee
-        ListView_SetItemText(g_hwndTransactionLV, 0, 1, const_cast<wchar_t*>((*itr)->getPayee()));
+
+        Transaction* pTransaction = *itr;
+        std::wstring payee = pTransaction->getPayee();
+        AccountBase* pAccountTo = AccountBase::lookupById(pTransaction->getAccountToId());
+        if (pAccountTo) {
+            AccountBase* pAccountFrom = AccountBase::lookupById(pTransaction->getAccountFromId());
+            wchar_t szBuff[1024] = { 0 };
+            swprintf(szBuff, 1024, L"%s->%s", pAccountFrom->getName(), pAccountTo->getName());
+            payee = szBuff;
+        }
+
+        ListView_SetItemText(g_hwndTransactionLV, 0, 1, const_cast<wchar_t*>(payee.c_str()));
 
         // Category
         AccountBase* ati = AccountBase::lookupById((*itr)->getCategoryId());
@@ -1607,17 +1652,9 @@ void populateTransactions()
         // Description
         ListView_SetItemText(g_hwndTransactionLV, 0, 3, const_cast<wchar_t*>((*itr)->getDescription()));
 
-        int iAmount = (*itr)->getAmount();
-        if (iAmount >= 0) {
-            // Inflow
-            std::wstring amount = Utils::penniesToDollarsString(iAmount);
-            ListView_SetItemText(g_hwndTransactionLV, 0, 5, const_cast<wchar_t*>(amount.c_str()));
-        }
-        else {
-            // Outflow
-            std::wstring amount = Utils::penniesToDollarsString(-iAmount);
-            ListView_SetItemText(g_hwndTransactionLV, 0, 4, const_cast<wchar_t*>(amount.c_str()));
-        }
+        int iAmount = abs((*itr)->getAmount());
+        std::wstring amount = Utils::penniesToDollarsString(iAmount);
+        ListView_SetItemText(g_hwndTransactionLV, 0, 5, const_cast<wchar_t*>(amount.c_str()));
     }
 
     DWORD dwFlags = LVSCW_AUTOSIZE_USEHEADER;

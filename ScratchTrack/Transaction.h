@@ -25,11 +25,14 @@ public:
 	const wchar_t* getPayee() { return _payee.c_str(); }
 	const wchar_t* getDescription() { return _description.c_str(); }
 
-	void setDetails(int amount, const wchar_t* szPayee, const wchar_t* szDesc)
+	void setDetails(int amount, const wchar_t* szPayee, const wchar_t* szDesc, int categoryId, int accountFromId, int accountToId)
 	{
 		_amount = amount;
 		_payee = szPayee;
 		_description = szDesc;
+		_categoryId = categoryId;
+		_payToAccountId = accountToId;
+		_payFromAccountId = accountFromId;
 	}
 
 	SYSTEMTIME getTimestamp() { return _timestamp; }
