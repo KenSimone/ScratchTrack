@@ -603,16 +603,24 @@ bool addTransaction(HTREEITEM hItem)
     {
         Transaction::addTransaction(transactionDlg.getAmount(), transactionDlg.getAccountFromId(), transactionDlg.getAccountToId(), transactionDlg.getCategoryId(), transactionDlg.getPayee(), transactionDlg.getDescription());
 
-        // Add the amount to the category
+        // Apply the amount to the transaction category 
         pCategory->addBalance(transactionDlg.getAmount());
 
-        // Add the amount to the account
+        // Apply the amount to the account
         AccountBase* acct = AccountBase::lookupById(transactionDlg.getAccountFromId());
         if (acct) {
             acct->addBalance(transactionDlg.getAmount());
         }
 
         AccountBase* pAccountTo = AccountBase::lookupById(transactionDlg.getAccountToId());
+        if (!pAccountTo)
+        {
+            Account* pAccount = dynamic_cast<Account*>(acct);
+            if (pAccount)
+            {
+                pAccountTo = AccountBase::lookupById(pAccount->paidFromCategoryId());
+            }
+        }
         if (pAccountTo) {
             pAccountTo->addBalance(-transactionDlg.getAmount());
         }
@@ -772,6 +780,15 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
         AccountBase* pAccountFrom = AccountBase::lookupById(pTransaction->getAccountFromId());
         AccountBase* pAccountTo = AccountBase::lookupById(pTransaction->getAccountToId());
 
+        if (!pAccountTo)
+        {
+            Account* pAccount = dynamic_cast<Account*>(pAccountFrom);
+            if (pAccount)
+            {
+                pAccountTo = AccountBase::lookupById(pAccount->paidFromCategoryId());
+            }
+        }
+
         int origAmount = pTransaction->getAmount();
         pCategory->addBalance(-origAmount);
         if (pAccountFrom) {
@@ -787,6 +804,15 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
         pCategory = AccountBase::lookupById(pTransaction->getCategoryId());
         pAccountFrom = AccountBase::lookupById(pTransaction->getAccountFromId());
         pAccountTo = AccountBase::lookupById(pTransaction->getAccountToId());
+
+        if (!pAccountTo)
+        {
+            Account* pAccount = dynamic_cast<Account*>(pAccountFrom);
+            if (pAccount) {
+                pAccountTo = AccountBase::lookupById(pAccount->paidFromCategoryId());
+            }
+        }
+
 
         pCategory->addBalance(pTransaction->getAmount());
 
