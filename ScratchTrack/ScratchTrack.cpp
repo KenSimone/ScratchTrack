@@ -414,7 +414,7 @@ void CreateTreeControl()
     item.mask = HDI_TEXT | HDI_WIDTH;
     Header_InsertItem(g_hwndHeader, 99, &item);
 
-    item.pszText = const_cast<wchar_t*>(L"Expected cashflow");
+    item.pszText = const_cast<wchar_t*>(L"Budgeted cashflow");
     item.cxy = g_columnSizes._budgeted;
     Header_InsertItem(g_hwndHeader, 99, &item);
 
@@ -1304,6 +1304,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 AccountGroup* pGroup = new AccountGroup;
                 pGroup->setName(temp.c_str());
                 addTreeItem(TVI_ROOT, pGroup);
+                serializeState();
             }
             break;
         }
@@ -1765,6 +1766,7 @@ void addAccount(Account* pAccount)
     std::wstring timeStamp;
     item.pszText = const_cast<wchar_t*>(pAccount->getName());
     item.lParam = (LPARAM)pAccount;
+    item.iItem = MAXINT;
 
     // Account name
     ListView_InsertItem(g_hwndAccountLV, &item);

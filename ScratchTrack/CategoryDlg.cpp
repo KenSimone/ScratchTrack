@@ -10,7 +10,7 @@
 extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 
-CategoryDialog::CategoryDialog() : _amount(0), _isIncome(false), _pDefaultTransactionPayFromAccount(nullptr), _isVirtual(false), _budget(0)
+CategoryDialog::CategoryDialog() : _amount(0), _isIncome(false), _pDefaultTransactionPayFromAccount(nullptr), _isVirtual(true), _budget(0)
 {
 
 }
