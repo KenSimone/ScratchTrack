@@ -1,6 +1,8 @@
 #include "TreeUtils.h"
 #include "resource.h"
 
+#include <map>
+
 // Global settings
 static const double FONT_SCALE_FACTOR = 1.6;
 
@@ -16,21 +18,41 @@ int serializeState();
 
 BUDGET_TREE_COLUMN_SIZES g_columnSizes;
 
+std::map<HTREEITEM, RECT> g_links;
+
+HTREEITEM hotLinkFromPoint(POINT pt)
+{
+    return nullptr;
+}
+
+
+LRESULT treeViewSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+{
+    if (uMsg == WM_SETCURSOR)
+    {
+        POINT point = { 0 };
+        GetCursorPos(&point);
+        ScreenToClient(g_hwndTV, &point);
+        budgetTreeHandleMouseMove(point.x, point.y);
+        return true;
+    }
+    return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+}
+
 // This function comes up with initial column sizes
 void calcColumnSpots()
 {
-    static const wchar_t* szMaxNameLength = L"WWWWWWWWWWWWWWWWWWWWWWW";
+    static const wchar_t* szMaxNameLength = L"THIS IS A LONG NAME------------------------ADD TRANSACTION";
     static const wchar_t* szMaxValueLength = L"In cagtegory(s): $1,000,000,000";
 
     HDC dc = GetDC(g_hwndTV);
     SIZE textSizeA = { 0 }, textSizeB = { 0 };
     GetTextExtentPoint(dc, szMaxNameLength, (int)wcslen(szMaxNameLength), &textSizeA);
     GetTextExtentPoint(dc, szMaxValueLength, (int)wcslen(szMaxValueLength), &textSizeB);
-
     ReleaseDC(g_hwndTV, dc);
 
     //textSizeA.cx *= 2;
-    g_columnSizes._name = (int)(textSizeA.cx * 1.5);
+    g_columnSizes._name = (int)(textSizeA.cx);
     g_columnSizes._budgeted = textSizeB.cx;
     g_columnSizes._inCategories = textSizeB.cx;
     g_columnSizes._balance = textSizeB.cx;
@@ -258,30 +280,45 @@ HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountBase* pAccount, HTREEITEM hI
         {
             addTreeItem(ret, children[i]);
         }
-
     }
-
-
     TreeView_Expand(g_hwndTV, hParentItem, TVE_EXPAND);
 
     return ret;
 
 }
 
-void budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
+HTREEITEM treeViewHitTestLinks(LONG xCur, LONG yCur)
+{
+    POINT point;
+    point.x = xCur;
+    point.y = yCur;
+
+    HTREEITEM hItem = nullptr;
+    // Hotspot check
+    for (auto itr = g_links.begin(); itr != g_links.end(); itr++)
+    {
+        if (PtInRect(&itr->second, point))
+        {
+            return itr->first;
+        }
+    }
+    return nullptr;
+}
+
+bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
 {
     HTREEITEM htiTarget;  // Handle to target item. 
     TVHITTESTINFO tvht;   // Hit test information. 
+
+    // Translate point
+    POINT point;
+    point.x = xCur;
+    point.y = yCur;
 
     if (g_btDragDetails._dragging)
     {
         // Drag the item to the current position of the mouse pointer. 
         // First convert the dialog coordinates to control coordinates. 
-        POINT point;
-        point.x = xCur;
-        point.y = yCur;
-        ClientToScreen(g_hTopWindow, &point);
-        ScreenToClient(g_hwndTV, &point);
         ImageList_DragMove(point.x, point.y);
 
         // Find out if the pointer is on the item. If it is, 
@@ -300,7 +337,21 @@ void budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
             }
         }
     }
-    return;
+    else
+    {
+        // Hotspot check
+        HCURSOR hCursor = nullptr;
+        if (treeViewHitTestLinks(point.x, point.y)){
+            hCursor = LoadCursor(nullptr, MAKEINTRESOURCE(IDC_HAND));
+        }
+
+        if ( !hCursor ) {
+            hCursor = LoadCursor(nullptr, MAKEINTRESOURCE(IDC_ARROW));
+        }
+
+        SetCursor(hCursor);
+    }
+    return false;
 }
 
 LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
@@ -308,14 +359,15 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
     LRESULT ret = CDRF_NOTIFYITEMDRAW;
     AccountBase* pItem = (AccountBase*)pCustomDrawItem->nmcd.lItemlParam;
 
-    static const wchar_t* szMaxNameLength = L"WWWWWWWWWWWWWWWWWWWWWWW";
-    static const wchar_t* szMaxValueLength = L"In categories: $1,000,000,000";
+    static const wchar_t* szAddTransaction = L"Add transaction";
 
     static const COLORREF ACCOUNT_COLOR = RGB(230, 240, 250);
     static const COLORREF GROUP_COLOR = RGB(230, 240, 250);
     static const COLORREF ENVELOPE_COLOR = RGB(255, 255, 255);
 
     static const COLORREF SEL_COLOR = GetSysColor(COLOR_HIGHLIGHT);
+    static const COLORREF LINK_COLOR = GetSysColor(COLOR_HIGHLIGHT);
+    static const COLORREF SEL_LINK_COLOR = GetSysColor(COLOR_HIGHLIGHTTEXT);
     static const COLORREF SEL_TEXT_COLOR = GetSysColor(COLOR_HIGHLIGHTTEXT);
 
     if (pItem)
@@ -423,7 +475,36 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
                     setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iBalance, selected, true);
                     TextOut(pCustomDrawItem->nmcd.hdc, balanceSpot, pCustomDrawItem->nmcd.rc.top, balance.c_str(), (int)balance.length());
                 }
+
+                // Create font for add/edit links
+                HFONT hTreeFont = (HFONT)GetCurrentObject(pCustomDrawItem->nmcd.hdc, OBJ_FONT);
+                LOGFONT lf = { 0 };
+                GetObject(hTreeFont, sizeof(LOGFONT), &lf);
+                lf.lfUnderline = true;
+                HFONT hFontItalic = CreateFontIndirect(&lf);
+                HFONT hOrigFont = (HFONT)SelectObject(pCustomDrawItem->nmcd.hdc, hFontItalic);
+                COLORREF oldColor = SetTextColor(pCustomDrawItem->nmcd.hdc, selected ? SEL_LINK_COLOR : LINK_COLOR);
+
+                // Add link
+                SIZE textSize = { 0 };
+                GetTextExtentPoint(pCustomDrawItem->nmcd.hdc, szAddTransaction, (int)wcslen(szAddTransaction), &textSize);
+
+                // TextOut(pCustomDrawItem->nmcd.hdc, availableBalanceSpot + 20, rcText.top, szAddTransaction, (int)wcslen(szAddTransaction));
+                RECT rHitArea = { 0 };
+                rHitArea.left = budgetedSpot - textSize.cx - 10;
+                rHitArea.top = rcText.top;
+                rHitArea.right = rHitArea.left + textSize.cx;
+                rHitArea.bottom = rHitArea.top + textSize.cy;
+
+                TextOut(pCustomDrawItem->nmcd.hdc, rHitArea.left, rHitArea.top, szAddTransaction, (int)wcslen(szAddTransaction));
+                g_links[hItem] = rHitArea;
+
+                // Clean up
+                SelectObject(pCustomDrawItem->nmcd.hdc, hOrigFont);
+                SetTextColor(pCustomDrawItem->nmcd.hdc, oldColor);
+                DeleteObject(hFontItalic);
             }
+
 
             // Draw a horizontal line above the item, across the full span
             MoveToEx(pCustomDrawItem->nmcd.hdc, pCustomDrawItem->nmcd.rc.left, pCustomDrawItem->nmcd.rc.top, nullptr);
@@ -484,6 +565,9 @@ void budgetTreeCreateTreeControl()
     // Adjust font
     budgetTreeSetFont(g_hwndTV);
     calcColumnSpots();
+
+    SetWindowSubclass(g_hwndTV, treeViewSubclass, 1, 0);
+
 
     // Create tree
     HDITEM item = { 0 };

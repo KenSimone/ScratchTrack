@@ -684,16 +684,6 @@ void doTreeDrag(LPNMTREEVIEW nmTreeItem)
     return;
 }
 
-void handleMouseMove(LONG xCur, LONG yCur)
-{
-    budgetTreeHandleMouseMove(xCur, yCur);
-}
-
-void handleLButtonUp(LONG xCur, LONG yCur)
-{
-    budgetTreeHandleLButtonUp(xCur, yCur);
-}
-
 void editAccount(Account* pAccount)
 {
     AccountDlg dlg;
@@ -730,11 +720,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message)
     {
     case WM_LBUTTONUP:
-        handleLButtonUp(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+        budgetTreeHandleLButtonUp(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
         break;
     case WM_MOUSEMOVE:
-        handleMouseMove(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+    {
+        // Translate point
+        POINT point;
+        point.x = GET_X_LPARAM(lParam);
+        point.y = GET_Y_LPARAM(lParam);
+        ClientToScreen(g_hTopWindow, &point);
+        ScreenToClient(g_hwndTV, &point);
+
+        budgetTreeHandleMouseMove(point.x, point.y);
         break;
+    }
     case WM_COMMAND:
     {
         int wmId = LOWORD(wParam);
@@ -900,13 +899,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 POINT pt = { 0 };
                 TVHITTESTINFO tvhi = { 0 };
                 GetCursorPos(&pt);
+                ScreenToClient(g_hwndTV, &pt);
                 tvhi.pt = pt;
-                ScreenToClient(g_hwndTV, &tvhi.pt);
-                TreeView_HitTest(g_hwndTV, &tvhi);
-                if (tvhi.hItem) {
-                    TreeView_Select(g_hwndTV, tvhi.hItem, TVGN_CARET);
-                }
 
+                HTREEITEM hItem = treeViewHitTestLinks(pt.x, pt.y);
+                if (hItem) 
+                {
+                    // We've hit a hotlink
+                    if (addTransaction(hItem)) {
+                        serializeState();
+                    }
+                    return true;
+                }
+                else 
+                {
+                    TreeView_HitTest(g_hwndTV, &tvhi);
+                    if (tvhi.hItem) {
+                        TreeView_Select(g_hwndTV, tvhi.hItem, TVGN_CARET);
+                    }
+                }
             }
             else if (pHeader->code == NM_DBLCLK)
             {
@@ -919,10 +930,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
                 TreeView_HitTest(g_hwndTV, &tvhi);
                 HTREEITEM hItem = tvhi.hItem;
-                auto envelope = accountFromTreeItem(hItem);
-                if (envelope)
+                auto acctBase = accountFromTreeItem(hItem);
+                if (acctBase)
                 {
-                    if (addTransaction(hItem)){
+                    AccountCategory* pCategory = dynamic_cast<AccountCategory*>(acctBase);
+                    if (pCategory && editCategory(pCategory) ){
                         serializeState();
                     }
                     return true;
