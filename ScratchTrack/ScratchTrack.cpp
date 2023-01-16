@@ -1668,8 +1668,8 @@ void updateGuiValues(HTREEITEM item /*= NULL*/)
     {
         // Calc new window caption;
         int iReservedDollars = 0, iBalance = 0;
-        static std::vector<AccountBase*> accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
-        static std::vector<AccountBase*> envelopes = AccountBase::getAllAccountsOfType(AccountBase::CATEGORY);
+        std::vector<AccountBase*> accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
+        std::vector<AccountBase*> envelopes = AccountBase::getAllAccountsOfType(AccountBase::CATEGORY);
 
         for (size_t i = 0; i < accounts.size(); i++) {
             Account* pAccount = (Account * )accounts[i];
