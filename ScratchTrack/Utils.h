@@ -7,6 +7,8 @@
 class Utils
 {
 public:
+	static bool searchText(const wchar_t* szString, const wchar_t* szSearchText);
+
 	static std::wstring penniesToDollarsString(int money)
 	{
 		// Remember if we're negative, and then flip to positive for easier math

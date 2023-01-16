@@ -13,6 +13,7 @@
 #include "AccountDlg.h"
 #include "Utils.h"
 #include "TreeUtils.h"
+#include "TransactionFilterDlg.h"
 
 #include <commctrl.h>
 #include <Windows.h>
@@ -32,6 +33,7 @@ WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 wchar_t szOneInputText[1024] = { 0 };
 double g_fontScale = 1.0;
+TransactionFilterDlg g_transactionFilterDlg;
 
 extern BUDGET_TREE_COLUMN_SIZES g_columnSizes;
 extern BUDGET_TREE_DRAG_DETAILS g_btDragDetails;
@@ -282,6 +284,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    createAccountListControl();
    budgetTreeCreateTreeControl();
    createTransactionListControl();
+   g_transactionFilterDlg.create(g_hTopWindow);
+
 
    // Populate data (load or create new)
    DWORD dwAttribs = ::GetFileAttributesA(getPersistFile());
@@ -781,7 +785,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_NOTIFY:
     {
         LPNMHDR pHeader = (LPNMHDR)lParam;
-        if (pHeader->idFrom == IDC_SIMPLEBUDGET_ACCOUNT_LIST)
+        if (pHeader->idFrom == IDD_TRANSACTION_FILTER_DIALOG && pHeader->code == TransactionFilterDlg::NM_TRANS_DIALOG_FILTER_CHANGED)
+        {
+            populateTransactions();
+        }
+        else if (pHeader->idFrom == IDC_SIMPLEBUDGET_ACCOUNT_LIST)
         {
             if (pHeader->code == NM_DBLCLK)
             {
@@ -1184,7 +1192,7 @@ void populateTransactions()
     }
 
     // Get Transactions for item
-    std::vector<Transaction*> Transactions = Transaction::getTransactionsForItem(pItem);
+    std::vector<Transaction*> Transactions = g_transactionFilterDlg.filterToCategorySelection() ? Transaction::getTransactionsForItem(pItem) : Transaction::getAllTransactions();
 
     // Add them to the list view
     SendMessage(g_hwndTransactionLV, WM_SETREDRAW, FALSE, 0);
@@ -1195,6 +1203,31 @@ void populateTransactions()
         item.mask = LVIF_TEXT | LVIF_PARAM;
         std::wstring timeStamp;
         (*itr)->getLocalTimeStamp(timeStamp);
+
+        Transaction* pCurTransaction = *itr;
+
+        int iAmount = (*itr)->getAmount();
+        bool isIncome = iAmount > 0;
+        iAmount = abs(iAmount);
+        std::wstring amount = Utils::penniesToDollarsString(iAmount);
+
+        std::wstring filterText = g_transactionFilterDlg.filterText();
+        if (!filterText.empty())
+        {
+            bool matched = Utils::searchText(timeStamp.c_str(), filterText.c_str());
+            matched = matched || Utils::searchText(pCurTransaction->getDescription(), filterText.c_str());
+            matched = matched || Utils::searchText(pCurTransaction->getPayee(), filterText.c_str());
+            matched = matched || Utils::searchText(amount.c_str(), filterText.c_str());
+
+            AccountBase* pCat = AccountBase::lookupById(pCurTransaction->getCategoryId());
+            if (pCat) {
+                matched = matched || Utils::searchText(pCat->getName(), filterText.c_str());
+            }
+            if (!matched) {
+                continue;
+            }
+        }
+
         item.pszText = const_cast<wchar_t*>(timeStamp.c_str());
         item.lParam = (LPARAM)*itr;
 
@@ -1223,10 +1256,6 @@ void populateTransactions()
         // Description
         ListView_SetItemText(g_hwndTransactionLV, 0, 3, const_cast<wchar_t*>((*itr)->getDescription()));
 
-        int iAmount = (*itr)->getAmount();
-        bool isIncome = iAmount > 0;
-        iAmount = abs(iAmount);
-        std::wstring amount = Utils::penniesToDollarsString(iAmount);
         ListView_SetItemText(g_hwndTransactionLV, 0, isIncome ? 5 : 4, const_cast<wchar_t*>(amount.c_str()));
     }
 
@@ -1300,7 +1329,7 @@ void positionControls()
     static const double TREE_VERTICAL_SPACE = .65;
     static const double TREE_HORIZONTAL_SPACE = .80;
 
-    RECT rClient = { 0 };
+    RECT rClient = { 0 }, rTransFilter = { 0 };
     HDLAYOUT hdl = { 0 };
     WINDOWPOS wp = { 0 };
     GetClientRect(g_hTopWindow, &rClient);
@@ -1308,15 +1337,30 @@ void positionControls()
     hdl.pwpos = &wp;
     SendMessage(g_hwndHeader, HDM_LAYOUT, 0, (LPARAM)&hdl);
 
-    int treeleft = (int)(rClient.right * (1.0 - TREE_HORIZONTAL_SPACE));
+    GetWindowRect(g_transactionFilterDlg, &rTransFilter);
 
-    int listtop = (int)(rClient.bottom * TREE_VERTICAL_SPACE);
+    int treeleft = (int)(rClient.right * (1.0 - TREE_HORIZONTAL_SPACE));
+    int transFilterTop = (int)(rClient.bottom * TREE_VERTICAL_SPACE);
+    int listtop = transFilterTop + (rTransFilter.bottom - rTransFilter.top);
     int listheight = rClient.bottom - listtop;
 
+    // Category tree header
     SetWindowPos(g_hwndHeader, wp.hwndInsertAfter, treeleft, 0, wp.cx, wp.cy, wp.flags | SWP_SHOWWINDOW);
-    SetWindowPos(g_hwndTV, nullptr, treeleft, rClient.top, rClient.right, listtop - 1 - wp.cy, SWP_NOZORDER);
-    SetWindowPos(g_hwndAccountLV, nullptr, 0, 0, treeleft-1, listtop - 1, SWP_NOZORDER);
+
+    // Category tree control
+    SetWindowPos(g_hwndTV, nullptr, treeleft, rClient.top, rClient.right, transFilterTop - 1 - wp.cy, SWP_NOZORDER);
+
+    // Accounts listview
+    SetWindowPos(g_hwndAccountLV, nullptr, 0, 0, treeleft-1, transFilterTop - 1, SWP_NOZORDER);
+
+    // Transaction filter
+    SetWindowPos(g_transactionFilterDlg, nullptr, rClient.left, transFilterTop, rClient.right, rTransFilter.bottom - rTransFilter.top, SWP_NOZORDER);
+
+    // Transactions list view
     SetWindowPos(g_hwndTransactionLV, nullptr, rClient.left, listtop, rClient.right, listheight, SWP_NOZORDER);
+
+
+    ShowWindow(g_transactionFilterDlg, SW_SHOW);
 
     //g_hwndAccountLV;
 }
