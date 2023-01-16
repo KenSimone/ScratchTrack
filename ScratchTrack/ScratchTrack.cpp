@@ -344,8 +344,9 @@ void createTransactionListControl()
         g_hInst,
         NULL);
 
-    HWND hHdrWnd = ListView_GetHeader(g_hwndTransactionLV);
-    SetWindowLong(hHdrWnd, GWL_STYLE, HDS_FILTERBAR);
+    // Filter bar
+    //HWND hHdrWnd = ListView_GetHeader(g_hwndTransactionLV);
+    //SetWindowLong(hHdrWnd, GWL_STYLE, HDS_FILTERBAR);
 
     ListView_SetExtendedListViewStyle(g_hwndTransactionLV, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 
