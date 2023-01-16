@@ -611,23 +611,33 @@ bool addTransaction(HTREEITEM hItem)
         pCategory->addBalance(transactionDlg.getAmount());
 
         // Apply the amount to the account
-        AccountBase* acct = AccountBase::lookupById(transactionDlg.getAccountFromId());
-        if (acct) {
-            acct->addBalance(transactionDlg.getAmount());
-        }
-
-        AccountBase* pAccountTo = AccountBase::lookupById(transactionDlg.getAccountToId());
-        if (!pAccountTo)
+        Account* pFromAccount = dynamic_cast<Account*>(AccountBase::lookupById(transactionDlg.getAccountFromId()));
+        if (pFromAccount)
         {
-            Account* pAccount = dynamic_cast<Account*>(acct);
-            if (pAccount)
+            // We have the "from" account. Add the transaction amount.
+            pFromAccount->addBalance(transactionDlg.getAmount());
+
+            // Is this a transfer?
+            Account* pAccountTo = dynamic_cast<Account*>(AccountBase::lookupById(transactionDlg.getAccountToId()));
+            if (pAccountTo)
             {
-                pAccountTo = AccountBase::lookupById(pAccount->paidFromCategoryId());
+                // This is a transfer, so add the opposite amount to the target account
+                pAccountTo->addBalance(-transactionDlg.getAmount());
             }
-        }
-        if (pAccountTo) {
-            pAccountTo->addBalance(-transactionDlg.getAmount());
-        }
+            else
+            {
+                // See if this is a payment from a CC account
+                AccountCategory* pToCategory = dynamic_cast<AccountCategory*>(AccountBase::lookupById(pFromAccount->paidFromCategoryId()));
+                if (pToCategory)
+                {
+                    pToCategory->addBalance(-transactionDlg.getAmount());
+                    if (pCategory->getBalance() < 0)
+                    {
+                        pCategory->addBalance(-pCategory->getBalance());
+                    }
+                }
+            }
+        } // if pFromAccount
 
         updateGuiValues();
         populateTransactions();
@@ -781,53 +791,53 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
     {
         // This is actually kind of complicated. 
         // We need to undo the original transacation first.
-        AccountBase* pCategory = AccountBase::lookupById(pTransaction->getCategoryId());
-        AccountBase* pAccountFrom = AccountBase::lookupById(pTransaction->getAccountFromId());
-        AccountBase* pAccountTo = AccountBase::lookupById(pTransaction->getAccountToId());
-
-        if (!pAccountTo)
-        {
-            Account* pAccount = dynamic_cast<Account*>(pAccountFrom);
-            if (pAccount)
-            {
-                pAccountTo = AccountBase::lookupById(pAccount->paidFromCategoryId());
-            }
-        }
+        AccountCategory* pCategory = dynamic_cast<AccountCategory*>(AccountBase::lookupById(pTransaction->getCategoryId()));
+        Account* pAccountFrom = dynamic_cast<Account *>(AccountBase::lookupById(pTransaction->getAccountFromId()));
+        Account* pAccountTo = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountToId()));
+        AccountCategory* pCategoryTo = dynamic_cast<AccountCategory*>(AccountBase::lookupById(pAccountFrom->paidFromCategoryId()));
 
         int origAmount = pTransaction->getAmount();
         pCategory->addBalance(-origAmount);
+
+        // Put the money back in the original account
         if (pAccountFrom) {
             pAccountFrom->addBalance(-origAmount);
         }
+
+        // Take it out of the target account (if any)
         if (pAccountTo) {
             pAccountTo->addBalance(origAmount);
+        }
+
+        // Take it out of the target category (if any)
+        if (pCategoryTo) {
+            pCategoryTo->addBalance(origAmount);
         }
 
         // Now this is basically the same as add
         pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), dlg.getCategoryId(), dlg.getAccountFromId(), dlg.getAccountToId());
 
-        pCategory = AccountBase::lookupById(pTransaction->getCategoryId());
-        pAccountFrom = AccountBase::lookupById(pTransaction->getAccountFromId());
-        pAccountTo = AccountBase::lookupById(pTransaction->getAccountToId());
+        pCategory = dynamic_cast<AccountCategory*>(AccountBase::lookupById(pTransaction->getCategoryId()));
+        pAccountFrom = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountFromId()));
+        pAccountTo = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountToId()));
+        pCategoryTo = dynamic_cast<AccountCategory*>(AccountBase::lookupById(pAccountFrom->paidFromCategoryId()));
 
-        if (!pAccountTo)
-        {
-            Account* pAccount = dynamic_cast<Account*>(pAccountFrom);
-            if (pAccount) {
-                pAccountTo = AccountBase::lookupById(pAccount->paidFromCategoryId());
-            }
-        }
-
-
+        // Record the expense in the category
         pCategory->addBalance(pTransaction->getAmount());
 
-        // Add the amount to the account
+        // Record the expense in the account
         if (pAccountFrom) {
             pAccountFrom->addBalance(pTransaction->getAmount());
         }
 
+        // If this is a transfer to a category, record the reverse of the expense in the target account 
         if (pAccountTo) {
             pAccountTo->addBalance(-pTransaction->getAmount());
+        }
+
+        // If this is a transfer to a category, record the reverse of the expense in the target category
+        if (pCategoryTo) {
+            pCategoryTo->addBalance(-pTransaction->getAmount());
         }
 
         // Payee
@@ -1735,7 +1745,6 @@ void populateTransactions()
         ListView_InsertItem(g_hwndTransactionLV, &item);
 
         // Payee
-
         Transaction* pTransaction = *itr;
         std::wstring payee = pTransaction->getPayee();
         AccountBase* pAccountTo = AccountBase::lookupById(pTransaction->getAccountToId());
@@ -1757,9 +1766,11 @@ void populateTransactions()
         // Description
         ListView_SetItemText(g_hwndTransactionLV, 0, 3, const_cast<wchar_t*>((*itr)->getDescription()));
 
-        int iAmount = abs((*itr)->getAmount());
+        int iAmount = (*itr)->getAmount();
+        bool isIncome = iAmount > 0;
+        iAmount = abs(iAmount);
         std::wstring amount = Utils::penniesToDollarsString(iAmount);
-        ListView_SetItemText(g_hwndTransactionLV, 0, 5, const_cast<wchar_t*>(amount.c_str()));
+        ListView_SetItemText(g_hwndTransactionLV, 0, isIncome ? 5 : 4, const_cast<wchar_t*>(amount.c_str()));
     }
 
     DWORD dwFlags = LVSCW_AUTOSIZE_USEHEADER;
@@ -1785,11 +1796,11 @@ void addAccount(Account* pAccount)
     item.iItem = MAXINT;
 
     // Account name
-    ListView_InsertItem(g_hwndAccountLV, &item);
+    int iIndex = ListView_InsertItem(g_hwndAccountLV, &item);
 
     // Account balance
     std::wstring balance = Utils::penniesToDollarsString(pAccount->getBalance());
-    ListView_SetItemText(g_hwndAccountLV, 0, 1, const_cast<wchar_t*>(balance.c_str()));
+    ListView_SetItemText(g_hwndAccountLV, iIndex, 1, const_cast<wchar_t*>(balance.c_str()));
 
 
     ListView_SetColumnWidth(g_hwndAccountLV, 0, 200);
