@@ -801,7 +801,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 ScreenToClient(g_hwndAccountLV, &lvhi.pt);
                 ListView_HitTest(g_hwndAccountLV, &lvhi);
                 if (lvhi.iItem == -1) {
-                    ListView_SubItemHitTest(g_hwndTransactionLV, &lvhi);
+                    ListView_SubItemHitTest(g_hwndAccountLV, &lvhi);
                 }
 
                 if (lvhi.iItem != -1)
@@ -810,6 +810,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     item.iItem = lvhi.iItem;
                     item.mask = LVIF_PARAM;
                     ListView_GetItem(g_hwndAccountLV, &item);
+
                     Account* pAccount = (Account*)item.lParam;
                     editAccount(pAccount);
                     return true;
@@ -826,7 +827,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 ScreenToClient(g_hwndAccountLV, &lvhi.pt);
                 ListView_HitTest(g_hwndAccountLV, &lvhi);
                 if (lvhi.iItem == -1) {
-                    ListView_SubItemHitTest(g_hwndTransactionLV, &lvhi);
+                    ListView_SubItemHitTest(g_hwndAccountLV, &lvhi);
                 }
 
                 if (lvhi.iItem != -1) 
