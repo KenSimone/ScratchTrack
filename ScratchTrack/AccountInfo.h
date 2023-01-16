@@ -165,13 +165,20 @@ public:
 
 	virtual void addChild(AccountBase* pItemToAdd, AccountBase* pAddAfter)
 	{
-		for (auto itr = _children.begin(); itr != _children.end(); itr++)
+		if (!pAddAfter)
 		{
-			if (*itr == pAddAfter)
+			_children.insert(_children.begin(), pItemToAdd);
+		}
+		else
+		{
+			for (auto itr = _children.begin(); itr != _children.end(); itr++)
 			{
-				itr++;
-				_children.insert(itr, pItemToAdd);
-				break;
+				if (*itr == pAddAfter)
+				{
+					itr++;
+					_children.insert(itr, pItemToAdd);
+					break;
+				}
 			}
 		}
 	}

@@ -152,7 +152,23 @@ void handleDragDrop(HTREEITEM hDragSource, HTREEITEM hDragTarget)
                     pOldParent->removeChild(pMovingAccount);
                 }
                 if (pNewParent) {
-                    pNewParent->addChild(pMovingAccount);
+                    AccountGroup* pNewGroup = dynamic_cast<AccountGroup*>(pNewParent);
+                    AccountBase* pInsertAfter = nullptr;
+                    if (pNewGroup)
+                    {
+                        if (hInsertAfter == TVI_FIRST) {
+
+                        }
+                        else if (hInsertAfter == TVI_LAST) {
+                            pInsertAfter = nullptr;
+                        }
+                        else
+                        {
+                            pInsertAfter = accountFromTreeItem(hInsertAfter);
+                        }
+                    }
+
+                    pNewParent->addChild(pMovingAccount, pInsertAfter);
                 }
 
                 addTreeItem(hNewParent, pMovingAccount, hInsertAfter);
@@ -381,7 +397,6 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             int inEnvelopes = budgetedSpot + g_columnSizes._budgeted;
             int balanceSpot = inEnvelopes + g_columnSizes._inCategories;
             int availableBalanceSpot = balanceSpot + g_columnSizes._balance;
-            int endSpot = availableBalanceSpot + g_columnSizes._endSpot;
 
             HPEN pen = CreatePen(PS_SOLID, 1, RGB(200, 200, 200));
             SelectObject(pCustomDrawItem->nmcd.hdc, GetStockObject(HOLLOW_BRUSH));
@@ -426,9 +441,6 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
 
             MoveToEx(pCustomDrawItem->nmcd.hdc, availableBalanceSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
             LineTo(pCustomDrawItem->nmcd.hdc, availableBalanceSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
-
-            MoveToEx(pCustomDrawItem->nmcd.hdc, endSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
-            LineTo(pCustomDrawItem->nmcd.hdc, endSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
 
             RestoreDC(pCustomDrawItem->nmcd.hdc, oldDcState);
 

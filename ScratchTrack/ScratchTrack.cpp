@@ -822,6 +822,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     ListView_GetItem(g_hwndAccountLV, &item);
                     Account* pAccount = (Account*)item.lParam;
                     editAccount(pAccount);
+                    return true;
                 }
 
             }
@@ -924,6 +925,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     if (addTransaction(hItem)){
                         serializeState();
                     }
+                    return true;
                 }
 
             }
@@ -1272,7 +1274,7 @@ int serializeState()
 {
     std::vector<AccountBase*> topItems;
 
-    // Serialize accounts
+    // Collect the accounts
     for (int i = 0; i < ListView_GetItemCount(g_hwndAccountLV); i++)
     {
         LVITEM item = { 0 };
@@ -1283,7 +1285,7 @@ int serializeState()
         topItems.push_back(pAccount);
     }
 
-    // Serialize Categories and subcategories
+    // Collect Categories and subcategories
     HTREEITEM hItem = TreeView_GetChild(g_hwndTV, TVI_ROOT);
     while (hItem){
         AccountBase* item = accountFromTreeItem(hItem);
