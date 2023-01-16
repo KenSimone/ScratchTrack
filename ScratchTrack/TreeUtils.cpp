@@ -169,6 +169,7 @@ void handleDragDrop(HTREEITEM hDragSource, HTREEITEM hDragTarget)
             if (pMovingAccount)
             {
                 // Remove the original
+                g_links.erase(hDragSource);
                 TreeView_DeleteItem(g_hwndTV, hDragSource);
                 if (pOldParent) {
                     pOldParent->removeChild(pMovingAccount);

@@ -531,23 +531,6 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
     }
     }
 
-    if (dwCommand >= ID_ROOT_ENVELOPE_MOVE_TO_START && dwCommand < ID_ROOT_ENVELOPE_MOVE_TO_END) {
-        // This is a "move to" command. Remove from current parent and add to new parent
-        AccountBase* pParent = pItem->getParent();
-        AccountBase* pNewParent = AccountBase::lookupById(dwCommand - ID_ROOT_ENVELOPE_MOVE_TO_START);
-
-        HTREEITEM hNewParent = treeItemFromAccount(pNewParent);
-        HTREEITEM hSelf = treeItemFromAccount(pItem);
-
-        if (pParent && pNewParent && pParent->removeChild(pItem)) 
-        {
-            pNewParent->addChild(pItem);
-            TreeView_DeleteItem(g_hwndTV, hSelf);
-            addTreeItem(hNewParent, pItem);
-            updateGuiValues();
-            didSomething = true;
-        }
-    }
     return didSomething;
 }
 
@@ -972,19 +955,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         hMenu = GetSubMenu(hMenu, 0);
 
                         // Add the "move to group" option
-                        bool added = false;
-                        std::vector<AccountBase*> groups = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
-                        HMENU groupMenu = CreatePopupMenu();
-                        for (size_t i = 0; i < groups.size(); i++) {
-                            if (pParentItem && groups[i]->getId() != pParentItem->getId()) {
-                                AppendMenu(groupMenu, MF_STRING, ID_ROOT_ENVELOPE_MOVE_TO_START + groups[i]->getId(), groups[i]->getName());
-                                added = true;
-                            }
-                        }
+                        //bool added = false;
+                        //std::vector<AccountBase*> groups = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
+                        //HMENU groupMenu = CreatePopupMenu();
+                        //for (size_t i = 0; i < groups.size(); i++) {
+                        //    if (pParentItem && groups[i]->getId() != pParentItem->getId()) {
+                        //        AppendMenu(groupMenu, MF_STRING, ID_ROOT_ENVELOPE_MOVE_TO_START + groups[i]->getId(), groups[i]->getName());
+                        //        added = true;
+                        //    }
+                        //}
 
-                        if (added) {
-                            AppendMenu(hMenu, MF_POPUP, (UINT_PTR)groupMenu, L"Move to group...");
-                        }
+                        //if (added) {
+                        //    AppendMenu(hMenu, MF_POPUP, (UINT_PTR)groupMenu, L"Move to group...");
+                        //}
 
                         //// Add the "move to account" option
                         //groups = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
