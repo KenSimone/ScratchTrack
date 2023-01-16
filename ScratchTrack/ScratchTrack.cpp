@@ -12,6 +12,7 @@
 #include "CategoryDlg.h"
 #include "AccountDlg.h"
 #include "Utils.h"
+#include "TreeUtils.h"
 
 #include <commctrl.h>
 #include <Windows.h>
@@ -23,9 +24,6 @@
 
 #define MAX_LOADSTRING 100
 
-// Global settings
-static const double FONT_SCALE_FACTOR = 1.6;
-
 // Global Variables:
 HINSTANCE g_hInst = nullptr;                                // current instance
 HWND g_hTopWindow = nullptr;
@@ -35,27 +33,8 @@ WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 wchar_t szOneInputText[1024] = { 0 };
 double g_fontScale = 1.0;
 
-struct BUDGET_TREE_DRAG_DETAILS
-{
-    BUDGET_TREE_DRAG_DETAILS() : _dragging(nullptr), _lastHitItem(nullptr) {};
-    HTREEITEM  _dragging;
-    HTREEITEM  _lastHitItem;
-} g_btDragDetails;
-
-struct TREE_COLUMN_SIZES
-{
-    TREE_COLUMN_SIZES()
-    {
-        _name = _budgeted = _inCategories = _balance = _available = _endSpot = 0;
-    }
-
-    int _name;
-    int _budgeted;
-    int _inCategories;
-    int _balance;
-    int _available;
-    int _endSpot;
-} g_columnSizes;
+extern BUDGET_TREE_COLUMN_SIZES g_columnSizes;
+extern BUDGET_TREE_DRAG_DETAILS g_btDragDetails;
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -68,10 +47,7 @@ void populateTransactions();
 int serializeState();
 void positionControls();
 void calcColumnSpots();
-void getColumnSpots();
 void addAccount(Account* pAccount);
-HTREEITEM treeItemFromAccount(AccountBase* pItem, HTREEITEM hItem = TVI_ROOT);
-HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountBase* pAccount, HTREEITEM hInsertAfter = TVI_LAST);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -178,131 +154,6 @@ void setupPaymentCategoryForAccount(Account* pAccount)
     }
 }
 
-// Finds an AccountBase associated with a tree item
-AccountBase* accountFromItem(HTREEITEM item)
-{
-    TVITEMEX tvi = { 0 };
-    tvi.hItem = item;
-    tvi.mask = TVIF_PARAM;
-
-    TreeView_GetItem(g_hwndTV, &tvi);
-
-    return (AccountBase*)tvi.lParam;
-}
-
-HTREEITEM treeItemFromAccount(AccountBase* pItem, HTREEITEM hItem /*= TVI_ROOT*/ )
-{
-    if (hItem == TVI_ROOT) {
-        hItem = TreeView_GetRoot(g_hwndTV);
-    }
-
-    // Check self and siblings
-    while (hItem) {
-        if (pItem == accountFromItem(hItem)) {
-            return hItem;
-        }
-
-        // Check children
-        HTREEITEM hChild = TreeView_GetChild(g_hwndTV, hItem);
-        if (hChild) {
-            HTREEITEM hRet = treeItemFromAccount(pItem, hChild);
-            if (hRet) {
-                return hRet;
-            }
-        }
-
-        // Move to next
-        hItem = TreeView_GetNextSibling(g_hwndTV, hItem);
-    }
-
-    // Oops. Couldn't find it.
-    return nullptr;
-
-}
-
-// Adds an account item to the tree
-HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountBase* pAccount, HTREEITEM hInsertAfter /*= TVI_LAST*/)
-{
-    static const DWORD IMG_ACCOUNT = 0;
-    static const DWORD IMG_FOLDER = 1;
-    static const DWORD IMG_CATEGORY = 2;
-    static const DWORD IMG_ADDMONEY = 3;
-    static const DWORD IMG_SUBTRACTMONEY = 4;
-
-
-    TVINSERTSTRUCT tvi = { 0 };
-    tvi.itemex.mask = TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
-    tvi.itemex.pszText = const_cast<wchar_t*>(pAccount->getName());
-    tvi.hParent = hParentItem;
-    tvi.itemex.lParam = (LPARAM)pAccount;
-    tvi.hInsertAfter = hInsertAfter;
-
-    switch (pAccount->getType())
-    {
-    case AccountBase::ACCOUNT:
-        tvi.itemex.iSelectedImage = tvi.itemex.iImage = IMG_ACCOUNT;
-        break;
-    case AccountBase::GROUP:
-        tvi.itemex.iSelectedImage = tvi.itemex.iImage = IMG_FOLDER;
-        break;
-    case AccountBase::CATEGORY:
-        if (((AccountCategory*)pAccount)->isExpense()) {
-            tvi.itemex.iSelectedImage = tvi.itemex.iImage = IMG_SUBTRACTMONEY;
-        }
-        else {
-            tvi.itemex.iSelectedImage = tvi.itemex.iImage = IMG_ADDMONEY;
-        }
-        break;
-    };
-
-    HTREEITEM ret = TVI_ROOT;
-    if (pAccount->getType() == AccountBase::ACCOUNT) {
-        addAccount((Account*)pAccount);
-    }
-    else {
-        ret = (HTREEITEM)SendMessageW(g_hwndTV, TVM_INSERTITEM, 0, (LPARAM)&tvi);
-    }
-
-    // Add any children
-    if (pAccount->getType() == AccountBase::GROUP)
-    {
-        AccountGroup* pGroup = (AccountGroup*)pAccount;
-        auto children = pGroup->getChildren();
-        for (size_t i = 0; i < children.size(); i++)
-        {
-            addTreeItem(ret, children[i]);
-        }
-
-    }
-
-    
-    TreeView_Expand(g_hwndTV, hParentItem, TVE_EXPAND);
-
-    return ret;
-
-}
-
-void setItemText(HTREEITEM hItem, const wchar_t* szText)
-{
-    TVITEMEX tvi = { 0 };
-    tvi.hItem = hItem;
-    tvi.mask = TVIF_TEXT;
-    tvi.pszText = const_cast<wchar_t*>(szText);
-
-    SendMessageW(g_hwndTV, TVM_SETITEM, 0, (LPARAM)&tvi);
-}
-
-void setFont(HWND hCtrl)
-{
-    // Adjust font
-    HFONT hFont = (HFONT)SendMessage(hCtrl, WM_GETFONT, NULL, NULL);
-    LOGFONT lf = { 0 };
-    GetObject(hFont, sizeof(lf), &lf);
-    lf.lfHeight = (LONG)(lf.lfHeight * FONT_SCALE_FACTOR);
-    HFONT hNewFont = CreateFontIndirect(&lf);
-    SendMessage(hCtrl, WM_SETFONT, (WPARAM)hNewFont, true);
-}
-
 void createAccountListControl()
 {
     // IDC_SIMPLEBUDGET_ACCOUNT_LIST
@@ -315,7 +166,7 @@ void createAccountListControl()
 
     ListView_SetExtendedListViewStyle(g_hwndAccountLV, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 
-    setFont(g_hwndAccountLV);
+    budgetTreeSetFont(g_hwndAccountLV);
 
     LVCOLUMN column = { 0 };
     column.mask = LVCF_TEXT;
@@ -350,7 +201,7 @@ void createTransactionListControl()
 
     ListView_SetExtendedListViewStyle(g_hwndTransactionLV, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 
-    setFont(g_hwndTransactionLV);
+    budgetTreeSetFont(g_hwndTransactionLV);
 
     LVCOLUMN column = { 0 };
     column.mask = LVCF_TEXT;
@@ -376,108 +227,6 @@ void createTransactionListControl()
         ListView_SetColumnWidth(g_hwndTransactionLV, i, LVSCW_AUTOSIZE_USEHEADER);
     }
 }
-
-void CreateTreeControl()
-{
-    // Create tree header
-    g_hwndHeader = CreateWindowEx(0, WC_HEADER, nullptr,  WS_CHILD | HDS_FULLDRAG, 0, 0, 0, 0, g_hTopWindow, (HMENU)IDC_SIMPLEBUDGET_TREEHEADER, g_hInst, nullptr);
-
- 
-    RECT rClient = { 0 };
-    HDLAYOUT hdl = { 0 };
-    WINDOWPOS wp = { 0 };
-    GetClientRect(g_hTopWindow, &rClient);
-    hdl.prc = &rClient;
-    hdl.pwpos = &wp;
-
-    HWND lvHeader = ListView_GetHeader(g_hwndAccountLV);
-    HFONT hFont = (HFONT)SendMessageW(lvHeader, WM_GETFONT, 0, 0);
-    SendMessageW(g_hwndHeader, WM_SETFONT, (WPARAM)hFont, 0);
-
-
-    SendMessage(g_hwndHeader, HDM_LAYOUT, 0, (LPARAM)&hdl);
-    SetWindowPos(g_hwndHeader, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, wp.flags | SWP_SHOWWINDOW);
-
-    g_hwndTV = CreateWindowEx(0,WC_TREEVIEW,TEXT("Simple Budget Tree"), WS_VISIBLE | WS_CHILD | WS_BORDER | TVS_HASLINES | TVS_HASBUTTONS | TVS_LINESATROOT,
-        rClient.left, rClient.top,
-        rClient.right,
-        rClient.bottom/2,
-        g_hTopWindow,
-        (HMENU)IDC_SIMPLEBUDGET_TREE,
-        g_hInst,
-        NULL);
-
-    // Adjust font
-    setFont(g_hwndTV);
-    calcColumnSpots();
-
-    // Create tree
-    HDITEM item = { 0 };
-    item.cxy = g_columnSizes._name;
-    item.pszText = const_cast<wchar_t*>(L"Category");
-    item.mask = HDI_TEXT | HDI_WIDTH;
-    Header_InsertItem(g_hwndHeader, 99, &item);
-
-    item.pszText = const_cast<wchar_t*>(L"Budgeted cashflow");
-    item.cxy = g_columnSizes._budgeted;
-    Header_InsertItem(g_hwndHeader, 99, &item);
-
-    item.pszText = const_cast<wchar_t*>(L"Actual cashflow");
-    item.cxy = g_columnSizes._inCategories;
-    Header_InsertItem(g_hwndHeader, 99, &item);
-
-    item.pszText = const_cast<wchar_t*>(L"Virtual balance");
-    item.cxy = g_columnSizes._balance;
-    Header_InsertItem(g_hwndHeader, 99, &item);
-
-    //item.pszText = const_cast<wchar_t*>(L"Available balance");
-    ////item.cxy = d - c;
-    //item.mask = HDI_TEXT;
-    //Header_InsertItem(g_hwndHeader, 99, &item);
-
-    SendMessage(g_hwndTV, WM_CHANGEUISTATE, MAKEWPARAM(UIS_SET, UISF_HIDEFOCUS), 0);
-
-    HIMAGELIST il = ImageList_Create(16, 16, ILC_COLOR32 | ILC_MASK, 0, 3);
-
-    HICON h = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_ACCOUNT));
-    ImageList_AddIcon(il, h);
-
-    h = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_FOLDER));
-    ImageList_AddIcon(il, h);
-
-    h = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_ENVELOPE));
-    ImageList_AddIcon(il, h);
-
-    h = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_ADD_MONEYICON));
-    ImageList_AddIcon(il, h);
-
-
-    h = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_SUBTRACT_MONEY_ICON));
-    ImageList_AddIcon(il, h);
-
-
-    TreeView_SetImageList(g_hwndTV, il, TVSIL_NORMAL);
-
-    DWORD dwAttribs = ::GetFileAttributesA(getPersistFile());
-    if (dwAttribs != INVALID_FILE_ATTRIBUTES) {
-        std::vector<AccountBase*> topLevelItems;
-        deserialize(getPersistFile(), topLevelItems);
-        for (size_t i = 0; i < topLevelItems.size(); i++)
-        {
-            addTreeItem(TVI_ROOT, topLevelItems[i]);
-        }
-    }
-    else if (GetLastError() != ERROR_FILE_NOT_FOUND) {
-        MessageBox(g_hTopWindow, L"Unable to load file", L"Error", MB_OK);
-        exit(0);
-    }
-    else {
-        Account* pAccount = new Account;
-        pAccount->setName(L"Checking");
-        addTreeItem(TVI_ROOT, pAccount);
-    }
-}
-
 
 //
 //  FUNCTION: MyRegisterClass()
@@ -531,9 +280,30 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    icex.dwICC = ICC_LISTVIEW_CLASSES | ICC_TREEVIEW_CLASSES;
    InitCommonControlsEx(&icex);
    createAccountListControl();
-   CreateTreeControl();
+   budgetTreeCreateTreeControl();
    createTransactionListControl();
 
+   // Populate data (load or create new)
+   DWORD dwAttribs = ::GetFileAttributesA(getPersistFile());
+   if (dwAttribs != INVALID_FILE_ATTRIBUTES) {
+       std::vector<AccountBase*> topLevelItems;
+       deserialize(getPersistFile(), topLevelItems);
+       for (size_t i = 0; i < topLevelItems.size(); i++)
+       {
+           addTreeItem(TVI_ROOT, topLevelItems[i]);
+       }
+   }
+   else if (GetLastError() != ERROR_FILE_NOT_FOUND) {
+       MessageBox(g_hTopWindow, L"Unable to load file", L"Error", MB_OK);
+       exit(0);
+   }
+   else {
+       Account* pAccount = new Account;
+       pAccount->setName(L"Checking");
+       addTreeItem(TVI_ROOT, pAccount);
+   }
+
+   // Fix up selection / paint
    HTREEITEM hRoot = TreeView_GetRoot(g_hwndTV);
    if (hRoot) {
        TreeView_SelectItem(g_hwndTV, hRoot);
@@ -578,7 +348,7 @@ INT_PTR CALLBACK OneInputProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 bool addTransaction(HTREEITEM hItem)
 {
     bool didSimonthing = false;
-    AccountBase* pItem = accountFromItem(hItem);
+    AccountBase* pItem = accountFromTreeItem(hItem);
     TransactionDialog transactionDlg;
     transactionDlg.setCategoryId(pItem->getId());
     AccountCategory* pCategory = nullptr;
@@ -893,243 +663,6 @@ LRESULT customDrawListControl(NMLVCUSTOMDRAW* pCustomDrawItem)
     return ret;
 }
 
-// This function comes up with initial column sizes
-void calcColumnSpots()
-{
-    static const wchar_t* szMaxNameLength = L"WWWWWWWWWWWWWWWWWWWWWWW";
-    static const wchar_t* szMaxValueLength = L"In cagtegory(s): $1,000,000,000";
-
-    HDC dc = GetDC(g_hwndTV);
-    SIZE textSizeA = { 0 }, textSizeB = { 0 };
-    GetTextExtentPoint(dc, szMaxNameLength, (int)wcslen(szMaxNameLength), &textSizeA);
-    GetTextExtentPoint(dc, szMaxValueLength, (int)wcslen(szMaxValueLength), &textSizeB);
-
-    ReleaseDC(g_hwndTV, dc);
-
-    //textSizeA.cx *= 2;
-    g_columnSizes._name = (int)(textSizeA.cx * 1.5);
-    g_columnSizes._budgeted = textSizeB.cx;
-    g_columnSizes._inCategories = textSizeB.cx;
-    g_columnSizes._balance = textSizeB.cx;
-    g_columnSizes._available = textSizeB.cx;
-    g_columnSizes._endSpot = textSizeB.cx;;
-}
-
-// This function gets the current position of the columns (user drag)
-void getColumnSpots()
-{
-    HDITEM hdi = { 0 };
-    hdi.mask = HDI_WIDTH;
-    Header_GetItem(g_hwndHeader, 0, &hdi);
-    g_columnSizes._name = hdi.cxy;
-
-    Header_GetItem(g_hwndHeader, 1, &hdi);
-    g_columnSizes._budgeted = hdi.cxy;
-
-    Header_GetItem(g_hwndHeader, 2, &hdi);
-    g_columnSizes._inCategories = hdi.cxy;
-
-    Header_GetItem(g_hwndHeader, 3, &hdi);
-    g_columnSizes._balance = hdi.cxy;
-
-    Header_GetItem(g_hwndHeader, 4, &hdi);
-    g_columnSizes._available = hdi.cxy;
-
-    g_columnSizes._endSpot = hdi.cxy;
-
-
-}
-
-COLORREF setTextColorForAmount(HDC hDC, int iAmount, bool bSelected, bool colorizeNegative)
-{
-    static const COLORREF TEXT_COLOR = GetSysColor(COLOR_MENUTEXT);
-    static const COLORREF SEL_TEXT_COLOR = GetSysColor(COLOR_HIGHLIGHTTEXT);
-
-    static const COLORREF NEGATIVE_BALANCE_COLOR = RGB(255, 0, 0);
-    static const COLORREF NEGATIVE_BALANCE_COLOR_SEL = RGB(255, 200, 200);
-
-    COLORREF crRet = { 0 };
-    if (iAmount >= 0 || !colorizeNegative) {
-        crRet = SetTextColor(hDC, bSelected ? SEL_TEXT_COLOR : TEXT_COLOR);
-    }
-    else{ 
-        crRet = SetTextColor(hDC, bSelected ? NEGATIVE_BALANCE_COLOR_SEL : NEGATIVE_BALANCE_COLOR );
-    }
-    return crRet;
-}
-
-LRESULT customDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
-{
-    LRESULT ret = CDRF_NOTIFYITEMDRAW;
-    AccountBase* pItem = (AccountBase*)pCustomDrawItem->nmcd.lItemlParam;
-
-    static const wchar_t* szMaxNameLength = L"WWWWWWWWWWWWWWWWWWWWWWW";
-    static const wchar_t* szMaxValueLength = L"In categories: $1,000,000,000";
-
-    static const COLORREF ACCOUNT_COLOR = RGB(230, 240, 250);
-    static const COLORREF GROUP_COLOR = RGB(230, 240, 250);
-    static const COLORREF ENVELOPE_COLOR = RGB(255, 255, 255);
-    
-    static const COLORREF SEL_COLOR = GetSysColor(COLOR_HIGHLIGHT);
-    static const COLORREF SEL_TEXT_COLOR = GetSysColor(COLOR_HIGHLIGHTTEXT);
-
-    if (pItem)
-    {
-        static HFONT hNewFont = nullptr;
-        HTREEITEM hItem = (HTREEITEM)pCustomDrawItem->nmcd.dwItemSpec;
-        HTREEITEM hSelItem = (HTREEITEM)TreeView_GetSelection(g_hwndTV);
-        COLORREF cr = { 0 }, crText = RGB(0,0,0);
-
-        switch (pItem->getType())
-        {
-        case AccountBase::ACCOUNT:
-            cr = ACCOUNT_COLOR;
-            break;
-        case AccountBase::GROUP:
-            cr = GROUP_COLOR;
-            break;
-        case AccountBase::CATEGORY:
-            cr = ENVELOPE_COLOR;
-            break;
-        }
-        
-        pItem->getType() == AccountBase::ACCOUNT ? ACCOUNT_COLOR : GROUP_COLOR;
-        bool selected = hItem == hSelItem;
-
-        if (selected) {
-            cr = SEL_COLOR;
-            crText = SEL_TEXT_COLOR;
-        }
-        COLORREF oldTextColor = SetTextColor(pCustomDrawItem->nmcd.hdc, crText);
-
-        if (pCustomDrawItem->nmcd.dwDrawStage == CDDS_ITEMPREPAINT)
-        {
-            HBRUSH brush = CreateSolidBrush(cr);
-            HBRUSH oldBrush = (HBRUSH)SelectObject(pCustomDrawItem->nmcd.hdc, brush);
-
-            HPEN pen = CreatePen(PS_NULL, 0, RGB(0, 0, 0));
-            HBRUSH oldpen = (HBRUSH)SelectObject(pCustomDrawItem->nmcd.hdc, pen);
-
-            RECT rcFull = { 0 }, rcText = { 0 };
-            TreeView_GetItemRect(g_hwndTV, hItem, &rcText, true);
-            TreeView_GetItemRect(g_hwndTV, hItem, &rcFull, false);
-
-            Rectangle(pCustomDrawItem->nmcd.hdc, rcText.left, rcFull.top, rcFull.right, rcFull.bottom + 1);
-            SelectObject(pCustomDrawItem->nmcd.hdc, oldBrush);
-            SelectObject(pCustomDrawItem->nmcd.hdc, oldpen);
-            DeleteObject(brush);
-            DeleteObject(pen);
-
-           
-            ret |= CDRF_NOTIFYPOSTPAINT;
-        }
-        else if (pCustomDrawItem->nmcd.dwDrawStage == CDDS_ITEMPOSTPAINT)
-        {
-            HPEN pen = CreatePen(PS_SOLID, 1, RGB(200, 200, 200));
-            HGDIOBJ oldBrush = SelectObject(pCustomDrawItem->nmcd.hdc, GetStockObject(HOLLOW_BRUSH));
-            HGDIOBJ oldPen = SelectObject(pCustomDrawItem->nmcd.hdc, pen);
-            int oldBkMode = SetBkMode(pCustomDrawItem->nmcd.hdc, TRANSPARENT);
-
-            //int dbalance = pItem->getBalance() + pItem->allocatedToSubAccounts();
-            int iBalance = pItem->getBalance();
-            std::wstring balance = Utils::penniesToDollarsString(iBalance);
-
-            int iBudget = pItem->getType() == AccountBase::CATEGORY ? pItem->getBudgeted() : pItem->budgetedToSubAccounts();
-            std::wstring budgeted = Utils::penniesToDollarsString(iBudget);
-
-            int iEnvelopes = pItem->getType() == AccountBase::CATEGORY ? pItem->getBalance() : pItem->allocatedToSubAccounts();
-            std::wstring allocated = Utils::penniesToDollarsString(iEnvelopes);
-
-            int iAvailable = pItem->getBalance() - abs(pItem->allocatedToSubAccounts());
-            std::wstring availableBalance = Utils::penniesToDollarsString(iAvailable);
-
-            int iTransactionSum = pItem->getCurrentMonthTransacationTotal();
-            std::wstring transactionSum = Utils::penniesToDollarsString(iTransactionSum);
-
-            getColumnSpots();
-
-            int budgetedSpot = g_columnSizes._name;
-            int inEnvelopes = budgetedSpot + g_columnSizes._budgeted;
-            int balanceSpot = inEnvelopes + g_columnSizes._inCategories;
-            int availableBalanceSpot = balanceSpot + g_columnSizes._balance;
-            int endSpot = availableBalanceSpot + g_columnSizes._endSpot;
-
-            // Budgeted dollars
-            setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iBudget, selected, false);
-            TextOut(pCustomDrawItem->nmcd.hdc, budgetedSpot, pCustomDrawItem->nmcd.rc.top, budgeted.c_str(), (int)budgeted.length());
-
-            // Monthly transaction sum
-            setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iTransactionSum, selected, false);
-            TextOut(pCustomDrawItem->nmcd.hdc, inEnvelopes, pCustomDrawItem->nmcd.rc.top, transactionSum.c_str(), (int)transactionSum.length());
-
-
-            if (pItem->getType() == AccountBase::CATEGORY)
-            {
-                AccountCategory* pCategory = (AccountCategory*)pItem;
-                if (pCategory->isVirtualAccount()) {
-                    setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iBalance, selected, true);
-                    TextOut(pCustomDrawItem->nmcd.hdc, balanceSpot, pCustomDrawItem->nmcd.rc.top, balance.c_str(), (int)balance.length());
-                }
-            }
-
-            //if (pItem->getType() == AccountBase::ACCOUNT)
-            //{
-            //    setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iAvailable, selected, true);
-            //    TextOut(pCustomDrawItem->nmcd.hdc, availableBalanceSpot, pCustomDrawItem->nmcd.rc.top, availableBalance.c_str(), (int)availableBalance.length());
-
-            //}
-
-            // Draw line above
-            MoveToEx(pCustomDrawItem->nmcd.hdc, pCustomDrawItem->nmcd.rc.left, pCustomDrawItem->nmcd.rc.top, nullptr);
-            LineTo(pCustomDrawItem->nmcd.hdc, pCustomDrawItem->nmcd.rc.right, pCustomDrawItem->nmcd.rc.top);
-
-            // Draw columns line
-            MoveToEx(pCustomDrawItem->nmcd.hdc, budgetedSpot-2, pCustomDrawItem->nmcd.rc.top, nullptr);
-            LineTo(pCustomDrawItem->nmcd.hdc, budgetedSpot-2, pCustomDrawItem->nmcd.rc.bottom);
-
-            MoveToEx(pCustomDrawItem->nmcd.hdc, inEnvelopes-2, pCustomDrawItem->nmcd.rc.top, nullptr);
-            LineTo(pCustomDrawItem->nmcd.hdc, inEnvelopes-2, pCustomDrawItem->nmcd.rc.bottom);
-
-            MoveToEx(pCustomDrawItem->nmcd.hdc, balanceSpot-2, pCustomDrawItem->nmcd.rc.top, nullptr);
-            LineTo(pCustomDrawItem->nmcd.hdc, balanceSpot-2, pCustomDrawItem->nmcd.rc.bottom);
-
-            MoveToEx(pCustomDrawItem->nmcd.hdc, availableBalanceSpot-2, pCustomDrawItem->nmcd.rc.top, nullptr);
-            LineTo(pCustomDrawItem->nmcd.hdc, availableBalanceSpot-2, pCustomDrawItem->nmcd.rc.bottom);
-
-            MoveToEx(pCustomDrawItem->nmcd.hdc, endSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
-            LineTo(pCustomDrawItem->nmcd.hdc, endSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
-
-            RECT rcText = { 0 }, rcFull = { 0 };
-
-            TreeView_GetItemRect(g_hwndTV, hItem, &rcText, true);
-            TreeView_GetItemRect(g_hwndTV, hItem, &rcFull, false);
-
-            HBRUSH brush = CreateSolidBrush(cr);
-            SelectObject(pCustomDrawItem->nmcd.hdc, brush);
-
-            DeleteObject(pen);
-            pen = CreatePen(PS_NULL, 0, RGB(0, 0, 0));
-            SelectObject(pCustomDrawItem->nmcd.hdc, pen);
-
-            Rectangle(pCustomDrawItem->nmcd.hdc, rcText.left, rcFull.top + 1, rcText.right + 1, rcFull.bottom);
-
-            setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 0, selected, false);
-            TextOut(pCustomDrawItem->nmcd.hdc, rcText.left, rcText.top, pItem->getName(), (int)wcslen(pItem->getName()));
-            SetTextColor(pCustomDrawItem->nmcd.hdc, oldTextColor);
-
-            SelectObject(pCustomDrawItem->nmcd.hdc, oldBrush);
-            SelectObject(pCustomDrawItem->nmcd.hdc, oldPen);
-            DeleteObject(brush);
-            DeleteObject(pen);
-
-
-            SetBkMode(pCustomDrawItem->nmcd.hdc, oldBkMode);
-            DeleteObject(pen);
-        }
-
-    } // if item
-    return ret;
-}
 
 void doTreeDrag(LPNMTREEVIEW nmTreeItem)
 {
@@ -1153,88 +686,12 @@ void doTreeDrag(LPNMTREEVIEW nmTreeItem)
 
 void handleMouseMove(LONG xCur, LONG yCur)
 {
-    HTREEITEM htiTarget;  // Handle to target item. 
-    TVHITTESTINFO tvht;   // Hit test information. 
-
-    if (g_btDragDetails._dragging)
-    {
-        // Drag the item to the current position of the mouse pointer. 
-        // First convert the dialog coordinates to control coordinates. 
-        POINT point;
-        point.x = xCur;
-        point.y = yCur;
-        ClientToScreen(g_hTopWindow, &point);
-        ScreenToClient(g_hwndTV, &point);
-        ImageList_DragMove(point.x, point.y);
-
-        // Find out if the pointer is on the item. If it is, 
-        // highlight the item as a drop target. 
-        tvht.pt.x = point.x;
-        tvht.pt.y = point.y;
-        if ((htiTarget = TreeView_HitTest(g_hwndTV, &tvht)) != NULL)
-        {
-            //TreeView_SelectDropTarget(g_hwndTV, htiTarget);
-            if (g_btDragDetails._lastHitItem != htiTarget)
-            {
-                ImageList_DragShowNolock(FALSE);
-                TreeView_SetInsertMark(g_hwndTV, htiTarget, true);
-                ImageList_DragShowNolock(TRUE);
-                g_btDragDetails._lastHitItem = htiTarget;
-            }
-        }
-    }
-    return;
+    budgetTreeHandleMouseMove(xCur, yCur);
 }
 
 void handleLButtonUp(LONG xCur, LONG yCur)
 {
-    if (g_btDragDetails._dragging)
-    {
-        TreeView_SetInsertMark(g_hwndTV, NULL, 0);
-
-        TVHITTESTINFO tvht;
-        POINT point;
-        point.x = xCur;
-        point.y = yCur;
-        ClientToScreen(g_hTopWindow, &point);
-        ScreenToClient(g_hwndTV, &point);
-        tvht.pt.x = point.x;
-        tvht.pt.y = point.y;
-
-        // Get destination item.
-        //HTREEITEM htiDest = TreeView_GetDropHilight(g_hwndTV);
-        HTREEITEM htiDest = TreeView_HitTest(g_hwndTV, &tvht);
-        if (htiDest != NULL)
-        {
-            AccountBase* dropSource = accountFromItem(g_btDragDetails._dragging);
-            AccountBase* dropTarget = accountFromItem(htiDest);
-
-            HTREEITEM hParent = TreeView_GetParent(g_hwndTV, g_btDragDetails._dragging);
-            HTREEITEM hNewParent = TreeView_GetParent(g_hwndTV, htiDest);
-
-            AccountBase* sourceParent = accountFromItem(hParent);
-            AccountBase* destParent = accountFromItem(hNewParent);
-
-            if (dropSource != dropTarget && sourceParent && destParent ) {
-                // Remove from the old location
-                sourceParent->removeChild(dropSource);
-                TreeView_DeleteItem(g_hwndTV, g_btDragDetails._dragging);
-
-                // Add to the new location
-                destParent->addChild(dropSource, dropTarget);
-                addTreeItem(hNewParent, dropSource, htiDest);
-
-                // Save
-                serializeState();
-            }
-        }
-        ImageList_EndDrag();
-        TreeView_SelectDropTarget(g_hwndTV, NULL);
-        ReleaseCapture();
-        ShowCursor(TRUE);
-        g_btDragDetails._dragging = g_btDragDetails._lastHitItem = nullptr;
-    }
-    return;
+    budgetTreeHandleLButtonUp(xCur, yCur);
 }
 
 void editAccount(Account* pAccount)
@@ -1435,7 +892,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             else if (pHeader->code == NM_CUSTOMDRAW)
             {
-                return customDrawTreeItem((NMTVCUSTOMDRAW*)lParam);
+                return budgetTreeCustomDrawTreeItem((NMTVCUSTOMDRAW*)lParam);
             }
             else if (pHeader->code == NM_CLICK)
             {
@@ -1461,7 +918,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
                 TreeView_HitTest(g_hwndTV, &tvhi);
                 HTREEITEM hItem = tvhi.hItem;
-                auto envelope = accountFromItem(hItem);
+                auto envelope = accountFromTreeItem(hItem);
                 if (envelope)
                 {
                     if (addTransaction(hItem)){
@@ -1483,9 +940,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 HTREEITEM hItem = tvhi.hItem;
                 if (tvhi.hItem) {
                     TreeView_Select(g_hwndTV, hItem, TVGN_CARET);
-                    pItem = accountFromItem(hItem);
+                    pItem = accountFromTreeItem(hItem);
                     HTREEITEM hParent = TreeView_GetParent(g_hwndTV, hItem);
-                    pParentItem = accountFromItem(hParent);
+                    pParentItem = accountFromTreeItem(hParent);
                 }
 
                 // Show context menu
@@ -1653,7 +1110,7 @@ void updateGuiValues(HTREEITEM item /*= NULL*/)
         TreeView_GetItem(g_hwndTV, &tvi);
 
         Account* pAccount = (Account*)tvi.lParam;
-        setItemText(item, pAccount->getName());
+        budgetTreeSetItemText(item, pAccount->getName());
 
         // Get children
         HTREEITEM child = TreeView_GetChild(g_hwndTV, item);
@@ -1722,7 +1179,7 @@ void populateTransactions()
         return;
     }
 
-    AccountBase* pItem = accountFromItem(hItem);
+    AccountBase* pItem = accountFromTreeItem(hItem);
     if (!pItem){
         return;
     }
@@ -1829,7 +1286,7 @@ int serializeState()
     // Serialize Categories and subcategories
     HTREEITEM hItem = TreeView_GetChild(g_hwndTV, TVI_ROOT);
     while (hItem){
-        AccountBase* item = accountFromItem(hItem);
+        AccountBase* item = accountFromTreeItem(hItem);
         topItems.push_back(item);
         hItem = TreeView_GetNextSibling(g_hwndTV, hItem);
     }

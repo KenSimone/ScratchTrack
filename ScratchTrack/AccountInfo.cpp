@@ -208,14 +208,15 @@ std::vector<AccountBase*> AccountBase::getAllAccountsOfType(accountItemType type
 	return results;
 }
 
-AccountBase* AccountGroup::getParent()
+AccountBase* AccountBase::getParent()
 {
 	std::vector<AccountBase*> results;
 	for (auto itr = _idToItem.begin(); itr != _idToItem.end(); itr++) {
-		if (itr->second->getType() == AccountBase::GROUP)
+		AccountGroup* pGroup = dynamic_cast<AccountGroup*>(itr->second);
+		if (pGroup)
 		{
-			AccountGroup* pGroup = (AccountGroup*)itr->second;
-			for (auto child = pGroup->_children.begin(); child != pGroup->_children.end(); child++) {
+			std::vector<AccountBase*> children = pGroup->getChildren();
+			for (auto child = children.begin(); child != children.end(); child++) {
 				unsigned int id = (*child)->getId();
 				if (id == getId())
 				{

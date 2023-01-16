@@ -34,7 +34,7 @@ public:
 	static std::vector<AccountBase*> getAllAccountsOfType(accountItemType type);
 
 	// Get parent item
-	virtual AccountBase* getParent() { return nullptr; }
+	virtual AccountBase* getParent();
 
 	// Each item in the tree has a unique ID throughout the system
 	unsigned int getId() { return _id; }
@@ -100,8 +100,6 @@ public:
 	// Groups only have aggregate balances from their children and hold no value on their own
 	virtual int getBalance() { return 0; }
 	virtual void addBalance(int balance) { _balance = 0; }
-
-	virtual AccountBase* getParent();
 
 	// Get the IDs for this item and all child items. 
 	virtual void getIdsForSelfAndChildren(std::set<unsigned int>& ids)
