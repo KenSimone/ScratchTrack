@@ -31,3 +31,13 @@
 *.exe
 *.out
 *.app
+
+# Visual studio artifacts
+*.vsidx
+*.lock
+*.suo
+*.db
+*.db-shm
+*.ipch
+*.tlog
+*.pdb
