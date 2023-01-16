@@ -846,7 +846,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         break;
                     case ID_ROOT_EDITACCOUNT:
                     {
-                        editAccount(pAccount);
+                        if (pAccount) {
+                            editAccount(pAccount);
+                        }
                         break;
                     }
                     }
