@@ -313,7 +313,7 @@ void createAccountListControl()
         0, 0, 0,0, g_hTopWindow,
         (HMENU)IDC_SIMPLEBUDGET_ACCOUNT_LIST, g_hInst, NULL);
 
-    ListView_SetExtendedListViewStyle(g_hwndAccountLV, LVS_EX_FULLROWSELECT);
+    ListView_SetExtendedListViewStyle(g_hwndAccountLV, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 
     setFont(g_hwndAccountLV);
 
@@ -344,7 +344,10 @@ void createTransactionListControl()
         g_hInst,
         NULL);
 
-    ListView_SetExtendedListViewStyle(g_hwndTransactionLV, LVS_EX_FULLROWSELECT);
+    HWND hHdrWnd = ListView_GetHeader(g_hwndTransactionLV);
+    SetWindowLong(hHdrWnd, GWL_STYLE, HDS_FILTERBAR);
+
+    ListView_SetExtendedListViewStyle(g_hwndTransactionLV, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 
     setFont(g_hwndTransactionLV);
 
@@ -1202,29 +1205,26 @@ void handleLButtonUp(LONG xCur, LONG yCur)
         HTREEITEM htiDest = TreeView_HitTest(g_hwndTV, &tvht);
         if (htiDest != NULL)
         {
-            auto dropSource = accountFromItem(g_btDragDetails._dragging);
-            auto dropTarget = accountFromItem(htiDest);
+            AccountBase* dropSource = accountFromItem(g_btDragDetails._dragging);
+            AccountBase* dropTarget = accountFromItem(htiDest);
 
             HTREEITEM hParent = TreeView_GetParent(g_hwndTV, g_btDragDetails._dragging);
             HTREEITEM hNewParent = TreeView_GetParent(g_hwndTV, htiDest);
 
-            if (dropSource != dropTarget && hParent && hNewParent ) {
-                // Move in the data structure
-                auto sourceParent = dropSource->getParent();
-                auto destParent = dropTarget->getParent();
-                if (sourceParent && destParent) {
+            AccountBase* sourceParent = accountFromItem(hParent);
+            AccountBase* destParent = accountFromItem(hNewParent);
 
-                    // Remove from the old location
-                    sourceParent->removeChild(dropSource);
-                    TreeView_DeleteItem(g_hwndTV, g_btDragDetails._dragging);
+            if (dropSource != dropTarget && sourceParent && destParent ) {
+                // Remove from the old location
+                sourceParent->removeChild(dropSource);
+                TreeView_DeleteItem(g_hwndTV, g_btDragDetails._dragging);
 
-                    // Add to the new location
-                    destParent->addChild(dropSource, dropTarget);
-                    addTreeItem(hNewParent, dropSource, htiDest);
+                // Add to the new location
+                destParent->addChild(dropSource, dropTarget);
+                addTreeItem(hNewParent, dropSource, htiDest);
 
-                    // Save
-                    serializeState();
-                }
+                // Save
+                serializeState();
             }
         }
         ImageList_EndDrag();
@@ -1514,18 +1514,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                             AppendMenu(hMenu, MF_POPUP, (UINT_PTR)groupMenu, L"Move to group...");
                         }
 
-                        // Add the "move to account" option
-                        groups = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
-                        HMENU accountMenu = CreatePopupMenu();
-                        for (size_t i = 0; i < groups.size(); i++) {
-                            if (pParentItem && groups[i]->getId() != pParentItem->getId()) {
-                                added = true;
-                                AppendMenu(accountMenu, MF_STRING, ID_ROOT_ENVELOPE_MOVE_TO_START + groups[i]->getId(), groups[i]->getName());
-                            }
-                        }
-                        if (added) {
-                            AppendMenu(hMenu, MF_POPUP, (UINT_PTR)accountMenu, L"Move to account...");
-                        }
+                        //// Add the "move to account" option
+                        //groups = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
+                        //HMENU accountMenu = CreatePopupMenu();
+                        //for (size_t i = 0; i < groups.size(); i++) {
+                        //    if (pParentItem && groups[i]->getId() != pParentItem->getId()) {
+                        //        added = true;
+                        //        AppendMenu(accountMenu, MF_STRING, ID_ROOT_ENVELOPE_MOVE_TO_START + groups[i]->getId(), groups[i]->getName());
+                        //    }
+                        //}
+                        //if (added) {
+                        //    AppendMenu(hMenu, MF_POPUP, (UINT_PTR)accountMenu, L"Move to account...");
+                        //}
                     }
                     else {
                         hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_MENU_TREEVIEW));
