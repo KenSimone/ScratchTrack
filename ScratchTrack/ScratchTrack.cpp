@@ -530,7 +530,11 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    CreateTreeControl();
    createTransactionListControl();
 
-   TreeView_SelectItem(g_hwndTV, TreeView_GetRoot(g_hwndTV));
+   HTREEITEM hRoot = TreeView_GetRoot(g_hwndTV);
+   if (hRoot) {
+       TreeView_SelectItem(g_hwndTV, hRoot);
+   }
+
    populateTransactions();
    positionControls();
 
@@ -828,7 +832,7 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
 
         // Payee
         std::wstring payee = pTransaction->getPayee();
-        if (pAccountTo) {
+        if (pTransaction->getAccountToId() != MAXINT && pAccountTo) {
             wchar_t szBuff[1024] = { 0 };
             swprintf(szBuff, 1024, L"%s->%s", pAccountFrom->getName(), pAccountTo->getName());
             payee = szBuff;
@@ -1603,32 +1607,33 @@ void updateGuiValues(HTREEITEM item /*= NULL*/)
     bool topLevel = item == nullptr;
     if (!item)
     {
-        // Account items
-        int nAccounts = ListView_GetItemCount(g_hwndAccountLV);
         SendMessage(g_hwndAccountLV, WM_SETREDRAW, FALSE, 0);
-        SendMessage(g_hwndTV, WM_SETREDRAW, FALSE, 0);
+        item = TreeView_GetRoot(g_hwndTV);
 
+        // Update account info
+        int nAccounts = ListView_GetItemCount(g_hwndAccountLV);
 
         for (int i = 0; i < nAccounts; i++)
         {
-            LVITEM item = { 0 };
-            item.mask = LVIF_PARAM;
-            item.iItem = i;
-            ListView_GetItem(g_hwndAccountLV, &item);
-            Account* pAccount = (Account*)item.lParam;
+            LVITEM listitem = { 0 };
+            listitem.mask = LVIF_PARAM;
+            listitem.iItem = i;
+            ListView_GetItem(g_hwndAccountLV, &listitem);
+            Account* pAccount = (Account*)listitem.lParam;
             ListView_SetItemText(g_hwndAccountLV, i, 0, const_cast<wchar_t*>(pAccount->getName()));
 
             std::wstring amount = Utils::penniesToDollarsString(pAccount->getBalance());
             ListView_SetItemText(g_hwndAccountLV, i, 1, const_cast<wchar_t*>(amount.c_str()));
 
         }
-
-        // Update treeview items
-        item = TreeView_GetRoot(g_hwndTV);
     }
 
     if (item)
     {
+        if (topLevel) {
+            SendMessage(g_hwndTV, WM_SETREDRAW, FALSE, 0);
+        }
+
         // Get self
         TVITEMEX tvi = { 0 };
         tvi.hItem = item;
@@ -1651,6 +1656,11 @@ void updateGuiValues(HTREEITEM item /*= NULL*/)
         if (item)
         {
             updateGuiValues(item);
+        }
+
+        if (topLevel) {
+            InvalidateRect(g_hwndTV, NULL, true);
+            SendMessage(g_hwndTV, WM_SETREDRAW, TRUE, 0);
         }
     }
 
@@ -1683,12 +1693,8 @@ void updateGuiValues(HTREEITEM item /*= NULL*/)
         wchar_t szCaption[1024] = { 0 };
         swprintf(szCaption, 1024, L"ScratchTrack: %s of %s available for spending", availableDollars.c_str(), totalDollars.c_str());
 
-        SetWindowText(g_hTopWindow, szCaption);
-
-        InvalidateRect(g_hwndTV, NULL, true);
         SendMessage(g_hwndAccountLV, WM_SETREDRAW, TRUE, 0);
-        SendMessage(g_hwndTV, WM_SETREDRAW, TRUE, 0);
-
+        SetWindowText(g_hTopWindow, szCaption);
 
     }
 
