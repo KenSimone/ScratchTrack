@@ -308,7 +308,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
 
         if (pCustomDrawItem->nmcd.dwDrawStage == CDDS_ITEMPREPAINT)
         {
-            // We want post paint notification
+            // We want post paint notifications
             ret |= CDRF_NOTIFYPOSTPAINT;
         }
         else if (pCustomDrawItem->nmcd.dwDrawStage == CDDS_ITEMPOSTPAINT)
