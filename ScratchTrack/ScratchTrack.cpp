@@ -99,7 +99,7 @@ const char* getPersistFile()
     char* slashSpot = strrchr(szBuff, '\\');
     *slashSpot = 0;
 
-    strcat_s(szBuff, 1024, "\\SimpleBudget.xml");
+    strcat_s(szBuff, 1024, "\\ScratchTrack.xml");
 
     return szBuff;
 }

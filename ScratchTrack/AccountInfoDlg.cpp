@@ -147,7 +147,7 @@ void AccountInfoDlg::getMasterSummary(std::wstring& summary, bool& isError)
 void AccountInfoDlg::updateReport()
 {
     HWND hRichText = GetDlgItem(_hThisDialg, IDC_RICHEDIT_SUMMARY);
-    SendMessageW(hRichText, WM_SETREDRAW, false, 0);
+    //SendMessageW(hRichText, WM_SETREDRAW, false, 0);
     SendMessageW(hRichText, WM_SETTEXT, 0, (LPARAM)L"");
 
     appendText(L"State of the budget\n", RGB(0, 0, 0), false, true, 14);
@@ -189,7 +189,6 @@ void AccountInfoDlg::updateReport()
         }
         
     }
-
-    SendMessageW(hRichText, WM_SETREDRAW, true, 0);
+    //SendMessageW(hRichText, WM_SETREDRAW, true, 0);
 
 }
