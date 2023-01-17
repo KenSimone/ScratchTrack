@@ -321,6 +321,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    updateGuiValues();
 
+   g_accountInfoDlg.updateReport();
    ShowWindow(g_hTopWindow, nCmdShow);
    UpdateWindow(g_hTopWindow);
 
@@ -1156,38 +1157,10 @@ void updateGuiValues(HTREEITEM item /*= NULL*/)
 
     if (topLevel)
     {
-        // Calc new window caption;
-        int iReservedDollars = 0, iBalance = 0;
-        std::vector<AccountBase*> accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
-        std::vector<AccountBase*> envelopes = AccountBase::getAllAccountsOfType(AccountBase::CATEGORY);
-
-        for (size_t i = 0; i < accounts.size(); i++) {
-            Account* pAccount = (Account * )accounts[i];
-            if (pAccount->isBudgeted()) {
-                iBalance += accounts[i]->getBalance();
-            }
-        }
-
-        for (size_t i = 0; i < envelopes.size(); i++) {
-            // This is a confusing operation. If a virtual account has a negative balance
-            // we conceptually treat it as if it had a bigger balance since the whole thing is
-            // a "how much do I deduct from what's available" operation. Hence the abs() here.
-            iReservedDollars += abs(envelopes[i]->getBalance());
-        }
-
-        int iAvailable = iBalance - iReservedDollars;
-
-        std::wstring totalDollars = Utils::penniesToDollarsString(iBalance);
-        std::wstring availableDollars = Utils::penniesToDollarsString(iBalance - iReservedDollars);
-
-        wchar_t szCaption[1024] = { 0 };
-        swprintf(szCaption, 1024, L"ScratchTrack: %s of %s available for spending", availableDollars.c_str(), totalDollars.c_str());
 
         SendMessage(g_hwndAccountLV, WM_SETREDRAW, TRUE, 0);
-        SetWindowText(g_hTopWindow, szCaption);
 
     }
-
 }
 
 void populateTransactions()
@@ -1336,13 +1309,15 @@ int serializeState()
 
     serialize(topItems, getPersistFile());
 
+    g_accountInfoDlg.updateReport();
+
     return ERROR_SUCCESS;
 }
 
 void positionControls()
 {
     static const double TREE_VERTICAL_SPACE = .65;
-    static const double TREE_HORIZONTAL_SPACE = .80;
+    static const double TREE_HORIZONTAL_SPACE = .70;
 
     RECT rClient = { 0 }, rTransFilter = { 0 };
     HDLAYOUT hdl = { 0 };
