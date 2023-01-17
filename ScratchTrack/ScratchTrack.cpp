@@ -914,8 +914,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 ScreenToClient(g_hwndTV, &pt);
                 tvhi.pt = pt;
 
-                HTREEITEM hItem = treeViewHitTestLinks(pt.x, pt.y);
-                if (hItem) 
+                ENVELOPE_TREE_LINK_ITEM::LINK_ITEM_TYPE type = ENVELOPE_TREE_LINK_ITEM::INVALID_LINK_ITEM_TYPE;
+                HTREEITEM hItem = treeViewHitTestLinks(pt.x, pt.y, type);
+                if (hItem && type == ENVELOPE_TREE_LINK_ITEM::TRANS_ADD)
                 {
                     // We've hit a hotlink
                     if (addTransaction(hItem)) {

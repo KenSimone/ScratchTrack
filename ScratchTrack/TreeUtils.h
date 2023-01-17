@@ -28,6 +28,20 @@ struct BUDGET_TREE_COLUMN_SIZES
     int _endSpot;
 };
 
+struct ENVELOPE_TREE_LINK_ITEM
+{
+    enum LINK_ITEM_TYPE
+    {
+        INVALID_LINK_ITEM_TYPE,
+        ENVELOPE_ADD,
+        ENVELOPE_EDIT,
+        TRANS_ADD,
+        FOLDER_EDIT
+    };
+    RECT rArea;
+    LINK_ITEM_TYPE type;
+};
+
 AccountBase* accountFromTreeItem(HTREEITEM item);
 HTREEITEM treeItemFromAccount(AccountBase* pItem, HTREEITEM hItem = TVI_ROOT);
 HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountBase* pAccount, HTREEITEM hInsertAfter = TVI_LAST);
@@ -38,4 +52,4 @@ void budgetTreeCreateTreeControl();
 void budgetTreeSetItemText(HTREEITEM hItem, const wchar_t* szText);
 void budgetTreeSetFont(HWND hCtrl);
 HTREEITEM hotLinkFromPoint(POINT pt);
-HTREEITEM treeViewHitTestLinks(LONG xCur, LONG yCur);
+HTREEITEM treeViewHitTestLinks(LONG xCur, LONG yCur, ENVELOPE_TREE_LINK_ITEM::LINK_ITEM_TYPE& itemType);

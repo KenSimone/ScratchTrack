@@ -18,13 +18,13 @@ int serializeState();
 
 BUDGET_TREE_COLUMN_SIZES g_columnSizes;
 
-std::map<HTREEITEM, RECT> g_links;
+//std::map<HTREEITEM, RECT> g_links;
+std::map<HTREEITEM, ENVELOPE_TREE_LINK_ITEM> g_links;
 
 HTREEITEM hotLinkFromPoint(POINT pt)
 {
     return nullptr;
 }
-
 
 LRESULT CALLBACK treeViewSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
@@ -288,18 +288,20 @@ HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountBase* pAccount, HTREEITEM hI
 
 }
 
-HTREEITEM treeViewHitTestLinks(LONG xCur, LONG yCur)
+HTREEITEM treeViewHitTestLinks(LONG xCur, LONG yCur, ENVELOPE_TREE_LINK_ITEM::LINK_ITEM_TYPE& itemType)
 {
     POINT point;
     point.x = xCur;
     point.y = yCur;
+    itemType = ENVELOPE_TREE_LINK_ITEM::INVALID_LINK_ITEM_TYPE;
 
     HTREEITEM hItem = nullptr;
     // Hotspot check
     for (auto itr = g_links.begin(); itr != g_links.end(); itr++)
     {
-        if (PtInRect(&itr->second, point))
+        if (PtInRect(&itr->second.rArea, point))
         {
+            itemType = itr->second.type;
             return itr->first;
         }
     }
@@ -342,7 +344,10 @@ bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
     {
         // Hotspot check
         HCURSOR hCursor = nullptr;
-        if (treeViewHitTestLinks(point.x, point.y)){
+
+        ENVELOPE_TREE_LINK_ITEM::LINK_ITEM_TYPE type = ENVELOPE_TREE_LINK_ITEM::INVALID_LINK_ITEM_TYPE;
+
+        if (treeViewHitTestLinks(point.x, point.y, type)){
             hCursor = LoadCursor(nullptr, IDC_HAND);
         }
 
@@ -498,7 +503,10 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
                 rHitArea.bottom = rHitArea.top + textSize.cy;
 
                 TextOut(pCustomDrawItem->nmcd.hdc, rHitArea.left, rHitArea.top, szAddTransaction, (int)wcslen(szAddTransaction));
-                g_links[hItem] = rHitArea;
+                ENVELOPE_TREE_LINK_ITEM lti = { 0 };
+                lti.type = ENVELOPE_TREE_LINK_ITEM::TRANS_ADD;
+                lti.rArea = rHitArea;
+                g_links[hItem] = lti;
 
                 // Clean up
                 SelectObject(pCustomDrawItem->nmcd.hdc, hOrigFont);
