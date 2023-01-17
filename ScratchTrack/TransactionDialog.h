@@ -18,7 +18,7 @@ public:
 	void setAmount(int amount) { _amount = amount; }
 	void setPayee(const wchar_t* szPayee) { _payee = szPayee; }
 	void setDescription(const wchar_t* szDescription) { _description = szDescription; }
-	void setCategoryId(unsigned int categoryId) { _categoryId = categoryId; }
+	void setEnvelopeId(unsigned int envelopeId) { _envelopeId = envelopeId; }
 	void setAccountFromId(unsigned int accountId) { _accountFromId = accountId; }
 	void setAccountToId(unsigned int accountToId) { _accountToId = accountToId; }
 
@@ -29,7 +29,7 @@ public:
 	int getAmount() { return _amount; }
 	const wchar_t* getPayee() { return _payee.c_str(); }
 	const wchar_t* getDescription() { return _description.c_str(); }
-	unsigned int getCategoryId() { return _categoryId; }
+	unsigned int getEnvelopeId() { return _envelopeId; }
 	unsigned int getAccountFromId() { return _accountFromId; }
 	unsigned int getAccountToId() { return _accountToId; }
 	bool getIsExpense() { return _isExpense; }
@@ -46,7 +46,7 @@ protected:
 
 	unsigned int _accountFromId;
 	unsigned int _accountToId;
-	unsigned int _categoryId;
+	unsigned int _envelopeId;
 
 	static INT_PTR CALLBACK TransactionDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 

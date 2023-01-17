@@ -129,15 +129,15 @@ void handleDragDrop(HTREEITEM hDragSource, HTREEITEM hDragTarget)
 
         HTREEITEM hNewParent = nullptr, hInsertAfter = TVI_LAST;
 
-        if (dropSource->getType() == AccountBase::CATEGORY && dropTarget->getType() == AccountBase::CATEGORY)
+        if (dropSource->getType() == AccountBase::ENVELOPE && dropTarget->getType() == AccountBase::ENVELOPE)
         {
             // This is the most common case, re-ordering categories
-            // The real drop target is the parent of the target category
+            // The real drop target is the parent of the target envelope
             AccountBase* pParent = dropTarget->getParent();
             hNewParent = treeItemFromAccount(pParent);
             hInsertAfter = hDragTarget;
         }
-        else if (dropSource->getType() == AccountBase::CATEGORY && dropTarget->getType() == AccountBase::GROUP)
+        else if (dropSource->getType() == AccountBase::ENVELOPE && dropTarget->getType() == AccountBase::GROUP)
         {
             // This is the second most common case, re-ordering categories, trying to get the item into the first spot
             hNewParent = hDragTarget;
@@ -150,10 +150,10 @@ void handleDragDrop(HTREEITEM hDragSource, HTREEITEM hDragTarget)
             hNewParent = TVI_ROOT;
             hInsertAfter = hDragTarget;
         }
-        else if ( dropSource->getType() == AccountBase::GROUP && dropTarget->getType() == AccountBase::CATEGORY)
+        else if ( dropSource->getType() == AccountBase::GROUP && dropTarget->getType() == AccountBase::ENVELOPE)
         {
-            // Someone has dropped a group on to a category. Assume they want to move the group after the
-            // parent of the category
+            // Someone has dropped a group on to a envelope. Assume they want to move the group after the
+            // parent of the envelope
             AccountBase* pParent = dropTarget->getParent();
             hNewParent = TVI_ROOT;
             hInsertAfter = treeItemFromAccount(pParent);
@@ -234,7 +234,7 @@ HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountBase* pAccount, HTREEITEM hI
 {
     static const DWORD IMG_ACCOUNT = 0;
     static const DWORD IMG_FOLDER = 1;
-    static const DWORD IMG_CATEGORY = 2;
+    static const DWORD IMG_ENVELOPE = 2;
     static const DWORD IMG_ADDMONEY = 3;
     static const DWORD IMG_SUBTRACTMONEY = 4;
 
@@ -254,8 +254,8 @@ HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountBase* pAccount, HTREEITEM hI
     case AccountBase::GROUP:
         tvi.itemex.iSelectedImage = tvi.itemex.iImage = IMG_FOLDER;
         break;
-    case AccountBase::CATEGORY:
-        if (((AccountCategory*)pAccount)->isExpense()) {
+    case AccountBase::ENVELOPE:
+        if (((AccountEnvelope*)pAccount)->isExpense()) {
             tvi.itemex.iSelectedImage = tvi.itemex.iImage = IMG_SUBTRACTMONEY;
         }
         else {
@@ -395,7 +395,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             case AccountBase::GROUP:
                 cr = GROUP_COLOR;
                 break;
-            case AccountBase::CATEGORY:
+            case AccountBase::ENVELOPE:
                 cr = ENVELOPE_COLOR;
                 break;
             }
@@ -431,11 +431,11 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             std::wstring balance = Utils::penniesToDollarsString(iBalance);
 
             // Amount budgeted for this item
-            int iBudget = pItem->getType() == AccountBase::CATEGORY ? pItem->getBudgeted() : pItem->budgetedToSubAccounts();
+            int iBudget = pItem->getType() == AccountBase::ENVELOPE ? pItem->getBudgeted() : pItem->budgetedToSubAccounts();
             std::wstring budgeted = Utils::penniesToDollarsString(iBudget);
 
             // Money allocated to this item
-            int iEnvelopes = pItem->getType() == AccountBase::CATEGORY ? pItem->getBalance() : pItem->allocatedToSubAccounts();
+            int iEnvelopes = pItem->getType() == AccountBase::ENVELOPE ? pItem->getBalance() : pItem->allocatedToSubAccounts();
             std::wstring allocated = Utils::penniesToDollarsString(iEnvelopes);
 
             // Sum of all transactions for this item
@@ -469,10 +469,10 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             TextOut(pCustomDrawItem->nmcd.hdc, inEnvelopes, pCustomDrawItem->nmcd.rc.top, transactionSum.c_str(), (int)transactionSum.length());
 
             // Balance
-            if (pItem->getType() == AccountBase::CATEGORY)
+            if (pItem->getType() == AccountBase::ENVELOPE)
             {
-                AccountCategory* pCategory = (AccountCategory*)pItem;
-                if (pCategory->isVirtualAccount()) {
+                AccountEnvelope* pEnvelope = (AccountEnvelope*)pItem;
+                if (pEnvelope->isVirtualAccount()) {
                     setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iBalance, selected, true);
                     TextOut(pCustomDrawItem->nmcd.hdc, balanceSpot, pCustomDrawItem->nmcd.rc.top, balance.c_str(), (int)balance.length());
                 }
@@ -573,7 +573,7 @@ void budgetTreeCreateTreeControl()
     // Create tree
     HDITEM item = { 0 };
     item.cxy = g_columnSizes._name;
-    item.pszText = const_cast<wchar_t*>(L"Category");
+    item.pszText = const_cast<wchar_t*>(L"Envelope");
     item.mask = HDI_TEXT | HDI_WIDTH;
     Header_InsertItem(g_hwndHeader, 99, &item);
 

@@ -9,7 +9,7 @@
 #include "ScratchTrack.h"
 #include "resource.h"
 #include "TransactionDialog.h"
-#include "CategoryDlg.h"
+#include "EnvelopeDlg.h"
 #include "AccountDlg.h"
 #include "Utils.h"
 #include "TreeUtils.h"
@@ -104,26 +104,26 @@ const char* getPersistFile()
     return szBuff;
 }
 
-void setupPaymentCategoryForAccount(Account* pAccount)
+void setupPaymentEnvelopeForAccount(Account* pAccount)
 {
-    if (pAccount->paidFromCategoryId() == MAXINT) {
+    if (pAccount->paidFromEnvelopeId() == MAXINT) {
         std::wstring catName = L"Pay ";
         catName += pAccount->getName();
 
-        // See if already have a category 
-        auto categories = AccountBase::getAllAccountsOfType(AccountBase::CATEGORY);
+        // See if already have a envelope 
+        auto categories = AccountBase::getAllAccountsOfType(AccountBase::ENVELOPE);
         auto groups = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
 
         for (size_t i = 0; i < categories.size(); i++)
         {
             if (_wcsicmp(catName.c_str(), categories[i]->getName()) == 0) {
-                // This seems to be the right category
-                pAccount->setPaidFromCategoryId(categories[i]->getId());
+                // This seems to be the right envelope
+                pAccount->setPaidFromEnvelopeId(categories[i]->getId());
                 return;
             }
         }
 
-        // We need to create a new category. First find a group to own it.
+        // We need to create a new envelope. First find a group to own it.
         AccountGroup* pGroup = nullptr;
         HTREEITEM hItemGroup = nullptr;
         std::wstring groupName = L"Credit cards";
@@ -144,17 +144,17 @@ void setupPaymentCategoryForAccount(Account* pAccount)
         }
 
 
-        // No existing category. Make one.
-        AccountCategory* pCategory = new AccountCategory;
-        pCategory->setName(catName.c_str());
-        pCategory->setDefaultTransactionPayToAccount(pAccount);
-        pCategory->setIsExpense(true);
-        pCategory->setIsVirtualAccount(true);
+        // No existing envelope. Make one.
+        AccountEnvelope* pEnvelope = new AccountEnvelope;
+        pEnvelope->setName(catName.c_str());
+        pEnvelope->setDefaultTransactionPayToAccount(pAccount);
+        pEnvelope->setIsExpense(true);
+        pEnvelope->setIsVirtualAccount(true);
 
-        pAccount->setPaidFromCategoryId(pCategory->getId());
+        pAccount->setPaidFromEnvelopeId(pEnvelope->getId());
 
-        pGroup->addChild(pCategory);
-        addTreeItem(hItemGroup, pCategory);
+        pGroup->addChild(pEnvelope);
+        addTreeItem(hItemGroup, pEnvelope);
     }
 }
 
@@ -215,7 +215,7 @@ void createTransactionListControl()
     column.pszText = const_cast<wchar_t*>(L"Payee");
     ListView_InsertColumn(g_hwndTransactionLV, 1, &column);
 
-    column.pszText = const_cast<wchar_t*>(L"Category");
+    column.pszText = const_cast<wchar_t*>(L"Envelope");
     ListView_InsertColumn(g_hwndTransactionLV, 2, &column);
 
     column.pszText = const_cast<wchar_t*>(L"Description");
@@ -358,39 +358,39 @@ bool addTransaction(HTREEITEM hItem)
     bool didSimonthing = false;
     AccountBase* pItem = accountFromTreeItem(hItem);
     TransactionDialog transactionDlg;
-    transactionDlg.setCategoryId(pItem->getId());
-    AccountCategory* pCategory = nullptr;
-    if (pItem->getType() == AccountBase::CATEGORY) {
-        pCategory = (AccountCategory*)pItem;
-        transactionDlg.setPayee(pCategory->getDefaultTransactionPayee());
-        transactionDlg.setAmount(pCategory->getDefaultTransactionAmount());
+    transactionDlg.setEnvelopeId(pItem->getId());
+    AccountEnvelope* pEnvelope = nullptr;
+    if (pItem->getType() == AccountBase::ENVELOPE) {
+        pEnvelope = (AccountEnvelope*)pItem;
+        transactionDlg.setPayee(pEnvelope->getDefaultTransactionPayee());
+        transactionDlg.setAmount(pEnvelope->getDefaultTransactionAmount());
 
-        if (pCategory->getDefaultTransactionPayToAccount()) {
-            transactionDlg.setAccountToId(pCategory->getDefaultTransactionPayToAccount()->getId());
+        if (pEnvelope->getDefaultTransactionPayToAccount()) {
+            transactionDlg.setAccountToId(pEnvelope->getDefaultTransactionPayToAccount()->getId());
         }
         else {
             transactionDlg.setAccountToId(MAXINT);
         }
 
-        if (pCategory->getDefaultTransactionPayFromAccount()) {
-            transactionDlg.setAccountFromId(pCategory->getDefaultTransactionPayFromAccount()->getId());
+        if (pEnvelope->getDefaultTransactionPayFromAccount()) {
+            transactionDlg.setAccountFromId(pEnvelope->getDefaultTransactionPayFromAccount()->getId());
         }
         else {
             transactionDlg.setAccountFromId(MAXINT);
         }
 
-        transactionDlg.setIsExpense(pCategory->isExpense());
-        if (pCategory->getDefaultTransactionPayFromAccount()) {
-            transactionDlg.setAccountFromId(pCategory->getDefaultTransactionPayFromAccount()->getId());
+        transactionDlg.setIsExpense(pEnvelope->isExpense());
+        if (pEnvelope->getDefaultTransactionPayFromAccount()) {
+            transactionDlg.setAccountFromId(pEnvelope->getDefaultTransactionPayFromAccount()->getId());
         }
     }
 
     if (transactionDlg.ShowDialog())
     {
-        Transaction::addTransaction(transactionDlg.getAmount(), transactionDlg.getAccountFromId(), transactionDlg.getAccountToId(), transactionDlg.getCategoryId(), transactionDlg.getPayee(), transactionDlg.getDescription());
+        Transaction::addTransaction(transactionDlg.getAmount(), transactionDlg.getAccountFromId(), transactionDlg.getAccountToId(), transactionDlg.getEnvelopeId(), transactionDlg.getPayee(), transactionDlg.getDescription());
 
-        // Apply the amount to the transaction category 
-        pCategory->addBalance(transactionDlg.getAmount());
+        // Apply the amount to the transaction envelope 
+        pEnvelope->addBalance(transactionDlg.getAmount());
 
         // Apply the amount to the account
         Account* pFromAccount = dynamic_cast<Account*>(AccountBase::lookupById(transactionDlg.getAccountFromId()));
@@ -409,13 +409,13 @@ bool addTransaction(HTREEITEM hItem)
             else
             {
                 // See if this is a payment from a CC account
-                AccountCategory* pToCategory = dynamic_cast<AccountCategory*>(AccountBase::lookupById(pFromAccount->paidFromCategoryId()));
-                if (pToCategory)
+                AccountEnvelope* pToEnvelope = dynamic_cast<AccountEnvelope*>(AccountBase::lookupById(pFromAccount->paidFromEnvelopeId()));
+                if (pToEnvelope)
                 {
-                    pToCategory->addBalance(-transactionDlg.getAmount());
-                    if (pCategory->getBalance() < 0)
+                    pToEnvelope->addBalance(-transactionDlg.getAmount());
+                    if (pEnvelope->getBalance() < 0)
                     {
-                        pCategory->addBalance(-pCategory->getBalance());
+                        pEnvelope->addBalance(-pEnvelope->getBalance());
                     }
                 }
             }
@@ -435,27 +435,27 @@ bool getOneText(std::wstring& result)
     return result[0] ? true : false;
 }
 
-bool editCategory(AccountCategory* pCategory)
+bool editEnvelope(AccountEnvelope* pEnvelope)
 {
-    CategoryDialog dlg;
-    dlg.setBudget(pCategory->getBudgeted());
-    dlg.setCategoryName(pCategory->getName());
-    dlg.setDefaultTransactionPayFromAccount(pCategory->getDefaultTransactionPayFromAccount());
-    dlg.setDefaultTransactionPayToAccount(pCategory->getDefaultTransactionPayToAccount());
-    dlg.setDefaultTransactionAmount(pCategory->getDefaultTransactionAmount());
-    dlg.setDefaultTransactionPayee(pCategory->getDefaultTransactionPayee());
-    dlg.setIsIncome(!pCategory->isExpense());
-    dlg.setIsVirtualAccount(pCategory->isVirtualAccount());
+    EnvelopeDialog dlg;
+    dlg.setBudget(pEnvelope->getBudgeted());
+    dlg.setEnvelopeName(pEnvelope->getName());
+    dlg.setDefaultTransactionPayFromAccount(pEnvelope->getDefaultTransactionPayFromAccount());
+    dlg.setDefaultTransactionPayToAccount(pEnvelope->getDefaultTransactionPayToAccount());
+    dlg.setDefaultTransactionAmount(pEnvelope->getDefaultTransactionAmount());
+    dlg.setDefaultTransactionPayee(pEnvelope->getDefaultTransactionPayee());
+    dlg.setIsIncome(!pEnvelope->isExpense());
+    dlg.setIsVirtualAccount(pEnvelope->isVirtualAccount());
     if (dlg.ShowDialog())
     {
-        pCategory->setBudgeted(dlg.getBudget());
-        pCategory->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
-        pCategory->setDefaultTransactionPayToAccount(dlg.getDefaultTransactionPayToAccount());
-        pCategory->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
-        pCategory->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
-        pCategory->setIsExpense(!dlg.getIsIncome());
-        pCategory->setIsVirtualAccount(dlg.getIsVirtual());
-        pCategory->setName(dlg.getCategoryName());
+        pEnvelope->setBudgeted(dlg.getBudget());
+        pEnvelope->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
+        pEnvelope->setDefaultTransactionPayToAccount(dlg.getDefaultTransactionPayToAccount());
+        pEnvelope->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
+        pEnvelope->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
+        pEnvelope->setIsExpense(!dlg.getIsIncome());
+        pEnvelope->setIsVirtualAccount(dlg.getIsVirtual());
+        pEnvelope->setName(dlg.getEnvelopeName());
         
         updateGuiValues();
 
@@ -484,9 +484,9 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
             didSomething = true;
         }
         break;
-    case ID_ROOT_EDITCATEGORY:
+    case ID_ROOT_EDITENVELOPE:
         //zzzz
-        didSomething = editCategory((AccountCategory*)pItem);
+        didSomething = editEnvelope((AccountEnvelope*)pItem);
         break;
     case ID_ROOT_ADD_TOP_LEVEL_ACCOUNT:
         if (pItem && getOneText(temp)) {
@@ -505,20 +505,20 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
         break;
     case ID_ROOT_ADDENVELOPE:
     {
-        CategoryDialog dlg;
+        EnvelopeDialog dlg;
         if (pParentGroup && dlg.ShowDialog()) {
-            AccountCategory* pCategory = new AccountCategory;
-            pCategory->setName(dlg.getCategoryName());
-            pCategory->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
-            pCategory->setDefaultTransactionPayToAccount(dlg.getDefaultTransactionPayToAccount());
-            pCategory->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
-            pCategory->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
-            pCategory->setIsExpense(!dlg.getIsIncome());
-            pCategory->setIsVirtualAccount(dlg.getIsVirtual());
-            pCategory->setBudgeted(dlg.getBudget());
+            AccountEnvelope* pEnvelope = new AccountEnvelope;
+            pEnvelope->setName(dlg.getEnvelopeName());
+            pEnvelope->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
+            pEnvelope->setDefaultTransactionPayToAccount(dlg.getDefaultTransactionPayToAccount());
+            pEnvelope->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
+            pEnvelope->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
+            pEnvelope->setIsExpense(!dlg.getIsIncome());
+            pEnvelope->setIsVirtualAccount(dlg.getIsVirtual());
+            pEnvelope->setBudgeted(dlg.getBudget());
 
-            pParentGroup->addChild(pCategory);
-            addTreeItem(hItem, pCategory);
+            pParentGroup->addChild(pEnvelope);
+            addTreeItem(hItem, pEnvelope);
             didSomething = true;
         }
         break;
@@ -541,19 +541,19 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
     dlg.setDescription(pTransaction->getDescription());
     dlg.setAccountFromId(pTransaction->getAccountFromId());
     dlg.setAccountToId(pTransaction->getAccountToId());
-    dlg.setCategoryId(pTransaction->getCategoryId());
+    dlg.setEnvelopeId(pTransaction->getEnvelopeId());
 
     if (dlg.ShowDialog())
     {
         // This is actually kind of complicated. 
         // We need to undo the original transacation first.
-        AccountCategory* pCategory = dynamic_cast<AccountCategory*>(AccountBase::lookupById(pTransaction->getCategoryId()));
+        AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(AccountBase::lookupById(pTransaction->getEnvelopeId()));
         Account* pAccountFrom = dynamic_cast<Account *>(AccountBase::lookupById(pTransaction->getAccountFromId()));
         Account* pAccountTo = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountToId()));
-        AccountCategory* pCategoryTo = dynamic_cast<AccountCategory*>(AccountBase::lookupById(pAccountFrom->paidFromCategoryId()));
+        AccountEnvelope* pEnvelopeTo = dynamic_cast<AccountEnvelope*>(AccountBase::lookupById(pAccountFrom->paidFromEnvelopeId()));
 
         int origAmount = pTransaction->getAmount();
-        pCategory->addBalance(-origAmount);
+        pEnvelope->addBalance(-origAmount);
 
         // Put the money back in the original account
         if (pAccountFrom) {
@@ -565,35 +565,35 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
             pAccountTo->addBalance(origAmount);
         }
 
-        // Take it out of the target category (if any)
-        if (pCategoryTo) {
-            pCategoryTo->addBalance(origAmount);
+        // Take it out of the target envelope (if any)
+        if (pEnvelopeTo) {
+            pEnvelopeTo->addBalance(origAmount);
         }
 
         // Now this is basically the same as add
-        pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), dlg.getCategoryId(), dlg.getAccountFromId(), dlg.getAccountToId());
+        pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), dlg.getEnvelopeId(), dlg.getAccountFromId(), dlg.getAccountToId());
 
-        pCategory = dynamic_cast<AccountCategory*>(AccountBase::lookupById(pTransaction->getCategoryId()));
+        pEnvelope = dynamic_cast<AccountEnvelope*>(AccountBase::lookupById(pTransaction->getEnvelopeId()));
         pAccountFrom = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountFromId()));
         pAccountTo = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountToId()));
-        pCategoryTo = dynamic_cast<AccountCategory*>(AccountBase::lookupById(pAccountFrom->paidFromCategoryId()));
+        pEnvelopeTo = dynamic_cast<AccountEnvelope*>(AccountBase::lookupById(pAccountFrom->paidFromEnvelopeId()));
 
-        // Record the expense in the category
-        pCategory->addBalance(pTransaction->getAmount());
+        // Record the expense in the envelope
+        pEnvelope->addBalance(pTransaction->getAmount());
 
         // Record the expense in the account
         if (pAccountFrom) {
             pAccountFrom->addBalance(pTransaction->getAmount());
         }
 
-        // If this is a transfer to a category, record the reverse of the expense in the target account 
+        // If this is a transfer to a envelope, record the reverse of the expense in the target account 
         if (pAccountTo) {
             pAccountTo->addBalance(-pTransaction->getAmount());
         }
 
-        // If this is a transfer to a category, record the reverse of the expense in the target category
-        if (pCategoryTo) {
-            pCategoryTo->addBalance(-pTransaction->getAmount());
+        // If this is a transfer to a envelope, record the reverse of the expense in the target envelope
+        if (pEnvelopeTo) {
+            pEnvelopeTo->addBalance(-pTransaction->getAmount());
         }
 
         // Payee
@@ -605,8 +605,8 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
         }
         ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 1, const_cast<wchar_t*>(payee.c_str()));
 
-        // Category
-        AccountBase* ati = AccountBase::lookupById(pTransaction->getCategoryId());
+        // Envelope
+        AccountBase* ati = AccountBase::lookupById(pTransaction->getEnvelopeId());
         if (ati) {
             ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 2, const_cast<wchar_t*>(ati->getName()));
         }
@@ -670,17 +670,17 @@ void editAccount(Account* pAccount)
 {
     AccountDlg dlg;
     dlg.setBalance(pAccount->getBalance());
-    dlg.setBudgeted(pAccount->isBudgeted());
+    dlg.setBudgeted(pAccount->getContributesToBudget());
     dlg.setName(pAccount->getName());
-    dlg.setCreditCard(pAccount->paidFromCategoryId() != MAXINT);
+    dlg.setCreditCard(pAccount->paidFromEnvelopeId() != MAXINT);
     if (dlg.ShowDialog())
     {
         pAccount->addBalance(-pAccount->getBalance());
         pAccount->addBalance(dlg.getBalance());
         pAccount->setName(dlg.getName());
-        pAccount->setIsBudgeted(dlg.getBudgeted());
+        pAccount->setContributesToBudget(dlg.getBudgeted());
         if (dlg.getCreditCard()) {
-            setupPaymentCategoryForAccount(pAccount);
+            setupPaymentEnvelopeForAccount(pAccount);
         }
         updateGuiValues();
         serializeState();
@@ -695,15 +695,16 @@ void doAddAccountDlg()
         Account* pAccount = new Account;
         pAccount->setName(dlg.getName());
         pAccount->addBalance(dlg.getBalance());
+        pAccount->setContributesToBudget(dlg.getBudgeted());
         if (dlg.getCreditCard()) {
-            setupPaymentCategoryForAccount(pAccount);
+            setupPaymentEnvelopeForAccount(pAccount);
         }
         addTreeItem(TVI_ROOT, pAccount);
         serializeState();
     }
 }
 
-void doAddCategory()
+void doAddEnvelope()
 {
     std::wstring temp;
     if (getOneText(temp)) {
@@ -766,8 +767,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             doAddAccountDlg();
             break;
         }
-        case ID_FILE_ADDCATEGORY:
-            doAddCategory();
+        case ID_FILE_ADDENVELOPE:
+            doAddEnvelope();
             break;
         default:
             return DefWindowProc(hWnd, message, wParam, lParam);
@@ -796,7 +797,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             else if (pHeader->code == AccountInfoDlg::NM_ACCOUNT_DIALOG_ADD_FOLDER)
             {
-                doAddCategory();
+                doAddEnvelope();
             }
 
         }
@@ -942,8 +943,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 auto acctBase = accountFromTreeItem(hItem);
                 if (acctBase)
                 {
-                    AccountCategory* pCategory = dynamic_cast<AccountCategory*>(acctBase);
-                    if (pCategory && editCategory(pCategory) ){
+                    AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(acctBase);
+                    if (pEnvelope && editEnvelope(pEnvelope) ){
                         serializeState();
                     }
                     return true;
@@ -976,7 +977,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_GROUP_MENU));
                         hMenu = GetSubMenu(hMenu, 0);
                     }
-                    else if (pItem->getType() == AccountBase::CATEGORY) {
+                    else if (pItem->getType() == AccountBase::ENVELOPE) {
                         hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_ENVELOPE_MENU));
                         hMenu = GetSubMenu(hMenu, 0);
 
@@ -1180,7 +1181,7 @@ void populateTransactions()
     }
 
     // Get Transactions for item
-    std::vector<Transaction*> Transactions = g_transactionFilterDlg.filterToCategorySelection() ? Transaction::getTransactionsForItem(pItem) : Transaction::getAllTransactions();
+    std::vector<Transaction*> Transactions = g_transactionFilterDlg.filterToEnvelopeSelection() ? Transaction::getTransactionsForItem(pItem) : Transaction::getAllTransactions();
 
     // Add them to the list view
     SendMessage(g_hwndTransactionLV, WM_SETREDRAW, FALSE, 0);
@@ -1207,7 +1208,7 @@ void populateTransactions()
             matched = matched || Utils::searchText(pCurTransaction->getPayee(), filterText.c_str());
             matched = matched || Utils::searchText(amount.c_str(), filterText.c_str());
 
-            AccountBase* pCat = AccountBase::lookupById(pCurTransaction->getCategoryId());
+            AccountBase* pCat = AccountBase::lookupById(pCurTransaction->getEnvelopeId());
             if (pCat) {
                 matched = matched || Utils::searchText(pCat->getName(), filterText.c_str());
             }
@@ -1235,8 +1236,8 @@ void populateTransactions()
 
         ListView_SetItemText(g_hwndTransactionLV, 0, 1, const_cast<wchar_t*>(payee.c_str()));
 
-        // Category
-        AccountBase* ati = AccountBase::lookupById((*itr)->getCategoryId());
+        // Envelope
+        AccountBase* ati = AccountBase::lookupById((*itr)->getEnvelopeId());
         if (ati) {
             ListView_SetItemText(g_hwndTransactionLV, 0, 2, const_cast<wchar_t*>(ati->getName()));
         }
@@ -1342,10 +1343,10 @@ void positionControls()
     int transListTop = transFilterTop + (rTransFilter.bottom - rTransFilter.top); // Top of transaction list, which is below the filter
     int transListHeight = rClient.bottom - transListTop; // From the top of the transaction list to the bottom of the screen
 
-    // Category tree header
+    // Envelope tree header
     SetWindowPos(g_hwndHeader, wp.hwndInsertAfter, treeleft, 0, wp.cx, wp.cy, wp.flags | SWP_SHOWWINDOW);
 
-    // Category tree control
+    // Envelope tree control
     SetWindowPos(g_hwndTV, nullptr, treeleft, rClient.top, rClient.right, transFilterTop - 1 - wp.cy, SWP_NOZORDER);
 
     // Accounts listview

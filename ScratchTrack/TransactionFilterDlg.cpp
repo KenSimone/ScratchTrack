@@ -47,9 +47,9 @@ INT_PTR CALLBACK TransactionFilterDlg::TransactionFilterDlgProc(HWND hwnd, UINT 
     //return TRUE;
 }
 
-bool TransactionFilterDlg::filterToCategorySelection()
+bool TransactionFilterDlg::filterToEnvelopeSelection()
 {
-    return SendDlgItemMessage(_hThisDialg, IDC_CHECK_FILTER_TO_CATEGORY, BM_GETCHECK, 0, 0);
+    return SendDlgItemMessage(_hThisDialg, IDC_CHECK_FILTER_TO_ENVELOPE, BM_GETCHECK, 0, 0);
 }
 
 std::wstring TransactionFilterDlg::filterText()

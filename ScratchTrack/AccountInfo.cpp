@@ -141,8 +141,8 @@ AccountBase* AccountItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	case AccountBase::GROUP:
 		pItem = new AccountGroup;
 		break;
-	case AccountBase::CATEGORY:
-		pItem = new AccountCategory;
+	case AccountBase::ENVELOPE:
+		pItem = new AccountEnvelope;
 		break;
 	}
 
@@ -250,7 +250,7 @@ int AccountBase::getCurrentMonthTransacationTotal()
 		if ((transactionTime.wYear == currentTime.wYear) &&
 			(transactionTime.wMonth == currentTime.wMonth))
 		{
-			if (accountIds.find((*itr)->getCategoryId()) != accountIds.end())
+			if (accountIds.find((*itr)->getEnvelopeId()) != accountIds.end())
 			{
 				ret += (*itr)->getAmount();
 			}
@@ -274,7 +274,7 @@ int AccountGroup::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	return ERROR_SUCCESS;
 }
 
-int AccountCategory::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
+int AccountEnvelope::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 {
 	AccountBase::initItemFromXmlElement(pAccount);
 
@@ -306,7 +306,7 @@ int AccountCategory::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	return ERROR_SUCCESS;
 }
 
-int AccountCategory::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement)
+int AccountEnvelope::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement)
 {
 	tinyxml2::XMLElement* pNewElement = nullptr;
 	if (!ppSerializedElement) {
@@ -338,8 +338,8 @@ int AccountCategory::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLEleme
 int Account::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 {
 	AccountBase::initItemFromXmlElement(pAccount);
-	pAccount->QueryBoolAttribute("isBudgeted", &_isBudgeted);
-	pAccount->QueryUnsignedAttribute("paidFromCategoryId", &_paidFromCategoryId);
+	pAccount->QueryBoolAttribute("getContributesToBudget", &_isBudgeted);
+	pAccount->QueryUnsignedAttribute("paidFromEnvelopeId", &_paidFromEnvelopeId);
 	return ERROR_SUCCESS;
 }
 
@@ -354,8 +354,8 @@ int Account::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppS
 	AccountBase::serialize(pParent, ppSerializedElement);
 
 	// Add our own attributes
-	pNewElement->SetAttribute("isBudgeted", _isBudgeted);
-	pNewElement->SetAttribute("paidFromCategoryId", _paidFromCategoryId);
+	pNewElement->SetAttribute("getContributesToBudget", _isBudgeted);
+	pNewElement->SetAttribute("paidFromEnvelopeId", _paidFromEnvelopeId);
 	return ERROR_SUCCESS;
 
 }

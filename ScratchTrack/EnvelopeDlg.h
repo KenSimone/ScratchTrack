@@ -7,16 +7,16 @@
 class AccountBase;
 class Account;
 
-class CategoryDialog
+class EnvelopeDialog
 {
 public:
-	CategoryDialog();
-	~CategoryDialog();
+	EnvelopeDialog();
+	~EnvelopeDialog();
 
 	bool ShowDialog();
 
 	// Pre-show functions
-	void setCategoryName(const wchar_t* szCategory) { _name = szCategory;  }
+	void setEnvelopeName(const wchar_t* szEnvelope) { _name = szEnvelope;  }
 	void setBudget(int budget) { _budget = budget; }
 	void setDefaultTransactionAmount(int defTransAmt) { _amount = defTransAmt; }
 	void setDefaultTransactionPayFromAccount(Account* pDefaultAccount) { _pDefaultTransactionPayFromAccount = pDefaultAccount; }
@@ -26,7 +26,7 @@ public:
 	void setIsVirtualAccount(bool isVirtual) { _isVirtual = isVirtual; }
 
 	// Post-show functions
-	const wchar_t* getCategoryName() { return _name.c_str(); }
+	const wchar_t* getEnvelopeName() { return _name.c_str(); }
 	int getBudget() { return _budget; }
 	int getDefaultTransactionAmount() { return _amount; }
 	Account* getDefaultTransactionPayFromAccount() { return _pDefaultTransactionPayFromAccount; }
@@ -41,14 +41,14 @@ protected:
 	Account* _pDefaultTransactionPayFromAccount;
 	Account* _pDefaultTransactionPayToAccount;
 	std::wstring _payee;
-	std::wstring _category;
+	std::wstring _envelope;
 	int _amount;
 	int _budget;
 	bool _isIncome;
 	bool _isVirtual;
 
-	static INT_PTR CALLBACK CategoryDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
+	static INT_PTR CALLBACK EnvelopeDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 
-	static CategoryDialog* PTHIS;
+	static EnvelopeDialog* PTHIS;
 };
 

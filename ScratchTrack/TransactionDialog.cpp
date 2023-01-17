@@ -9,7 +9,7 @@
 extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 
-TransactionDialog::TransactionDialog() : _amount(0), _accountFromId(0), _categoryId(0), _accountToId(MAXINT)
+TransactionDialog::TransactionDialog() : _amount(0), _accountFromId(0), _envelopeId(0), _accountToId(MAXINT)
 {
 }
 
@@ -77,13 +77,13 @@ INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT messag
             SendDlgItemMessage(hDlg, IDC_CHECK_PAY_TO_ACCOUNT, BM_SETCHECK, THIS_PTR->getAccountToId() != MAXINT ? BST_CHECKED : BST_UNCHECKED, 0);
 
             // Categories
-            HWND hCategories = GetDlgItem(hDlg, IDC_COMBO_CATEGORY);
-            auto categories = AccountBase::getAllAccountsOfType(AccountBase::CATEGORY);
+            HWND hCategories = GetDlgItem(hDlg, IDC_COMBO_ENVELOPE);
+            auto categories = AccountBase::getAllAccountsOfType(AccountBase::ENVELOPE);
             for (auto itr = categories.begin(); itr != categories.end(); itr++) {
                 int pos = (int)SendMessage(hCategories, CB_ADDSTRING, 0, (LPARAM)(*itr)->getName());
                 SendMessage(hCategories, CB_SETITEMDATA, pos, (LPARAM)*itr);
                 AccountBase* pAccount = *itr;
-                if (pAccount->getId() == THIS_PTR->getCategoryId()) {
+                if (pAccount->getId() == THIS_PTR->getEnvelopeId()) {
                     ComboBox_SetCurSel(hCategories, pos);
                 }
             }

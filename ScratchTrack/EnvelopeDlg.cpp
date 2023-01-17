@@ -1,4 +1,4 @@
-#include "CategoryDlg.h"
+#include "EnvelopeDlg.h"
 #include "resource.h"
 #include "AccountInfo.h"
 #include "Transaction.h"
@@ -10,20 +10,20 @@
 extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 
-CategoryDialog::CategoryDialog() : _amount(0), _isIncome(false), _pDefaultTransactionPayFromAccount(nullptr), _isVirtual(true), _budget(0)
+EnvelopeDialog::EnvelopeDialog() : _amount(0), _isIncome(false), _pDefaultTransactionPayFromAccount(nullptr), _isVirtual(true), _budget(0)
 {
 
 }
 
-CategoryDialog::~CategoryDialog()
+EnvelopeDialog::~EnvelopeDialog()
 {
 
 }
 
-bool CategoryDialog::ShowDialog()
+bool EnvelopeDialog::ShowDialog()
 {
     PTHIS = this;
-    INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_CATEGORY_DIALOG), g_hTopWindow, CategoryDialogProc);
+    INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_ENVELOPE_DIALOG), g_hTopWindow, EnvelopeDialogProc);
     PTHIS = nullptr;
 
     return result == IDOK;
@@ -45,7 +45,7 @@ void enableDisableUi(HWND hDlg)
 
 }
 
-INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK EnvelopeDialog::EnvelopeDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     UNREFERENCED_PARAMETER(lParam);
     switch (message)
@@ -57,7 +57,7 @@ INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPA
             SendDlgItemMessage(hDlg, IDC_CHECK_VIRTUAL_ACCOUNT, BM_SETCHECK, PTHIS->getIsVirtual() ? BST_CHECKED : BST_UNCHECKED, 0);
 
             HWND hCatNameEdit = GetDlgItem(hDlg, IDC_EDIT_CAT_NAME);
-            SetWindowText(hCatNameEdit, const_cast<wchar_t*>(PTHIS->getCategoryName()));
+            SetWindowText(hCatNameEdit, const_cast<wchar_t*>(PTHIS->getEnvelopeName()));
 
             HWND hAccountCombo = GetDlgItem(hDlg, IDC_COMBO_CAT_ACCOUNT);
             HWND hAccountToCombo = GetDlgItem(hDlg, IDC_COMBO_ACCOUNT_TO2);
@@ -154,7 +154,7 @@ INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPA
                     // Name
                     wchar_t szBuff[1024] = { 0 };
                     GetDlgItemText(hDlg, IDC_EDIT_CAT_NAME, szBuff, 1024);
-                    PTHIS->setCategoryName(szBuff);
+                    PTHIS->setEnvelopeName(szBuff);
 
                     // Account from
                     HWND hAccountCombo = GetDlgItem(hDlg, IDC_COMBO_CAT_ACCOUNT);
@@ -224,4 +224,4 @@ INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPA
     return (INT_PTR)FALSE;
 }
 
-CategoryDialog* CategoryDialog::PTHIS = nullptr;
+EnvelopeDialog* EnvelopeDialog::PTHIS = nullptr;

@@ -13,7 +13,7 @@ public:
 	HWND create(HWND hParent);
 	operator HWND() { return _hThisDialg;  }
 
-	bool filterToCategorySelection();
+	bool filterToEnvelopeSelection();
 	std::wstring filterText();
 
 	static const UINT NM_TRANS_DIALOG_FIRST = 0x8000;

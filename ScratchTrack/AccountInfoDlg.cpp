@@ -115,11 +115,11 @@ void AccountInfoDlg::getMasterSummary(std::wstring& summary, bool& isError)
     // Calc new window caption;
     int iReservedDollars = 0, iBalance = 0;
     std::vector<AccountBase*> accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
-    std::vector<AccountBase*> envelopes = AccountBase::getAllAccountsOfType(AccountBase::CATEGORY);
+    std::vector<AccountBase*> envelopes = AccountBase::getAllAccountsOfType(AccountBase::ENVELOPE);
 
     for (size_t i = 0; i < accounts.size(); i++) {
         Account* pAccount = (Account*)accounts[i];
-        if (pAccount->isBudgeted()) {
+        if (pAccount->getContributesToBudget()) {
             iBalance += accounts[i]->getBalance();
         }
     }
@@ -173,16 +173,16 @@ void AccountInfoDlg::updateReport()
         }
     }
 
-    auto categories = AccountBase::getAllAccountsOfType(AccountBase::CATEGORY);
+    auto categories = AccountBase::getAllAccountsOfType(AccountBase::ENVELOPE);
     for (size_t i = 0; i < categories.size(); i++)
     {
-        auto category = categories[i];
-        if (category->getBalance() < 0)
+        auto envelope = categories[i];
+        if (envelope->getBalance() < 0)
         {
-            std::wstring balance = Utils::penniesToDollarsString(category->getBalance());
+            std::wstring balance = Utils::penniesToDollarsString(envelope->getBalance());
             appendText(L"\u26A0 : ", RGB(255, 0, 0), false, false, 13);
-            appendText(L"Category '", RGB(255, 0, 0), false, false, 12);
-            appendText(category->getName(), RGB(255, 0, 0), false, false, 12);
+            appendText(L"Envelope '", RGB(255, 0, 0), false, false, 12);
+            appendText(envelope->getName(), RGB(255, 0, 0), false, false, 12);
             appendText(L"' negative balance ", RGB(255, 0, 0), false, false, 12);
             appendText(balance.c_str(), RGB(255, 0, 0), false, false, 12);
             appendText(L"\n", RGB(255, 0, 0), false, false, 12);

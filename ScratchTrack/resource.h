@@ -28,7 +28,7 @@
 #define IDI_ADD_MONEYICON               150
 #define IDI_SUBTRACT_MONEY_ICON         151
 #define IDR_MENU_ACCOUNT                152
-#define IDD_CATEGORY_DIALOG             153
+#define IDD_ENVELOPE_DIALOG             153
 #define IDD_ACCOUNT_DIALOG              154
 #define IDD_TRANSACTION_FILTER_DIALOG   156
 #define IDD_BUDGET_INFO_DIALOG          157
@@ -39,7 +39,7 @@
 #define IDC_RADIO_EXPENSE               1003
 #define IDC_EDIT_Transaction_DESCRIPTION 1004
 #define IDC_EDIT_Transaction_PAYEE      1005
-#define IDC_COMBO_CATEGORY              1007
+#define IDC_COMBO_ENVELOPE              1007
 #define IDC_COMBO_ACCOUNT               1008
 #define IDC_COMBO_PAYEE                 1009
 #define IDC_EDIT_CAT_NAME               1009
@@ -56,7 +56,7 @@
 #define IDC_CHECK_PAY_TO_ACCOUNT        1018
 #define IDC_CHECK_BUDGETED2             1018
 #define IDC_CHECK_CREDIT_CARD           1018
-#define IDC_CHECK_FILTER_TO_CATEGORY    1019
+#define IDC_CHECK_FILTER_TO_ENVELOPE    1019
 #define IDC_EDIT_TRANSACTION_FILTER     1020
 #define IDC_BUTTON_APPLY_TRANSACTION_FILTER 1021
 #define IDC_BUTTON_ADD_ACCOUNT          1022
@@ -91,10 +91,10 @@
 #define ID_ACCOUNT_SETBALANCE           33014
 #define ID_ACCOUNT_RENAME               33015
 #define ID_FILE_ADDACCOUNT              33016
-#define ID_FILE_ADDCATEGORY             33017
+#define ID_FILE_ADDENVELOPE             33017
 #define ID_ROOT_EDITACCOUNT             33018
 #define ID_ENVELOPE_RESERVE_FUNDS       33019
-#define ID_ROOT_EDITCATEGORY            33020
+#define ID_ROOT_EDITENVELOPE            33020
 #define IDC_STATIC                      -1
 
 // Next default values for new objects

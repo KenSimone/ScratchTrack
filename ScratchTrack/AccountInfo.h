@@ -22,7 +22,7 @@ public:
 	{
 		ACCOUNT, // Holds funds
 		GROUP, // Display-only method for dividing envelopes
-		CATEGORY // A virtual account, essentially
+		ENVELOPE // A virtual account, essentially
 	}; // enum accountItemType
 
 	// Construction / destruction
@@ -224,27 +224,27 @@ protected:
 class Account : public AccountBase
 {
 public:
-	Account() : AccountBase(ACCOUNT), _isBudgeted(true), _paidFromCategoryId(MAXINT) {};
+	Account() : AccountBase(ACCOUNT), _isBudgeted(true), _paidFromEnvelopeId(MAXINT) {};
 
-	bool isBudgeted() { return _isBudgeted;  }
-	void setIsBudgeted(bool budgeted) { _isBudgeted = budgeted; }
+	bool getContributesToBudget() { return _isBudgeted;  }
+	void setContributesToBudget(bool budgeted) { _isBudgeted = budgeted; }
 
 	// If this is a credit card account, when an expense is charged to this account,
-	// funds will be taken from the expense category and applied to '_paidFromCategoryId'.
-	// This allows "paying" for items via credit card (removing funds from a category), and
+	// funds will be taken from the expense envelope and applied to '_paidFromEnvelopeId'.
+	// This allows "paying" for items via credit card (removing funds from a envelope), and
 	// still properly tracking expenses.
 	// 
 	// Example
-	// 1) Dining transaction category has a balance of $50 dollars.
+	// 1) Dining transaction envelope has a balance of $50 dollars.
 	// 2) You spend $25 dollars at McDonalds, and pay with a credit card.
-	// 3) You record the transaction against the dining category, paid with CC.
-	// 4) $25 dollars comes out of the dining category and moves to the "pay cc" category.
+	// 3) You record the transaction against the dining envelope, paid with CC.
+	// 4) $25 dollars comes out of the dining envelope and moves to the "pay cc" envelope.
 	// 5) The CC account balance is deducted by $25.
 	//
 	// Later, when the credit card is paid, record an expense transaction against that 
-	// category.
-	unsigned int paidFromCategoryId() { return _paidFromCategoryId; }
-	void setPaidFromCategoryId(unsigned int paidFromCategoryId) { _paidFromCategoryId = paidFromCategoryId; }
+	// envelope.
+	unsigned int paidFromEnvelopeId() { return _paidFromEnvelopeId; }
+	void setPaidFromEnvelopeId(unsigned int paidFromEnvelopeId) { _paidFromEnvelopeId = paidFromEnvelopeId; }
 
 	// The item-type (account/group/envelope)
 	virtual accountItemType getType() { return AccountBase::ACCOUNT; }
@@ -254,18 +254,18 @@ public:
 
 protected:
 	bool _isBudgeted;
-	unsigned int _paidFromCategoryId;
+	unsigned int _paidFromEnvelopeId;
 
 }; // class Account
 
-// Envelope (category) class and implementation
-class AccountCategory : public AccountBase
+// Envelope (envelope) class and implementation
+class AccountEnvelope : public AccountBase
 {
 public:
-	AccountCategory() : AccountBase(CATEGORY), _pDefaultTransactionPayFromAccount(nullptr), _defaultTransactionAmount(0), 
+	AccountEnvelope() : AccountBase(ENVELOPE), _pDefaultTransactionPayFromAccount(nullptr), _defaultTransactionAmount(0), 
 		_isExpense(true), _isVirtualAccount(false), _pDefaultTransactionPayToAccount(nullptr) {};
 
-	virtual accountItemType getType() { return AccountBase::CATEGORY; }
+	virtual accountItemType getType() { return AccountBase::ENVELOPE; }
 
 	// Transaction defaults
 	int getDefaultTransactionAmount() { return _defaultTransactionAmount; }
@@ -281,6 +281,16 @@ public:
 
 	bool isExpense() { return _isExpense; }
 	bool isVirtualAccount() { return _isVirtualAccount; }
+
+	virtual void addBalance(int balance) 
+	{ 
+		// An envelope can't have negative money in it
+		_balance += balance; 
+		if (_balance < 0) {
+			_balance = 0;
+		}
+	}
+
 
 	void setIsExpense(bool isExpense) { _isExpense = isExpense; }
 	void setIsVirtualAccount(bool isVirtualAccount) { _isVirtualAccount = isVirtualAccount; }

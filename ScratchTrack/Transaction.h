@@ -12,25 +12,25 @@ class AccountBase;
 class Transaction
 {
 public:
-	static Transaction* addTransaction(int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int categoryId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp = nullptr);
+	static Transaction* addTransaction(int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int envelopeId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp = nullptr);
 	static int deserialize(tinyxml2::XMLElement* pRoot);
 
 	static std::vector<Transaction*> getTransactionsForItem(AccountBase* pItem);
 	static std::vector<Transaction*> getAllTransactions();
 
 	int getAmount() { return _amount; }
-	unsigned int getCategoryId() { return _categoryId; }
+	unsigned int getEnvelopeId() { return _envelopeId; }
 	unsigned int getAccountFromId() { return _payFromAccountId; }
 	unsigned int getAccountToId() { return _payToAccountId; }
 	const wchar_t* getPayee() { return _payee.c_str(); }
 	const wchar_t* getDescription() { return _description.c_str(); }
 
-	void setDetails(int amount, const wchar_t* szPayee, const wchar_t* szDesc, int categoryId, int accountFromId, int accountToId)
+	void setDetails(int amount, const wchar_t* szPayee, const wchar_t* szDesc, int envelopeId, int accountFromId, int accountToId)
 	{
 		_amount = amount;
 		_payee = szPayee;
 		_description = szDesc;
-		_categoryId = categoryId;
+		_envelopeId = envelopeId;
 		_payToAccountId = accountToId;
 		_payFromAccountId = accountFromId;
 	}
@@ -50,7 +50,7 @@ public:
 	virtual int serialize(tinyxml2::XMLElement* pParent);
 
 protected:
-	Transaction(int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int categoryId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp = nullptr)
+	Transaction(int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int envelopeId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp = nullptr)
 	{
 		if (pTimeStamp) {
 			_timestamp = *pTimeStamp;
@@ -60,7 +60,7 @@ protected:
 		}
 
 		_amount = amount;
-		_categoryId = categoryId;
+		_envelopeId = envelopeId;
 		_payFromAccountId = payFromAccountId;
 		_payToAccountId = payToAccountId;
 		if (szPayee) {
@@ -74,7 +74,7 @@ protected:
 
 protected:
 	int _amount;
-	unsigned int _categoryId;
+	unsigned int _envelopeId;
 	unsigned int _payFromAccountId;
 	unsigned int _payToAccountId;
 	std::wstring _payee;
