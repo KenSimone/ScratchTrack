@@ -893,7 +893,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             if (pHeader->code == TVN_SELCHANGED)
             {
-                populateTransactions();
+                if (g_transactionFilterDlg.filterToEnvelopeSelection()) {
+                    populateTransactions();
+                }
             }
             else if (pHeader->code == TVN_BEGINDRAG)
             {

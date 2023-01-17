@@ -26,7 +26,7 @@ HTREEITEM hotLinkFromPoint(POINT pt)
 }
 
 
-LRESULT treeViewSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+LRESULT CALLBACK treeViewSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
     if (uMsg == WM_SETCURSOR)
     {
@@ -343,11 +343,11 @@ bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
         // Hotspot check
         HCURSOR hCursor = nullptr;
         if (treeViewHitTestLinks(point.x, point.y)){
-            hCursor = LoadCursor(nullptr, MAKEINTRESOURCE(IDC_HAND));
+            hCursor = LoadCursor(nullptr, IDC_HAND);
         }
 
         if ( !hCursor ) {
-            hCursor = LoadCursor(nullptr, MAKEINTRESOURCE(IDC_ARROW));
+            hCursor = LoadCursor(nullptr, IDC_ARROW);
         }
 
         SetCursor(hCursor);
@@ -581,7 +581,7 @@ void budgetTreeCreateTreeControl()
     item.cxy = g_columnSizes._budgeted;
     Header_InsertItem(g_hwndHeader, 99, &item);
 
-    item.pszText = const_cast<wchar_t*>(L"Cashflow");
+    item.pszText = const_cast<wchar_t*>(L"Actual");
     item.cxy = g_columnSizes._inCategories;
     Header_InsertItem(g_hwndHeader, 99, &item);
 
