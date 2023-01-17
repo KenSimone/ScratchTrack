@@ -17,7 +17,7 @@ public:
 	std::wstring filterText();
 
 	static const UINT NM_TRANS_DIALOG_FIRST = 0x8000;
-	static const UINT NM_TRANS_DIALOG_FILTER_CHANGED = 0x8000;
+	static const UINT NM_TRANS_DIALOG_FILTER_CHANGED = NM_TRANS_DIALOG_FIRST + 0;
 
 
 protected:

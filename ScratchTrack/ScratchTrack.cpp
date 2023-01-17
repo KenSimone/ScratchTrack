@@ -14,6 +14,7 @@
 #include "Utils.h"
 #include "TreeUtils.h"
 #include "TransactionFilterDlg.h"
+#include "AccountInfoDlg.h"
 
 #include <commctrl.h>
 #include <Windows.h>
@@ -34,6 +35,7 @@ WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 wchar_t szOneInputText[1024] = { 0 };
 double g_fontScale = 1.0;
 TransactionFilterDlg g_transactionFilterDlg;
+AccountInfoDlg g_accountInfoDlg;
 
 extern BUDGET_TREE_COLUMN_SIZES g_columnSizes;
 extern BUDGET_TREE_DRAG_DETAILS g_btDragDetails;
@@ -285,6 +287,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    budgetTreeCreateTreeControl();
    createTransactionListControl();
    g_transactionFilterDlg.create(g_hTopWindow);
+   g_accountInfoDlg.create(g_hTopWindow);
 
 
    // Populate data (load or create new)
@@ -499,15 +502,6 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
             didSomething = true;
         }
         break;
-    case ID_ROOT_ADD_GROUP:
-        if (pItem && pParentGroup && getOneText(temp)) {
-            AccountGroup* pGroup = new AccountGroup;
-            pGroup->setName(szOneInputText);
-            pParentGroup->addChild(pGroup);
-            addTreeItem(hItem, pGroup);
-            didSomething = true;
-        }
-        break;
     case ID_ROOT_ADDENVELOPE:
     {
         CategoryDialog dlg;
@@ -692,6 +686,33 @@ void editAccount(Account* pAccount)
     }
 }
 
+void doAddAccountDlg()
+{
+    AccountDlg dlg;
+    dlg.setBudgeted(true);
+    if (dlg.ShowDialog()) {
+        Account* pAccount = new Account;
+        pAccount->setName(dlg.getName());
+        pAccount->addBalance(dlg.getBalance());
+        if (dlg.getCreditCard()) {
+            setupPaymentCategoryForAccount(pAccount);
+        }
+        addTreeItem(TVI_ROOT, pAccount);
+        serializeState();
+    }
+}
+
+void doAddCategory()
+{
+    std::wstring temp;
+    if (getOneText(temp)) {
+        AccountGroup* pGroup = new AccountGroup;
+        pGroup->setName(temp.c_str());
+        addTreeItem(TVI_ROOT, pGroup);
+        serializeState();
+    }
+}
+
 //
 //  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
 //
@@ -741,31 +762,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             break;
         case ID_FILE_ADDACCOUNT:
         {
-            AccountDlg dlg;
-            dlg.setBudgeted(true);
-            if (dlg.ShowDialog()) {
-                Account* pAccount = new Account;
-                pAccount->setName(dlg.getName());
-                pAccount->addBalance(dlg.getBalance());
-                if (dlg.getCreditCard()) {
-                    setupPaymentCategoryForAccount(pAccount);
-                }
-                addTreeItem(TVI_ROOT, pAccount);
-                serializeState();
-            }
+            doAddAccountDlg();
             break;
         }
         case ID_FILE_ADDCATEGORY:
-        {//zzzz
-            std::wstring temp;
-            if (getOneText(temp)) {
-                AccountGroup* pGroup = new AccountGroup;
-                pGroup->setName(temp.c_str());
-                addTreeItem(TVI_ROOT, pGroup);
-                serializeState();
-            }
+            doAddCategory();
             break;
-        }
         default:
             return DefWindowProc(hWnd, message, wParam, lParam);
         }
@@ -785,7 +787,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_NOTIFY:
     {
         LPNMHDR pHeader = (LPNMHDR)lParam;
-        if (pHeader->idFrom == IDD_TRANSACTION_FILTER_DIALOG && pHeader->code == TransactionFilterDlg::NM_TRANS_DIALOG_FILTER_CHANGED)
+        if (pHeader->idFrom == IDD_BUDGET_INFO_DIALOG) {
+            if (pHeader->code == AccountInfoDlg::NM_ACCOUNT_INFO_DIALOG_ADD_ACCOUNT)
+            {
+                doAddAccountDlg();
+
+            }
+            else if (pHeader->code == AccountInfoDlg::NM_ACCOUNT_DIALOG_ADD_FOLDER)
+            {
+                doAddCategory();
+            }
+
+        }
+        else if (pHeader->idFrom == IDD_TRANSACTION_FILTER_DIALOG && pHeader->code == TransactionFilterDlg::NM_TRANS_DIALOG_FILTER_CHANGED)
         {
             populateTransactions();
         }
@@ -1340,10 +1354,18 @@ void positionControls()
 
     GetWindowRect(g_transactionFilterDlg, &rTransFilter);
 
-    int treeleft = (int)(rClient.right * (1.0 - TREE_HORIZONTAL_SPACE));
-    int transFilterTop = (int)(rClient.bottom * TREE_VERTICAL_SPACE);
-    int listtop = transFilterTop + (rTransFilter.bottom - rTransFilter.top);
-    int listheight = rClient.bottom - listtop;
+    int treeleft = (int)(rClient.right * (1.0 - TREE_HORIZONTAL_SPACE)); // Left size of the tree, the account stuff is to the right
+    int accountListTop = 0;
+    int accountListLeft = 0;
+    int accountListRight = treeleft - 1;
+    int accountListBottom = (int)(rClient.bottom * TREE_VERTICAL_SPACE) /2;
+
+    int accountInfoTop = accountListBottom + 1; //  Below the account list
+    int accountInfoBottom = (int)(rClient.bottom * TREE_VERTICAL_SPACE) - 1; // Same height as the tree
+
+    int transFilterTop = accountInfoBottom+1; // Top of the transaction filter, which is above transactions, and below account stuff and tree
+    int transListTop = transFilterTop + (rTransFilter.bottom - rTransFilter.top); // Top of transaction list, which is below the filter
+    int transListHeight = rClient.bottom - transListTop; // From the top of the transaction list to the bottom of the screen
 
     // Category tree header
     SetWindowPos(g_hwndHeader, wp.hwndInsertAfter, treeleft, 0, wp.cx, wp.cy, wp.flags | SWP_SHOWWINDOW);
@@ -1352,16 +1374,23 @@ void positionControls()
     SetWindowPos(g_hwndTV, nullptr, treeleft, rClient.top, rClient.right, transFilterTop - 1 - wp.cy, SWP_NOZORDER);
 
     // Accounts listview
-    SetWindowPos(g_hwndAccountLV, nullptr, 0, 0, treeleft-1, transFilterTop - 1, SWP_NOZORDER);
+    SetWindowPos(g_hwndAccountLV, nullptr, 
+        accountListLeft, accountListTop,  // Top left
+        accountListRight, (accountListBottom - accountListTop) - 1,  // left edge of the tree, above the transaction filter
+        SWP_NOZORDER);
+
+    // Account info dlg
+    SetWindowPos(g_accountInfoDlg, nullptr, accountListLeft, accountInfoTop, accountListRight, accountInfoBottom - accountInfoTop, SWP_NOZORDER);
 
     // Transaction filter
     SetWindowPos(g_transactionFilterDlg, nullptr, rClient.left, transFilterTop, rClient.right, rTransFilter.bottom - rTransFilter.top, SWP_NOZORDER);
 
     // Transactions list view
-    SetWindowPos(g_hwndTransactionLV, nullptr, rClient.left, listtop, rClient.right, listheight, SWP_NOZORDER);
+    SetWindowPos(g_hwndTransactionLV, nullptr, rClient.left, transListTop, rClient.right, transListHeight, SWP_NOZORDER);
 
 
     ShowWindow(g_transactionFilterDlg, SW_SHOW);
+    ShowWindow(g_accountInfoDlg, SW_SHOW);
 
     //g_hwndAccountLV;
 }
