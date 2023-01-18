@@ -18,8 +18,7 @@ int serializeState();
 
 BUDGET_TREE_COLUMN_SIZES g_columnSizes;
 
-//std::map<HTREEITEM, RECT> g_links;
-std::map<HTREEITEM, ENVELOPE_TREE_LINK_ITEM> g_links;
+std::map< BUDGET_TREE_LINK_ITEM_TYPE, RECT> g_budgetTreeLinkSpots;
 
 HTREEITEM hotLinkFromPoint(POINT pt)
 {
@@ -168,8 +167,6 @@ void handleDragDrop(HTREEITEM hDragSource, HTREEITEM hDragTarget)
             
             if (pMovingAccount)
             {
-                // Remove the original
-                g_links.erase(hDragSource);
                 TreeView_DeleteItem(g_hwndTV, hDragSource);
                 if (pOldParent) {
                     pOldParent->removeChild(pMovingAccount);
@@ -288,23 +285,46 @@ HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountBase* pAccount, HTREEITEM hI
 
 }
 
-HTREEITEM treeViewHitTestLinks(LONG xCur, LONG yCur, ENVELOPE_TREE_LINK_ITEM::LINK_ITEM_TYPE& itemType)
+HTREEITEM treeViewHitTestLinks(LONG xCur, LONG yCur, BUDGET_TREE_LINK_ITEM_TYPE& itemType)
 {
-    POINT point;
-    point.x = xCur;
-    point.y = yCur;
-    itemType = ENVELOPE_TREE_LINK_ITEM::INVALID_LINK_ITEM_TYPE;
+    TVHITTESTINFO tvhi = { 0 };
+    tvhi.pt.x = xCur;
+    tvhi.pt.y = yCur;
+    itemType = BUDGET_TREE_LINK_ITEM_TYPE::INVALID_LINK_ITEM_TYPE;
 
-    HTREEITEM hItem = nullptr;
-    // Hotspot check
-    for (auto itr = g_links.begin(); itr != g_links.end(); itr++)
+    HTREEITEM hItem = TreeView_HitTest(g_hwndTV, &tvhi);
+    AccountBase* pItem = accountFromTreeItem(hItem);
+
+    if (pItem)
     {
-        if (PtInRect(&itr->second.rArea, point))
+        RECT r = { 0 };
+        TreeView_GetItemRect(g_hwndTV, hItem, &r, false);
+
+        for (auto itr = g_budgetTreeLinkSpots.begin(); itr != g_budgetTreeLinkSpots.end(); itr++)
         {
-            itemType = itr->second.type;
-            return itr->first;
+            // Weed out the wrong types
+            if (pItem->getType() == AccountBase::ENVELOPE && (itr->first < ENV_FIRST || itr->first > ENV_LAST))
+            {
+                continue;
+
+            }
+            else if (pItem->getType() == AccountBase::GROUP && (itr->first < GRP_FIRST || itr->first > GRP_LAST))
+            {
+                continue;
+            }
+
+
+            RECT rHitArea = itr->second;
+            rHitArea.top = r.top;
+            rHitArea.bottom = r.bottom;
+            if (PtInRect(&rHitArea, tvhi.pt))
+            {
+                itemType = itr->first;
+                return hItem;
+            }
         }
     }
+
     return nullptr;
 }
 
@@ -345,7 +365,7 @@ bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
         // Hotspot check
         HCURSOR hCursor = nullptr;
 
-        ENVELOPE_TREE_LINK_ITEM::LINK_ITEM_TYPE type = ENVELOPE_TREE_LINK_ITEM::INVALID_LINK_ITEM_TYPE;
+        BUDGET_TREE_LINK_ITEM_TYPE type = INVALID_LINK_ITEM_TYPE;
 
         if (treeViewHitTestLinks(point.x, point.y, type)){
             hCursor = LoadCursor(nullptr, IDC_HAND);
@@ -360,12 +380,32 @@ bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
     return false;
 }
 
+int addLinkText(HTREEITEM hItem, HDC hDc, const wchar_t* szLinkText, BUDGET_TREE_LINK_ITEM_TYPE type, int rightEdge, int top)
+{
+    SIZE textSize = { 0 };
+    GetTextExtentPoint(hDc, szLinkText, (int)wcslen(szLinkText), &textSize);
+
+    RECT rHitArea = { 0 };
+    rHitArea.left = rightEdge - textSize.cx - 10;
+    rHitArea.top = top;
+    rHitArea.right = rHitArea.left + textSize.cx;
+    rHitArea.bottom = rHitArea.top + textSize.cy;
+
+    TextOut(hDc, rHitArea.left, rHitArea.top, szLinkText, (int)wcslen(szLinkText));
+
+    g_budgetTreeLinkSpots[type] = rHitArea;
+
+    return rHitArea.left;
+}
+
 LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
 {
     LRESULT ret = CDRF_NOTIFYITEMDRAW;
     AccountBase* pItem = (AccountBase*)pCustomDrawItem->nmcd.lItemlParam;
 
-    static const wchar_t* szAddTransaction = L"Add transaction";
+    static const wchar_t* szAddTransaction = L"\u271A";
+    static const wchar_t* szEditEnvelope= L"\u270E"; 
+    static const wchar_t* szAddEnvelope = L"\u271A";
 
     static const COLORREF ACCOUNT_COLOR = RGB(230, 240, 250);
     static const COLORREF GROUP_COLOR = RGB(230, 240, 250);
@@ -481,38 +521,35 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
                     setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iBalance, selected, true);
                     TextOut(pCustomDrawItem->nmcd.hdc, balanceSpot, pCustomDrawItem->nmcd.rc.top, balance.c_str(), (int)balance.length());
                 }
-
-                // Create font for add/edit links
-                HFONT hTreeFont = (HFONT)GetCurrentObject(pCustomDrawItem->nmcd.hdc, OBJ_FONT);
-                LOGFONT lf = { 0 };
-                GetObject(hTreeFont, sizeof(LOGFONT), &lf);
-                lf.lfUnderline = true;
-                HFONT hFontItalic = CreateFontIndirect(&lf);
-                HFONT hOrigFont = (HFONT)SelectObject(pCustomDrawItem->nmcd.hdc, hFontItalic);
-                COLORREF oldColor = SetTextColor(pCustomDrawItem->nmcd.hdc, selected ? SEL_LINK_COLOR : LINK_COLOR);
-
-                // Add link
-                SIZE textSize = { 0 };
-                GetTextExtentPoint(pCustomDrawItem->nmcd.hdc, szAddTransaction, (int)wcslen(szAddTransaction), &textSize);
-
-                // TextOut(pCustomDrawItem->nmcd.hdc, availableBalanceSpot + 20, rcText.top, szAddTransaction, (int)wcslen(szAddTransaction));
-                RECT rHitArea = { 0 };
-                rHitArea.left = budgetedSpot - textSize.cx - 10;
-                rHitArea.top = rcText.top;
-                rHitArea.right = rHitArea.left + textSize.cx;
-                rHitArea.bottom = rHitArea.top + textSize.cy;
-
-                TextOut(pCustomDrawItem->nmcd.hdc, rHitArea.left, rHitArea.top, szAddTransaction, (int)wcslen(szAddTransaction));
-                ENVELOPE_TREE_LINK_ITEM lti = { 0 };
-                lti.type = ENVELOPE_TREE_LINK_ITEM::TRANS_ADD;
-                lti.rArea = rHitArea;
-                g_links[hItem] = lti;
-
-                // Clean up
-                SelectObject(pCustomDrawItem->nmcd.hdc, hOrigFont);
-                SetTextColor(pCustomDrawItem->nmcd.hdc, oldColor);
-                DeleteObject(hFontItalic);
             }
+
+            // Create font for add/edit links
+            HFONT hTreeFont = (HFONT)GetCurrentObject(pCustomDrawItem->nmcd.hdc, OBJ_FONT);
+            LOGFONT lf = { 0 };
+            GetObject(hTreeFont, sizeof(LOGFONT), &lf);
+            //lf.lfUnderline = true;
+            HFONT hFontItalic = CreateFontIndirect(&lf);
+            HFONT hOrigFont = (HFONT)SelectObject(pCustomDrawItem->nmcd.hdc, hFontItalic);
+            COLORREF oldColor = SetTextColor(pCustomDrawItem->nmcd.hdc, selected ? SEL_LINK_COLOR : LINK_COLOR);
+
+            int rightEdge = budgetedSpot;
+            switch (pItem->getType())
+            {
+            case AccountBase::ENVELOPE:
+                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddTransaction, ENV_TRANS_ADD, rightEdge, rcText.top);
+                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditEnvelope, ENV_ENVELOPE_EDIT, rightEdge, rcText.top);
+                break;
+            case AccountBase::GROUP:
+                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddEnvelope, GRP_ENVELOPE_ADD, rightEdge, rcText.top);
+                //rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditEnvelope, ENVELOPE_TREE_LINK_ITEM::ENVELOPE_EDIT, rightEdge, rcText.top);
+                break;
+
+            }
+
+            // Clean up
+            SelectObject(pCustomDrawItem->nmcd.hdc, hOrigFont);
+            SetTextColor(pCustomDrawItem->nmcd.hdc, oldColor);
+            DeleteObject(hFontItalic);
 
 
             // Draw a horizontal line above the item, across the full span

@@ -464,6 +464,28 @@ bool editEnvelope(AccountEnvelope* pEnvelope)
     return false;
 }
 
+bool doEnvelopeAdd(AccountGroup* pParent, HTREEITEM hParent)
+{
+    bool ret = false;
+    EnvelopeDialog dlg;
+    if (pParent && dlg.ShowDialog()) {
+        AccountEnvelope* pEnvelope = new AccountEnvelope;
+        pEnvelope->setName(dlg.getEnvelopeName());
+        pEnvelope->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
+        pEnvelope->setDefaultTransactionPayToAccount(dlg.getDefaultTransactionPayToAccount());
+        pEnvelope->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
+        pEnvelope->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
+        pEnvelope->setIsExpense(!dlg.getIsIncome());
+        pEnvelope->setIsVirtualAccount(dlg.getIsVirtual());
+        pEnvelope->setBudgeted(dlg.getBudget());
+
+        pParent->addChild(pEnvelope);
+        addTreeItem(hParent, pEnvelope);
+        ret = true;
+    }
+    return ret;
+}
+
 bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
 {
     std::wstring temp;
@@ -505,22 +527,7 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
         break;
     case ID_ROOT_ADDENVELOPE:
     {
-        EnvelopeDialog dlg;
-        if (pParentGroup && dlg.ShowDialog()) {
-            AccountEnvelope* pEnvelope = new AccountEnvelope;
-            pEnvelope->setName(dlg.getEnvelopeName());
-            pEnvelope->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
-            pEnvelope->setDefaultTransactionPayToAccount(dlg.getDefaultTransactionPayToAccount());
-            pEnvelope->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
-            pEnvelope->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
-            pEnvelope->setIsExpense(!dlg.getIsIncome());
-            pEnvelope->setIsVirtualAccount(dlg.getIsVirtual());
-            pEnvelope->setBudgeted(dlg.getBudget());
-
-            pParentGroup->addChild(pEnvelope);
-            addTreeItem(hItem, pEnvelope);
-            didSomething = true;
-        }
+        didSomething = doEnvelopeAdd(pParentGroup, hItem);
         break;
     }
     case ID_ROOT_ADDTransaction:
@@ -914,15 +921,35 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 ScreenToClient(g_hwndTV, &pt);
                 tvhi.pt = pt;
 
-                ENVELOPE_TREE_LINK_ITEM::LINK_ITEM_TYPE type = ENVELOPE_TREE_LINK_ITEM::INVALID_LINK_ITEM_TYPE;
+                BUDGET_TREE_LINK_ITEM_TYPE type = INVALID_LINK_ITEM_TYPE;
                 HTREEITEM hItem = treeViewHitTestLinks(pt.x, pt.y, type);
-                if (hItem && type == ENVELOPE_TREE_LINK_ITEM::TRANS_ADD)
+                if (hItem && type == ENV_TRANS_ADD)
                 {
                     // We've hit a hotlink
                     if (addTransaction(hItem)) {
                         serializeState();
                     }
                     return true;
+                }
+                else if (hItem && type == GRP_ENVELOPE_ADD)
+                {
+                    AccountGroup* pGroup = dynamic_cast<AccountGroup*>(accountFromTreeItem(hItem));
+                    if (doEnvelopeAdd(pGroup, hItem)) {
+                        serializeState();
+                    }
+                }
+                else if (hItem && type == ENV_ENVELOPE_EDIT)
+                {
+                    AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(accountFromTreeItem(hItem));
+                    if (!pEnvelope)
+                    {
+                        int x = 5;
+                    }
+
+                    if (editEnvelope(pEnvelope)) {
+                        serializeState();
+                    }
+                    
                 }
                 else 
                 {
