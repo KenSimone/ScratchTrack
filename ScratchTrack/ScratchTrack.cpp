@@ -112,7 +112,7 @@ const char* getPersistFile()
 
 void setupPaymentEnvelopeForAccount(Account* pAccount)
 {
-    if (pAccount->paidFromEnvelopeId() == MAXINT) {
+    if (pAccount->paidFromEnvelopeId() == INVALID_ACCOUNT_ID) {
         std::wstring catName = L"Pay ";
         catName += pAccount->getName();
 
@@ -353,14 +353,14 @@ bool addTransaction(HTREEITEM hItem)
             transactionDlg.setAccountToId(pEnvelope->getDefaultTransactionPayToAccount()->getId());
         }
         else {
-            transactionDlg.setAccountToId(MAXINT);
+            transactionDlg.setAccountToId(INVALID_ACCOUNT_ID);
         }
 
         if (pEnvelope->getDefaultTransactionPayFromAccount()) {
             transactionDlg.setAccountFromId(pEnvelope->getDefaultTransactionPayFromAccount()->getId());
         }
         else {
-            transactionDlg.setAccountFromId(MAXINT);
+            transactionDlg.setAccountFromId(INVALID_ACCOUNT_ID);
         }
 
         transactionDlg.setIsExpense(pEnvelope->isExpense());
@@ -544,7 +544,9 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
         AccountEnvelope* pEnvelopeTo = dynamic_cast<AccountEnvelope*>(AccountBase::lookupById(pAccountFrom->paidFromEnvelopeId()));
 
         int origAmount = pTransaction->getAmount();
-        pEnvelope->addBalance(-origAmount);
+        if (pEnvelope) {
+            pEnvelope->addBalance(-origAmount);
+        }
 
         // Put the money back in the original account
         if (pAccountFrom) {
@@ -570,7 +572,9 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
         pEnvelopeTo = dynamic_cast<AccountEnvelope*>(AccountBase::lookupById(pAccountFrom->paidFromEnvelopeId()));
 
         // Record the expense in the envelope
-        pEnvelope->addBalance(pTransaction->getAmount());
+        if (pEnvelope) {
+            pEnvelope->addBalance(pTransaction->getAmount());
+        }
 
         // Record the expense in the account
         if (pAccountFrom) {
@@ -589,7 +593,7 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
 
         // Payee
         std::wstring payee = pTransaction->getPayee();
-        if (pTransaction->getAccountToId() != MAXINT && pAccountTo) {
+        if (pTransaction->getAccountToId() != INVALID_ACCOUNT_ID && pAccountTo) {
             wchar_t szBuff[1024] = { 0 };
             swprintf(szBuff, 1024, L"%s->%s", pAccountFrom->getName(), pAccountTo->getName());
             payee = szBuff;
@@ -663,7 +667,7 @@ void editAccount(Account* pAccount)
     dlg.setBalance(pAccount->getBalance());
     dlg.setBudgeted(pAccount->getContributesToBudget());
     dlg.setName(pAccount->getName());
-    dlg.setCreditCard(pAccount->paidFromEnvelopeId() != MAXINT);
+    dlg.setCreditCard(pAccount->paidFromEnvelopeId() != INVALID_ACCOUNT_ID);
     if (dlg.ShowDialog())
     {
         pAccount->addBalance(-pAccount->getBalance());
@@ -786,7 +790,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         else if (pHeader->idFrom == IDC_SIMPLEBUDGET_ACCOUNT_LIST)
         {
-            if (pHeader->code == NM_CUSTOMDRAW)
+            if (pHeader->code == NM_CLICK)
+            {
+                POINT pt = { 0 };
+                TVHITTESTINFO tvhi = { 0 };
+                GetCursorPos(&pt);
+                ScreenToClient(g_hwndAccountLV, &pt);
+
+                Account::ACTION_FLAG af = hitTestAccountList(pt);
+                if (af == Account::ACTION_FLAG::DEPOSIT) {
+
+                    return true;
+                }
+                else if (af == Account::ACTION_FLAG::TRANSFER) {
+
+                    return true;
+                }
+                else if (af == Account::ACTION_FLAG::PAY) {
+
+                    return true;
+                }
+            }
+            else if (pHeader->code == NM_CUSTOMDRAW)
             {
                 return accountListCustomDraw((LPNMLVCUSTOMDRAW)lParam);
             }
@@ -1122,7 +1147,7 @@ void updateGuiValues(HTREEITEM item /*= NULL*/)
             std::wstring name;
             static const wchar_t* szCreditCard = (wchar_t*)(u"\U0001F4B3 ");
             static const wchar_t* szBank = (wchar_t*)u"\U0001F3E6 ";
-            name = (pAccount->paidFromEnvelopeId() == MAXINT) ? szBank : szCreditCard;
+            name = (pAccount->paidFromEnvelopeId() == INVALID_ACCOUNT_ID) ? szBank : szCreditCard;
             name += pAccount->getName();
 
             ListView_SetItemText(g_hwndAccountLV, i, 0, const_cast<wchar_t*>(name.c_str()));

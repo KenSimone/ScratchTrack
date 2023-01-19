@@ -73,7 +73,7 @@ int Transaction::deserialize(tinyxml2::XMLElement* pRoot)
 		tinyxml2::XMLElement* pTransaction = pTransactions->FirstChildElement("transaction");
 		while (pTransaction) {
 			// deserialize
-			int envelopeId = 0, fromAccountId = 0, toAccountId = MAXINT;
+			int envelopeId = 0, fromAccountId = 0, toAccountId = INVALID_ACCOUNT_ID;
 			pTransaction->QueryIntAttribute("envelope", &envelopeId);
 			pTransaction->QueryIntAttribute("accountFrom", &fromAccountId);
 			pTransaction->QueryIntAttribute("accountTo", &toAccountId);

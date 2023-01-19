@@ -14,6 +14,8 @@ class AccountBase;
 int serialize(std::vector<AccountBase*>& topLevelItems, const char* szFilename);
 int deserialize(const char* szFilename, std::vector<AccountBase*>& topLevelItems);
 
+#define INVALID_ACCOUNT_ID		MAXINT
+
 // Base class for items in the account tree
 class AccountBase
 {
@@ -223,7 +225,7 @@ protected:
 class Account : public AccountBase
 {
 public:
-	Account() : AccountBase(ACCOUNT), _isBudgeted(true), _paidFromEnvelopeId(MAXINT) {};
+	Account() : AccountBase(ACCOUNT), _isBudgeted(true), _paidFromEnvelopeId(INVALID_ACCOUNT_ID) {};
 
 	bool getContributesToBudget() { return _isBudgeted;  }
 	void setContributesToBudget(bool budgeted) { _isBudgeted = budgeted; }
@@ -253,6 +255,7 @@ public:
 
 	enum ACTION_FLAG
 	{
+		NO_ACTION = 0,
 		DEPOSIT = 1,
 		TRANSFER = 2,
 		PAY = 4
@@ -261,7 +264,7 @@ public:
 	// Returns a mask of the actions that apply to this account
 	int getActionFlags()
 	{
-		return getActionFlags(this->paidFromEnvelopeId() != MAXINT);
+		return getActionFlags(this->paidFromEnvelopeId() != INVALID_ACCOUNT_ID);
 	}
 
 	static int getActionFlags(bool forCC)

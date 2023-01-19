@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include <string>
 #include <vector>
+#include "AccountInfo.h"
 
 class AccountBase;
 
@@ -33,7 +34,7 @@ public:
 	unsigned int getAccountFromId() { return _accountFromId; }
 	unsigned int getAccountToId() { return _accountToId; }
 	bool getIsExpense() { return _isExpense; }
-	bool isTransfer() { return _accountToId != MAXINT;  }
+	bool isTransfer() { return _accountToId != INVALID_ACCOUNT_ID;  }
 
 protected:
 	static void updateUi(HWND hDlg);

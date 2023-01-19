@@ -19,20 +19,15 @@ static const wchar_t* szPay = L"Pay";
 static const wchar_t* szDeposit = L"Deposit";
 static const wchar_t* szTransfer = L"Transfer";
 
-
-bool accountListHandleMouseMove(LONG xCur, LONG yCur)
+Account::ACTION_FLAG hitTestAccountList(POINT pt)
 {
-    // Translate point
     LVHITTESTINFO hitInfo = { 0 };
-    hitInfo.pt.x = xCur;
-    hitInfo.pt.y = yCur;
-
+    hitInfo.pt = pt;
     ListView_SubItemHitTestEx(g_hwndAccountLV, &hitInfo);
-    HCURSOR hCursor = nullptr;
-    bool hit = false;
+    Account::ACTION_FLAG ret = Account::ACTION_FLAG::NO_ACTION;
 
 
-    if (hitInfo.iSubItem == 2 && hitInfo.flags & LVHT_ONITEMLABEL ) 
+    if (hitInfo.iSubItem == 2 && hitInfo.flags & LVHT_ONITEMLABEL)
     {
         LVITEM item = { 0 };
         item.iItem = hitInfo.iItem;
@@ -53,38 +48,48 @@ bool accountListHandleMouseMove(LONG xCur, LONG yCur)
             rTransfer.top = rPay.top = rDeposit.top = rSubItem.top;
             rTransfer.bottom = rPay.bottom = rDeposit.bottom = rSubItem.bottom;
 
-            hit = false;
-            if (pAccount->getActionFlags() & Account::ACTION_FLAG::PAY && PtInRect(&rPay, hitInfo.pt))
+            if (pAccount->paidFromEnvelopeId() != INVALID_ACCOUNT_ID)
             {
-                hit = true;
+                if (pAccount->getActionFlags() & Account::ACTION_FLAG::PAY && PtInRect(&rPay, hitInfo.pt) && pAccount->paidFromEnvelopeId() != INVALID_ACCOUNT_ID)
+                {
+                    ret = Account::ACTION_FLAG::PAY;
+                }
             }
-            if (pAccount->getActionFlags() & Account::ACTION_FLAG::DEPOSIT && PtInRect(&rDeposit, hitInfo.pt))
+            else
             {
-                hit = true;
-            }
-            if (pAccount->getActionFlags() & Account::ACTION_FLAG::DEPOSIT && PtInRect(&rTransfer, hitInfo.pt))
-            {
-                hit = true;
+                if (pAccount->getActionFlags() & Account::ACTION_FLAG::DEPOSIT && PtInRect(&rDeposit, hitInfo.pt))
+                {
+                    ret = Account::ACTION_FLAG::DEPOSIT;
+                }
+                else if (pAccount->getActionFlags() & Account::ACTION_FLAG::TRANSFER && PtInRect(&rTransfer, hitInfo.pt))
+                {
+                    ret = Account::ACTION_FLAG::TRANSFER;
+                }
             }
         }
     }
 
-    if (hit)
-    {
-        hCursor = LoadCursor(nullptr, IDC_HAND);
-    }
-    else
-    {
-        hCursor = LoadCursor(nullptr, IDC_ARROW);
-    }
+    return ret;
+}
 
-    if (hCursor) 
-    {
+
+bool accountListHandleMouseMove(LONG xCur, LONG yCur)
+{
+    // Translate point
+    POINT pt = { 0 };
+    pt.x = xCur;
+    pt.y = yCur;
+
+    HCURSOR hCursor = nullptr;
+
+    bool hit = hitTestAccountList(pt) != Account::ACTION_FLAG::NO_ACTION;
+    hCursor = LoadCursor(nullptr, hit ? IDC_HAND : IDC_ARROW);
+
+    if (hCursor) {
         SetCursor(hCursor);
     }
 
     return true;
-
 }
 
 
@@ -180,7 +185,7 @@ LRESULT accountListCustomDraw(LPNMLVCUSTOMDRAW  pCustomDraw)
             DeleteObject(brush);
 
 
-            if (pAccount->paidFromEnvelopeId() != MAXINT)
+            if (pAccount->paidFromEnvelopeId() != INVALID_ACCOUNT_ID)
             {
                 // This is a credit card
                 TextOut(pCustomDraw->nmcd.hdc, iR.left, iR.top, L"Pay", 3);
@@ -258,12 +263,12 @@ void addAccount(Account* pAccount)
     std::wstring timeStamp;
     //item.pszText = const_cast<wchar_t*>(pAccount->getName());
     item.lParam = (LPARAM)pAccount;
-    item.iItem = MAXINT;
+    item.iItem = INVALID_ACCOUNT_ID;
 
     // Account name
     std::wstring name(pAccount->getName());
     static const wchar_t* szCreditCard = (wchar_t*)(u"\U0001F4B3");
-    if (pAccount->paidFromEnvelopeId() != MAXINT) {
+    if (pAccount->paidFromEnvelopeId() != INVALID_ACCOUNT_ID) {
         name += szCreditCard;
     }
     item.pszText = const_cast<wchar_t*>(name.c_str());
@@ -274,7 +279,7 @@ void addAccount(Account* pAccount)
     ListView_SetItemText(g_hwndAccountLV, iIndex, 1, const_cast<wchar_t*>(balance.c_str()));
 
     // Actions
-    if (pAccount->paidFromEnvelopeId() == MAXINT ){
+    if (pAccount->paidFromEnvelopeId() == INVALID_ACCOUNT_ID ){
         ListView_SetItemText(g_hwndAccountLV, iIndex, 2, const_cast<wchar_t*>(L"Deposit  Transfer"));
     }
     else {

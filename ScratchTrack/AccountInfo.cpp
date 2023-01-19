@@ -278,7 +278,7 @@ int AccountEnvelope::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 {
 	AccountBase::initItemFromXmlElement(pAccount);
 
-	unsigned int accountId = MAXINT, payToAccountId = MAXINT;
+	unsigned int accountId = INVALID_ACCOUNT_ID, payToAccountId = INVALID_ACCOUNT_ID;
 
 	pAccount->QueryUnsignedAttribute("defaultPayFromAccount", &accountId);
 	pAccount->QueryUnsignedAttribute("defaultPayToAccount", &payToAccountId);

@@ -9,7 +9,7 @@
 extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 
-TransactionDialog::TransactionDialog() : _amount(0), _accountFromId(0), _envelopeId(0), _accountToId(MAXINT)
+TransactionDialog::TransactionDialog() : _amount(0), _accountFromId(0), _envelopeId(0), _accountToId(INVALID_ACCOUNT_ID)
 {
 }
 
@@ -74,7 +74,7 @@ INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT messag
             }
 
             // Transfer checkbox
-            SendDlgItemMessage(hDlg, IDC_CHECK_PAY_TO_ACCOUNT, BM_SETCHECK, THIS_PTR->getAccountToId() != MAXINT ? BST_CHECKED : BST_UNCHECKED, 0);
+            SendDlgItemMessage(hDlg, IDC_CHECK_PAY_TO_ACCOUNT, BM_SETCHECK, THIS_PTR->getAccountToId() != INVALID_ACCOUNT_ID ? BST_CHECKED : BST_UNCHECKED, 0);
 
             // Categories
             HWND hCategories = GetDlgItem(hDlg, IDC_COMBO_ENVELOPE);
@@ -177,7 +177,7 @@ INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT messag
                     // Set account to
                     bool isTransfer = SendDlgItemMessage(hDlg, IDC_CHECK_PAY_TO_ACCOUNT, BM_GETCHECK, 0, 0);
                     if (!isTransfer) {
-                        THIS_PTR->_accountToId = MAXINT;
+                        THIS_PTR->_accountToId = INVALID_ACCOUNT_ID;
                     }
                     else
                     {
