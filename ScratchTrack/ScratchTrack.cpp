@@ -13,6 +13,7 @@
 #include "AccountDlg.h"
 #include "Utils.h"
 #include "TreeUtils.h"
+#include "AccountListViewUtils.h"
 #include "TransactionFilterDlg.h"
 #include "AccountInfoDlg.h"
 
@@ -25,6 +26,10 @@
 #pragma comment(lib, "Shlwapi")
 
 #define MAX_LOADSTRING 100
+
+// Global settings
+static const double FONT_SCALE_FACTOR = 1.6;
+
 
 // Global Variables:
 HINSTANCE g_hInst = nullptr;                                // current instance
@@ -52,6 +57,7 @@ int serializeState();
 void positionControls();
 void calcColumnSpots();
 void addAccount(Account* pAccount);
+void setGuiFont(HWND hCtrl);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -158,33 +164,6 @@ void setupPaymentEnvelopeForAccount(Account* pAccount)
     }
 }
 
-void createAccountListControl()
-{
-    // IDC_SIMPLEBUDGET_ACCOUNT_LIST
-    RECT rClient = { 0 };
-    GetClientRect(g_hTopWindow, &rClient);
-
-    g_hwndAccountLV = CreateWindowEx(0, WC_LISTVIEW, TEXT("Simple Budget list"), WS_VISIBLE | WS_CHILD | WS_BORDER | LVS_SHOWSELALWAYS | LVS_REPORT | LVS_SINGLESEL,
-        0, 0, 0,0, g_hTopWindow,
-        (HMENU)IDC_SIMPLEBUDGET_ACCOUNT_LIST, g_hInst, NULL);
-
-    ListView_SetExtendedListViewStyle(g_hwndAccountLV, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
-
-    budgetTreeSetFont(g_hwndAccountLV);
-
-    LVCOLUMN column = { 0 };
-    column.mask = LVCF_TEXT;
-    column.pszText = const_cast<wchar_t*>(L"Account");
-    ListView_InsertColumn(g_hwndAccountLV, 0, &column);
-
-    column.pszText = const_cast<wchar_t*>(L"Balance");
-    ListView_InsertColumn(g_hwndAccountLV, 1, &column);
-
-    for (int i = 0; i < 2; i++) {
-        ListView_SetColumnWidth(g_hwndAccountLV, i, LVSCW_AUTOSIZE_USEHEADER);
-    }
-
-}
 void createTransactionListControl()
 {
     RECT rClient = { 0 };
@@ -205,7 +184,7 @@ void createTransactionListControl()
 
     ListView_SetExtendedListViewStyle(g_hwndTransactionLV, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 
-    budgetTreeSetFont(g_hwndTransactionLV);
+    setGuiFont(g_hwndTransactionLV);
 
     LVCOLUMN column = { 0 };
     column.mask = LVCF_TEXT;
@@ -308,6 +287,11 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
        Account* pAccount = new Account;
        pAccount->setName(L"Checking");
        addTreeItem(TVI_ROOT, pAccount);
+
+       AccountGroup* pGroup = new AccountGroup;
+       pGroup->setName(L"Monthly Expenses");
+       addTreeItem(TVI_ROOT, pGroup);
+       serializeState();
    }
 
    // Fix up selection / paint
@@ -711,7 +695,7 @@ void doAddAccountDlg()
     }
 }
 
-void doAddEnvelope()
+void doAddCategory()
 {
     std::wstring temp;
     if (getOneText(temp)) {
@@ -739,18 +723,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_LBUTTONUP:
         budgetTreeHandleLButtonUp(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
         break;
-    case WM_MOUSEMOVE:
-    {
-        // Translate point
-        POINT point;
-        point.x = GET_X_LPARAM(lParam);
-        point.y = GET_Y_LPARAM(lParam);
-        ClientToScreen(g_hTopWindow, &point);
-        ScreenToClient(g_hwndTV, &point);
-
-        budgetTreeHandleMouseMove(point.x, point.y);
-        break;
-    }
     case WM_COMMAND:
     {
         int wmId = LOWORD(wParam);
@@ -775,7 +747,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             break;
         }
         case ID_FILE_ADDENVELOPE:
-            doAddEnvelope();
+            doAddCategory();
             break;
         default:
             return DefWindowProc(hWnd, message, wParam, lParam);
@@ -804,7 +776,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             else if (pHeader->code == AccountInfoDlg::NM_ACCOUNT_DIALOG_ADD_FOLDER)
             {
-                doAddEnvelope();
+                doAddCategory();
             }
 
         }
@@ -814,7 +786,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         else if (pHeader->idFrom == IDC_SIMPLEBUDGET_ACCOUNT_LIST)
         {
-            if (pHeader->code == NM_DBLCLK)
+            if (pHeader->code == NM_CUSTOMDRAW)
+            {
+                return accountListCustomDraw((LPNMLVCUSTOMDRAW)lParam);
+            }
+            else if (pHeader->code == NM_DBLCLK)
             {
                 // See if we hit an item
                 POINT pt = { 0 };
@@ -1142,7 +1118,14 @@ void updateGuiValues(HTREEITEM item /*= NULL*/)
             listitem.iItem = i;
             ListView_GetItem(g_hwndAccountLV, &listitem);
             Account* pAccount = (Account*)listitem.lParam;
-            ListView_SetItemText(g_hwndAccountLV, i, 0, const_cast<wchar_t*>(pAccount->getName()));
+
+            std::wstring name;
+            static const wchar_t* szCreditCard = (wchar_t*)(u"\U0001F4B3 ");
+            static const wchar_t* szBank = (wchar_t*)u"\U0001F3E6 ";
+            name = (pAccount->paidFromEnvelopeId() == MAXINT) ? szBank : szCreditCard;
+            name += pAccount->getName();
+
+            ListView_SetItemText(g_hwndAccountLV, i, 0, const_cast<wchar_t*>(name.c_str()));
 
             std::wstring amount = Utils::penniesToDollarsString(pAccount->getBalance());
             ListView_SetItemText(g_hwndAccountLV, i, 1, const_cast<wchar_t*>(amount.c_str()));
@@ -1287,34 +1270,6 @@ void populateTransactions()
 
 }
 
-void addAccount(Account* pAccount)
-{
-
-    // Add them to the list view
-    SendMessage(g_hwndAccountLV, WM_SETREDRAW, FALSE, 0);
-
-    LVITEM item = { 0 };
-    item.mask = LVIF_TEXT | LVIF_PARAM;
-    std::wstring timeStamp;
-    item.pszText = const_cast<wchar_t*>(pAccount->getName());
-    item.lParam = (LPARAM)pAccount;
-    item.iItem = MAXINT;
-
-    // Account name
-    int iIndex = ListView_InsertItem(g_hwndAccountLV, &item);
-
-    // Account balance
-    std::wstring balance = Utils::penniesToDollarsString(pAccount->getBalance());
-    ListView_SetItemText(g_hwndAccountLV, iIndex, 1, const_cast<wchar_t*>(balance.c_str()));
-
-
-    ListView_SetColumnWidth(g_hwndAccountLV, 0, 200);
-    ListView_SetColumnWidth(g_hwndAccountLV, 1, 200);
-
-    SendMessage(g_hwndAccountLV, WM_SETREDRAW, TRUE, 0);
-
-}
-
 int serializeState()
 {
     std::vector<AccountBase*> topItems;
@@ -1399,4 +1354,15 @@ void positionControls()
     ShowWindow(g_accountInfoDlg, SW_SHOW);
 
     //g_hwndAccountLV;
+}
+
+void setGuiFont(HWND hCtrl)
+{
+    // Adjust font
+    HFONT hFont = (HFONT)SendMessage(hCtrl, WM_GETFONT, NULL, NULL);
+    LOGFONT lf = { 0 };
+    GetObject(hFont, sizeof(lf), &lf);
+    lf.lfHeight = (LONG)(lf.lfHeight * FONT_SCALE_FACTOR);
+    HFONT hNewFont = CreateFontIndirect(&lf);
+    SendMessage(hCtrl, WM_SETFONT, (WPARAM)hNewFont, true);
 }

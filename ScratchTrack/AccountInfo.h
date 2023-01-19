@@ -91,7 +91,7 @@ protected:
 class AccountGroup : public AccountBase
 {
 public:
-	AccountGroup() : AccountBase(GROUP), _displayName{ 0 } {};
+	AccountGroup() : AccountBase(GROUP) {};
 	virtual int initItemFromXmlElement(tinyxml2::XMLElement* pAccount);
 
 	// The item-type (account/group/envelope)
@@ -216,7 +216,6 @@ public:
 
 
 protected:
-	wchar_t _displayName[1024];
 	std::vector<AccountBase*> _children;
 };
 
@@ -251,6 +250,29 @@ public:
 
 	virtual int initItemFromXmlElement(tinyxml2::XMLElement* pAccount);
 	virtual int serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement);
+
+	enum ACTION_FLAG
+	{
+		DEPOSIT = 1,
+		TRANSFER = 2,
+		PAY = 4
+	};
+
+	// Returns a mask of the actions that apply to this account
+	int getActionFlags()
+	{
+		return getActionFlags(this->paidFromEnvelopeId() != MAXINT);
+	}
+
+	static int getActionFlags(bool forCC)
+	{
+		if (forCC) {
+			return PAY;
+		}
+
+		return TRANSFER | DEPOSIT;
+	}
+
 
 protected:
 	bool _isBudgeted;

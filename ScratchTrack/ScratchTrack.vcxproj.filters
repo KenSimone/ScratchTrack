@@ -60,6 +60,9 @@
     <ClInclude Include="EnvelopeDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AccountListViewUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScratchTrack.cpp">
@@ -96,6 +99,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="EnvelopeDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AccountListViewUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

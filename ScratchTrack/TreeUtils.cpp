@@ -1,10 +1,7 @@
 #include "TreeUtils.h"
 #include "resource.h"
-
 #include <map>
-
-// Global settings
-static const double FONT_SCALE_FACTOR = 1.6;
+void setGuiFont(HWND hCtrl);
 
 extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
@@ -406,13 +403,14 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
     static const wchar_t* szAddTransaction = L"\u271A";
     static const wchar_t* szEditEnvelope= L"\u270E"; 
     static const wchar_t* szAddEnvelope = L"\u271A";
+    //static const wchar_t* szCreditCard = (wchar_t*)(u"\U0001F4B3");
 
     static const COLORREF ACCOUNT_COLOR = RGB(230, 240, 250);
     static const COLORREF GROUP_COLOR = RGB(230, 240, 250);
     static const COLORREF ENVELOPE_COLOR = RGB(255, 255, 255);
 
     static const COLORREF SEL_COLOR = GetSysColor(COLOR_HIGHLIGHT);
-    static const COLORREF LINK_COLOR = GetSysColor(COLOR_HIGHLIGHT);
+    static const COLORREF LINK_COLOR = GetSysColor(COLOR_HOTLIGHT);
     static const COLORREF SEL_LINK_COLOR = GetSysColor(COLOR_HIGHLIGHTTEXT);
     static const COLORREF SEL_TEXT_COLOR = GetSysColor(COLOR_HIGHLIGHTTEXT);
 
@@ -609,7 +607,7 @@ void budgetTreeCreateTreeControl()
         NULL);
 
     // Adjust font
-    budgetTreeSetFont(g_hwndTV);
+    setGuiFont(g_hwndTV);
     calcColumnSpots();
 
     SetWindowSubclass(g_hwndTV, treeViewSubclass, 1, 0);
@@ -671,17 +669,6 @@ void budgetTreeSetItemText(HTREEITEM hItem, const wchar_t* szText)
     tvi.pszText = const_cast<wchar_t*>(szText);
 
     SendMessageW(g_hwndTV, TVM_SETITEM, 0, (LPARAM)&tvi);
-}
-
-void budgetTreeSetFont(HWND hCtrl)
-{
-    // Adjust font
-    HFONT hFont = (HFONT)SendMessage(hCtrl, WM_GETFONT, NULL, NULL);
-    LOGFONT lf = { 0 };
-    GetObject(hFont, sizeof(lf), &lf);
-    lf.lfHeight = (LONG)(lf.lfHeight * FONT_SCALE_FACTOR);
-    HFONT hNewFont = CreateFontIndirect(&lf);
-    SendMessage(hCtrl, WM_SETFONT, (WPARAM)hNewFont, true);
 }
 
 HTREEITEM treeItemFromAccount(AccountBase* pItem, HTREEITEM hItem /*= TVI_ROOT*/)

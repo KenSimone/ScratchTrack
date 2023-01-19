@@ -53,6 +53,5 @@ bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur);
 LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem);
 void budgetTreeCreateTreeControl();
 void budgetTreeSetItemText(HTREEITEM hItem, const wchar_t* szText);
-void budgetTreeSetFont(HWND hCtrl);
 HTREEITEM hotLinkFromPoint(POINT pt);
 HTREEITEM treeViewHitTestLinks(LONG xCur, LONG yCur, BUDGET_TREE_LINK_ITEM_TYPE& itemType);
