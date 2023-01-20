@@ -1,12 +1,13 @@
 #pragma once
 
+#define INVALID_ACCOUNT_ID		MAXINT
+
 #include <string>
 #include <vector>
 #include <shlwapi.h>
 #include <locale.h>
 #include <set>
 #include "TinyXml2.h"
-#include "Utils.h"
 
 // Forward defines
 class AccountBase;
@@ -14,7 +15,6 @@ class AccountBase;
 int serialize(std::vector<AccountBase*>& topLevelItems, const char* szFilename);
 int deserialize(const char* szFilename, std::vector<AccountBase*>& topLevelItems);
 
-#define INVALID_ACCOUNT_ID		MAXINT
 
 // Base class for items in the account tree
 class AccountBase
@@ -331,3 +331,4 @@ protected:
 	bool _isExpense;
 	bool _isVirtualAccount;
 }; // class Envelope
+

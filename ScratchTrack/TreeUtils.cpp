@@ -1,5 +1,7 @@
 #include "TreeUtils.h"
 #include "resource.h"
+#include "Utils.h"
+
 #include <map>
 void setGuiFont(HWND hCtrl);
 

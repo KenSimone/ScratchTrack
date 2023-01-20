@@ -24,14 +24,13 @@ bool PayCCDlg::ShowDialog()
 
 INT_PTR CALLBACK PayCCDlg::PayCCDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    UNREFERENCED_PARAMETER(lParam);
     switch (message)
     {
     case WM_INITDIALOG:
         if (PayCCDlg::PTHIS) {
-            // 
-            // IDC_EDIT_ENVELOPE
-            // IDC_EDIT_DESCRIPTION
+
+            Utils::populateAccountCombo(hDlg, IDC_COMBO_ACCOUNT_FROM, PTHIS->_payFromAcctId);
+
             HWND hWnd = GetDlgItem(hDlg, IDC_EDIT_AMOUNT);
             std::wstring amt = Utils::penniesToDollarsString(abs(PayCCDlg::PTHIS->_amount));
             SetWindowText(hWnd, amt.c_str());
@@ -46,7 +45,6 @@ INT_PTR CALLBACK PayCCDlg::PayCCDlgProc(HWND hDlg, UINT message, WPARAM wParam, 
 
             hWnd = GetDlgItem(hDlg, IDC_EDIT_DESCRIPTION);
             SetWindowTextW(hWnd, PTHIS->_description.c_str());
-
         }
 
         return (INT_PTR)TRUE;
@@ -63,6 +61,7 @@ INT_PTR CALLBACK PayCCDlg::PayCCDlgProc(HWND hDlg, UINT message, WPARAM wParam, 
                 hWnd = GetDlgItem(hDlg, IDC_EDIT_DESCRIPTION);
                 GetWindowTextW(hWnd, szBuff, 1024);
                 PTHIS->_description = szBuff;
+                PTHIS->_payFromAcctId = Utils::getAccountIdFromAccountCombo(hDlg, IDC_COMBO_ACCOUNT_FROM);
             }
 
             EndDialog(hDlg, LOWORD(wParam));

@@ -595,21 +595,19 @@ void editPayCC(Transaction* pTransaction, int listviewItemIndex)
 {
     Account* pAcct = (Account*)AccountBase::lookupById(pTransaction->getAccountToId());
     if (pAcct) {
-        PayCCDlg dlg(pAcct, pTransaction->getAmount(), pTransaction->getDescription());
+        PayCCDlg dlg(pAcct, pTransaction->getAmount(), pTransaction->getAccountFromId(), pTransaction->getDescription());
         if (dlg.ShowDialog()) {
             AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(AccountBase::lookupById(pTransaction->getEnvelopeId()));
             Account* pAccountTo = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountToId()));
+            Account* pAccountFrom = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountFromId()));
 
-            // Put money back in the envelope
+            // Put money back in the envelope and "from account"
             int origAmount = pTransaction->getAmount();
-            if (pEnvelope) {
-                pEnvelope->addBalance(-origAmount);
-            }
+            pEnvelope->addBalance(-origAmount);
+            pAccountFrom->addBalance(-origAmount);
 
-            // Take money away from the account
-            if (pAccountTo) {
-                pAccountTo->addBalance(origAmount);
-            }
+            // Take money away from the CC account
+            pAccountTo->addBalance(origAmount);
 
             // Apply new balance to the envelope
             pTransaction->setDetails(dlg.getAmount(), pTransaction->getPayee(), dlg.getDescription(), pTransaction->getEnvelopeId(), pTransaction->getAccountFromId(), pTransaction->getAccountToId());
@@ -642,9 +640,7 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
         Account* pAccountTo = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountToId()));
         AccountEnvelope* pEnvelopeTo = nullptr;
 
-        if (pAccountFrom) {
-            pEnvelopeTo = dynamic_cast<AccountEnvelope*>(AccountBase::lookupById(pAccountFrom->paidFromEnvelopeId()));
-        }
+        pEnvelopeTo = dynamic_cast<AccountEnvelope*>(AccountBase::lookupById(pAccountFrom->paidFromEnvelopeId()));
 
         int origAmount = pTransaction->getAmount();
         if (pEnvelope) {
@@ -652,9 +648,7 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
         }
 
         // Put the money back in the original account
-        if (pAccountFrom) {
-            pAccountFrom->addBalance(-origAmount);
-        }
+        pAccountFrom->addBalance(-origAmount);
 
         // Take it out of the target account (if any)
         if (pAccountTo) {
@@ -864,12 +858,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     return true;
                 }
                 else if (af == Account::ACTION_FLAG::PAY) {
-                    PayCCDlg dlg(pHitAccount, 0);
+                    PayCCDlg dlg(pHitAccount, 0, 0);
                     if (dlg.ShowDialog()) {
-                        Transaction::addTransaction(dlg.getAmount(), INVALID_ACCOUNT_ID, pHitAccount->getId(), pHitAccount->paidFromEnvelopeId(), pHitAccount->getName(), dlg.getDescription());
+                        Transaction::addTransaction(dlg.getAmount(), dlg.getPaidFromId(), pHitAccount->getId(), pHitAccount->paidFromEnvelopeId(), pHitAccount->getName(), dlg.getDescription());
                         pHitAccount->addBalance(-dlg.getAmount());
                         AccountEnvelope* pEnvelope = (AccountEnvelope * )Account::lookupById(pHitAccount->paidFromEnvelopeId());
                         pEnvelope->addBalance(dlg.getAmount());
+                        Account* pFrom = (Account*)Account::lookupById(dlg.getPaidFromId());
+                        pFrom->addBalance(dlg.getAmount());
                         serializeState();
                         updateGuiValues();
                         populateTransactions();

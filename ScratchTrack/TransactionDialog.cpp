@@ -41,37 +41,14 @@ INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT messag
     case WM_INITDIALOG:
         if (THIS_PTR) {
             // Accounts
-            HWND hAccounts = GetDlgItem(hDlg, IDC_COMBO_ACCOUNT);
-            HWND hAccountsTo = GetDlgItem(hDlg, IDC_COMBO_ACCOUNT_TO);
-            auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
             bool selSet = false, toSelSet = false;
-            for (auto itr = accounts.begin(); itr != accounts.end(); itr++){
-                AccountBase* pAccount = *itr;
 
-                // Account from
-                int pos = (int)SendMessage(hAccounts, CB_ADDSTRING, 0, (LPARAM)pAccount->getName());
-                SendMessage(hAccounts, CB_SETITEMDATA, pos, (LPARAM)pAccount);
-                if (pAccount->getId() == THIS_PTR->getAccountFromId()) {
-                    selSet = true;
-                    ComboBox_SetCurSel(hAccounts, pos);
-                }
+            // Account from
+            Utils::populateAccountCombo(hDlg, IDC_COMBO_ACCOUNT, THIS_PTR->getAccountFromId());
 
-                // Account to
-                pos = (int)SendMessage(hAccountsTo, CB_ADDSTRING, 0, (LPARAM)pAccount->getName());
-                SendMessage(hAccountsTo, CB_SETITEMDATA, pos, (LPARAM)pAccount);
-                if (pAccount->getId() == THIS_PTR->getAccountToId()) {
-                    toSelSet = true;
-                    ComboBox_SetCurSel(hAccountsTo, pos);
-                }
+            // Account to
+            Utils::populateAccountCombo(hDlg, IDC_COMBO_ACCOUNT_TO, THIS_PTR->getAccountToId());
 
-            }
-            if (!selSet) {
-                ComboBox_SetCurSel(hAccounts, 0);
-            }
-
-            if (!toSelSet) {
-                ComboBox_SetCurSel(hAccountsTo, 0);
-            }
 
             // Transfer checkbox
             SendDlgItemMessage(hDlg, IDC_CHECK_PAY_TO_ACCOUNT, BM_SETCHECK, THIS_PTR->getAccountToId() != INVALID_ACCOUNT_ID ? BST_CHECKED : BST_UNCHECKED, 0);
@@ -172,30 +149,15 @@ INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT messag
                     THIS_PTR->_description = szBuff;
 
                     // Set account from
-                    HWND hWndFrom = GetDlgItem(hDlg, IDC_COMBO_ACCOUNT);
-                    iSel = ComboBox_GetCurSel(hWndFrom);
-                    if (iSel >= 0) {
-                        Account* pAcct = (Account*)ComboBox_GetItemData(hWndFrom, iSel);
-                        if (pAcct) {
-                            THIS_PTR->setAccountFromId(pAcct->getId());
-                        }
-                    }
+                    THIS_PTR->setAccountFromId(Utils::getAccountIdFromAccountCombo(hDlg, IDC_COMBO_ACCOUNT));
 
                     // Set account to
                     bool isTransfer = SendDlgItemMessage(hDlg, IDC_CHECK_PAY_TO_ACCOUNT, BM_GETCHECK, 0, 0);
                     if (!isTransfer) {
                         THIS_PTR->_accountToId = INVALID_ACCOUNT_ID;
                     }
-                    else
-                    {
-                        HWND hWndTo = GetDlgItem(hDlg, IDC_COMBO_ACCOUNT_TO);
-                        iSel = ComboBox_GetCurSel(hWndTo);
-                        if (iSel >= 0) {
-                            Account* pAcct = (Account * )ComboBox_GetItemData(hWndTo, iSel);
-                            if (pAcct) {
-                                THIS_PTR->setAccountToId(pAcct->getId());
-                            }
-                        }
+                    else{
+                        THIS_PTR->setAccountToId(Utils::getAccountIdFromAccountCombo(hDlg, IDC_COMBO_ACCOUNT_TO));
                     }
                 }
             }
