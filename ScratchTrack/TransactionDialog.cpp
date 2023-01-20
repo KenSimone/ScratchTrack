@@ -9,7 +9,7 @@
 extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 
-TransactionDialog::TransactionDialog() : _amount(0), _accountFromId(0), _envelopeId(0), _accountToId(INVALID_ACCOUNT_ID)
+TransactionDialog::TransactionDialog() : _amount(0), _accountFromId(INVALID_ACCOUNT_ID), _envelopeId(INVALID_ACCOUNT_ID), _accountToId(INVALID_ACCOUNT_ID)
 {
 }
 
@@ -146,6 +146,7 @@ INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT messag
 
                     HWND hAccountsFrom = GetDlgItem(hDlg, IDC_COMBO_ACCOUNT);
                     HWND hAccountsTo = GetDlgItem(hDlg, IDC_COMBO_ACCOUNT_TO);
+                    HWND hCategories = GetDlgItem(hDlg, IDC_COMBO_ENVELOPE);
 
                     // Set amount
                     wchar_t szBuff[1024] = { 0 };
@@ -159,20 +160,26 @@ INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT messag
                     GetDlgItemText(hDlg, IDC_COMBO_PAYEE, szBuff, 1024);
                     THIS_PTR->_payee = szBuff;
 
+                    // Set category
+                    int iSel = ComboBox_GetCurSel(hCategories);
+                    if (iSel >= 0) {
+                        AccountEnvelope* pEnvelope = (AccountEnvelope*)ComboBox_GetItemData(hCategories, iSel);
+                        THIS_PTR->setEnvelopeId(pEnvelope->getId());
+                    }
+
                     // Set description
                     GetDlgItemText(hDlg, IDC_EDIT_Transaction_DESCRIPTION, szBuff, 1024);
                     THIS_PTR->_description = szBuff;
 
                     // Set account from
                     HWND hWndFrom = GetDlgItem(hDlg, IDC_COMBO_ACCOUNT);
-                    int iSel = ComboBox_GetCurSel(hWndFrom);
+                    iSel = ComboBox_GetCurSel(hWndFrom);
                     if (iSel >= 0) {
                         Account* pAcct = (Account*)ComboBox_GetItemData(hWndFrom, iSel);
                         if (pAcct) {
                             THIS_PTR->setAccountFromId(pAcct->getId());
                         }
                     }
-
 
                     // Set account to
                     bool isTransfer = SendDlgItemMessage(hDlg, IDC_CHECK_PAY_TO_ACCOUNT, BM_GETCHECK, 0, 0);
@@ -182,7 +189,7 @@ INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT messag
                     else
                     {
                         HWND hWndTo = GetDlgItem(hDlg, IDC_COMBO_ACCOUNT_TO);
-                        int iSel = ComboBox_GetCurSel(hWndTo);
+                        iSel = ComboBox_GetCurSel(hWndTo);
                         if (iSel >= 0) {
                             Account* pAcct = (Account * )ComboBox_GetItemData(hWndTo, iSel);
                             if (pAcct) {

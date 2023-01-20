@@ -19,12 +19,13 @@ static const wchar_t* szPay = L"Pay";
 static const wchar_t* szDeposit = L"Deposit";
 static const wchar_t* szTransfer = L"Transfer";
 
-Account::ACTION_FLAG hitTestAccountList(POINT pt)
+Account::ACTION_FLAG hitTestAccountList(POINT pt, Account** ppAccount /*= nullptr*/)
 {
     LVHITTESTINFO hitInfo = { 0 };
     hitInfo.pt = pt;
     ListView_SubItemHitTestEx(g_hwndAccountLV, &hitInfo);
     Account::ACTION_FLAG ret = Account::ACTION_FLAG::NO_ACTION;
+    Account* pAccount = nullptr;
 
 
     if (hitInfo.iSubItem == 2 && hitInfo.flags & LVHT_ONITEMLABEL)
@@ -33,7 +34,7 @@ Account::ACTION_FLAG hitTestAccountList(POINT pt)
         item.iItem = hitInfo.iItem;
         item.mask = LVIF_PARAM;
         ListView_GetItem(g_hwndAccountLV, &item);
-        Account* pAccount = (Account*)item.lParam;
+        pAccount = (Account*)item.lParam;
         if (pAccount)
         {
             bool hitPay = false, hitDeposit = false, hitTransfer = false;
@@ -67,6 +68,10 @@ Account::ACTION_FLAG hitTestAccountList(POINT pt)
                 }
             }
         }
+    }
+
+    if (ppAccount){
+        *ppAccount = pAccount;
     }
 
     return ret;

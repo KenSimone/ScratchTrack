@@ -797,17 +797,33 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 GetCursorPos(&pt);
                 ScreenToClient(g_hwndAccountLV, &pt);
 
-                Account::ACTION_FLAG af = hitTestAccountList(pt);
+                Account* pHitAccount = nullptr;
+                Account::ACTION_FLAG af = hitTestAccountList(pt, &pHitAccount);
                 if (af == Account::ACTION_FLAG::DEPOSIT) {
-
+                    TransactionDialog dlg;
+                    dlg.setDescription(L"Deposit");
+                    dlg.setIsExpense(false);
+                    dlg.setPayee(L"Self");
+                    dlg.setAccountFromId(pHitAccount->getId());
+                    dlg.ShowDialog();
                     return true;
                 }
                 else if (af == Account::ACTION_FLAG::TRANSFER) {
-
+                    TransactionDialog dlg;
+                    dlg.setDescription(L"Transfer");
+                    dlg.setPayee(L"Self");
+                    dlg.setAccountFromId(pHitAccount->getId());
+                    dlg.setAccountToId(0);
+                    dlg.ShowDialog();
                     return true;
                 }
                 else if (af == Account::ACTION_FLAG::PAY) {
-
+                    TransactionDialog dlg;                    
+                    dlg.setDescription(L"Pay CC");
+                    dlg.setPayee(pHitAccount->getName());
+                    dlg.setEnvelopeId(pHitAccount->paidFromEnvelopeId());
+                    dlg.setAccountToId(pHitAccount->getId());
+                    dlg.ShowDialog();
                     return true;
                 }
             }
