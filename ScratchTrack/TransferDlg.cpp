@@ -18,7 +18,7 @@ TransferDlg::~TransferDlg()
 bool TransferDlg::ShowDialog()
 {
     PTHIS = this;
-    INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_DEPOSIT_DIALOG), g_hTopWindow, TransferDlgProc);
+    INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_TRANSFER_DIALOG), g_hTopWindow, TransferDlgProc);
     PTHIS = nullptr;
 
     return result == IDOK;

@@ -67,6 +67,10 @@
 #define IDC_RICHEDIT_SUMMARY            1024
 #define IDC_EDIT_DEPOSIT_AMOUNT         1025
 #define IDC_EDIT_DESCRIPTION            1026
+#define IDC_EDIT_AMOUNT                 1027
+#define IDC_EDIT_ACCOUNT                1028
+#define IDC_EDIT_ACCOUNT2               1029
+#define IDC_EDIT_ENVELOPE               1029
 #define ID_ROOT_ADD_GROUP               32771
 #define ID_ROOT_RENAMEACCOUNT           32772
 #define ID_ROOT_SETBALANCE              32773
@@ -109,7 +113,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        161
 #define _APS_NEXT_COMMAND_VALUE         33021
-#define _APS_NEXT_CONTROL_VALUE         1027
+#define _APS_NEXT_CONTROL_VALUE         1029
 #define _APS_NEXT_SYMED_VALUE           113
 #endif
 #endif

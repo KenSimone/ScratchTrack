@@ -1,15 +1,12 @@
 #include "PayCCDlg.h"
 #include "resource.h"
+#include "Utils.h"
+#include "AccountInfo.h"
 
 #include <Windows.h>
 
 extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
-
-PayCCDlg::PayCCDlg() : _hParent(nullptr), _hThisDialg(nullptr)
-{
-
-}
 
 PayCCDlg::~PayCCDlg()
 {
@@ -27,14 +24,29 @@ bool PayCCDlg::ShowDialog()
 
 INT_PTR CALLBACK PayCCDlg::PayCCDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    PayCCDlg* pThis = (PayCCDlg*)GetWindowLongPtr(hDlg, GWLP_USERDATA);
-
     UNREFERENCED_PARAMETER(lParam);
     switch (message)
     {
     case WM_INITDIALOG:
-        if (pThis) {
-            // Accounts
+        if (PayCCDlg::PTHIS) {
+            // 
+            // IDC_EDIT_ENVELOPE
+            // IDC_EDIT_DESCRIPTION
+            HWND hWnd = GetDlgItem(hDlg, IDC_EDIT_AMOUNT);
+            std::wstring amt = Utils::penniesToDollarsString(abs(PayCCDlg::PTHIS->_amount));
+            SetWindowText(hWnd, amt.c_str());
+
+            hWnd = GetDlgItem(hDlg, IDC_EDIT_ACCOUNT);
+            SetWindowTextW(hWnd, PTHIS->_pAccount->getName());
+
+            hWnd = GetDlgItem(hDlg, IDC_EDIT_ENVELOPE);
+            int envelopeId = PTHIS->_pAccount->paidFromEnvelopeId();
+            AccountBase* pEnvelope = AccountBase::lookupById(envelopeId);
+            SetWindowTextW(hWnd, pEnvelope->getName());
+
+            hWnd = GetDlgItem(hDlg, IDC_EDIT_DESCRIPTION);
+            SetWindowTextW(hWnd, PTHIS->_description.c_str());
+
         }
 
         return (INT_PTR)TRUE;
@@ -43,6 +55,14 @@ INT_PTR CALLBACK PayCCDlg::PayCCDlgProc(HWND hDlg, UINT message, WPARAM wParam, 
         {
             if (LOWORD(wParam) == IDOK)
             {
+                wchar_t szBuff[1024] = { 0 };
+                HWND hWnd = GetDlgItem(hDlg, IDC_EDIT_AMOUNT);
+                GetWindowText(hWnd, szBuff, 1024);
+                PTHIS->_amount = -1 * abs(Utils::dollarsStringToPennies(szBuff));
+
+                hWnd = GetDlgItem(hDlg, IDC_EDIT_DESCRIPTION);
+                GetWindowTextW(hWnd, szBuff, 1024);
+                PTHIS->_description = szBuff;
             }
 
             EndDialog(hDlg, LOWORD(wParam));
