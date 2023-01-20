@@ -562,7 +562,12 @@ void applyModifiedTransaction(Transaction* pTransaction, int listviewItemIndex)
     std::wstring payee = pTransaction->getPayee();
     if (pTransaction->getAccountToId() != INVALID_ACCOUNT_ID && pAccountTo) {
         wchar_t szBuff[1024] = { 0 };
-        swprintf(szBuff, 1024, L"%s->%s", pAccountFrom ? pAccountFrom->getName() : L"", pAccountTo->getName());
+        if (pAccountFrom) {
+            swprintf(szBuff, 1024, L"%s->%s", pAccountFrom->getName(), pAccountTo->getName());
+        }
+        else{ 
+            swprintf(szBuff, 1024, L"%s", pAccountTo->getName());
+        }
         payee = szBuff;
     }
     ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 1, const_cast<wchar_t*>(payee.c_str()));
