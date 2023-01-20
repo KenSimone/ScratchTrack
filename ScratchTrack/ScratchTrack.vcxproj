@@ -140,7 +140,9 @@
     <ClInclude Include="AccountInfoDlg.h" />
     <ClInclude Include="AccountListViewUtils.h" />
     <ClInclude Include="AutoCombo.h" />
+    <ClInclude Include="DepositDlg.h" />
     <ClInclude Include="EnvelopeDlg.h" />
+    <ClInclude Include="PayCCDlg.h" />
     <ClInclude Include="Transaction.h" />
     <ClInclude Include="TransactionDialog.h" />
     <ClInclude Include="framework.h" />
@@ -149,6 +151,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TinyXml2.h" />
     <ClInclude Include="TransactionFilterDlg.h" />
+    <ClInclude Include="TransferDlg.h" />
     <ClInclude Include="TreeUtils.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
@@ -158,12 +161,15 @@
     <ClCompile Include="AccountInfoDlg.cpp" />
     <ClCompile Include="AccountListViewUtils.cpp" />
     <ClCompile Include="AutoCombo.cpp" />
+    <ClCompile Include="DepositDlg.cpp" />
     <ClCompile Include="EnvelopeDlg.cpp" />
+    <ClCompile Include="PayCCDlg.cpp" />
     <ClCompile Include="Transaction.cpp" />
     <ClCompile Include="TransactionDialog.cpp" />
     <ClCompile Include="ScratchTrack.cpp" />
     <ClCompile Include="TinyXml2.cpp" />
     <ClCompile Include="TransactionFilterDlg.cpp" />
+    <ClCompile Include="TransferDlg.cpp" />
     <ClCompile Include="TreeUtils.cpp" />
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
