@@ -8,9 +8,9 @@
 std::vector<Transaction*> _Transactions;
 
 
-Transaction* Transaction::addTransaction(int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int envelopeId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp /*= nullptr*/)
+Transaction* Transaction::addTransaction(TRANSACTION_TYPE type, int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int envelopeId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp /*= nullptr*/)
 {
-	Transaction* pTransaction = new Transaction(amount, payFromAccountId, payToAccountId, envelopeId, szPayee, szDescription, pTimeStamp);
+	Transaction* pTransaction = new Transaction(type, amount, payFromAccountId, payToAccountId, envelopeId, szPayee, szDescription, pTimeStamp);
 
 	_Transactions.push_back(pTransaction);
 
@@ -58,6 +58,7 @@ int Transaction::serialize(tinyxml2::XMLElement* pParent)
 	pElement->SetAttribute("timestamp", ft);
 
 	pElement->SetAttribute("amount", _amount);
+	pElement->SetAttribute("type", (int)_type);
 
 	pParent->InsertEndChild(pElement);
 
@@ -94,7 +95,10 @@ int Transaction::deserialize(tinyxml2::XMLElement* pRoot)
 
 			int amount = 0;
 			pTransaction->QueryIntAttribute("amount", &amount);
-			Transaction::addTransaction(amount, fromAccountId, toAccountId, envelopeId, szPayeeW, szDescriptionW, &st);
+
+			int type = 0;
+			pTransaction->QueryIntAttribute("type", &type);
+			Transaction::addTransaction((Transaction::TRANSACTION_TYPE)type, amount, fromAccountId, toAccountId, envelopeId, szPayeeW, szDescriptionW, &st);
 
 			// next
 			pTransaction = pTransaction->NextSiblingElement("transaction");

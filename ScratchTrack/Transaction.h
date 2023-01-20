@@ -12,7 +12,15 @@ class AccountBase;
 class Transaction
 {
 public:
-	static Transaction* addTransaction(int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int envelopeId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp = nullptr);
+	enum TRANSACTION_TYPE
+	{
+		EXPENSE,
+		DEPOSIT,
+		TRANSFER,
+		CCPAYMENT
+	};
+
+	static Transaction* addTransaction(TRANSACTION_TYPE type, int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int envelopeId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp = nullptr);
 	static int deserialize(tinyxml2::XMLElement* pRoot);
 
 	static std::vector<Transaction*> getTransactionsForItem(AccountBase* pItem);
@@ -24,6 +32,7 @@ public:
 	unsigned int getAccountToId() { return _payToAccountId; }
 	const wchar_t* getPayee() { return _payee.c_str(); }
 	const wchar_t* getDescription() { return _description.c_str(); }
+	TRANSACTION_TYPE getType() { return _type; }
 
 	void setDetails(int amount, const wchar_t* szPayee, const wchar_t* szDesc, int envelopeId, int accountFromId, int accountToId)
 	{
@@ -50,7 +59,7 @@ public:
 	virtual int serialize(tinyxml2::XMLElement* pParent);
 
 protected:
-	Transaction(int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int envelopeId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp = nullptr)
+	Transaction(TRANSACTION_TYPE type, int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int envelopeId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp = nullptr)
 	{
 		if (pTimeStamp) {
 			_timestamp = *pTimeStamp;
@@ -63,6 +72,7 @@ protected:
 		_envelopeId = envelopeId;
 		_payFromAccountId = payFromAccountId;
 		_payToAccountId = payToAccountId;
+		_type = type;
 		if (szPayee) {
 			_payee = szPayee;
 		}
@@ -80,6 +90,7 @@ protected:
 	std::wstring _payee;
 	std::wstring _description;
 	SYSTEMTIME _timestamp;
+	TRANSACTION_TYPE _type;
 
 }; // class Transaction
 

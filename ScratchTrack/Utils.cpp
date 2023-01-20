@@ -1,6 +1,9 @@
 #include "Utils.h"
 #include <Windows.h>
 #include <windowsx.h>
+#include "Transaction.h"
+#include "AccountInfo.h"
+#include "AutoCombo.h"
 
 bool Utils::searchText(const wchar_t* szString, const wchar_t* szSearchText)
 {
@@ -171,4 +174,50 @@ std::wstring Utils::accountGuiName(Account* pAccount)
 	name += pAccount->getName();
 
 	return name;
+}
+
+std::wstring Utils::getDlgItemText(HWND hDlg, int resourceId)
+{
+	wchar_t szBuffer[1024] = { 0 };
+	GetDlgItemText(hDlg, resourceId, szBuffer, 1024);
+	std::wstring ret(szBuffer);
+	return ret;
+}
+
+void Utils::setDlgItemDollarTet(HWND hDlg, int resourceId, int amount)
+{
+	std::wstring theText =  Utils::penniesToDollarsString(amount);
+	SetDlgItemText(hDlg, resourceId, theText.c_str());
+}
+
+int Utils::getDlgItemDollarText(HWND hDlg, int resourceId)
+{
+	std::wstring theText = getDlgItemText(hDlg, resourceId);
+	return Utils::dollarsStringToPennies(theText.c_str());
+}
+
+bool Utils::populatePayeeCombo(HWND hParent, int resourceId, const wchar_t* szDefaultPayee /*= nullptr*/)
+{
+	std::vector<Transaction*> transactions = Transaction::getAllTransactions();
+	std::set<std::wstring> uniquePayees;
+	for (auto itr = transactions.begin(); itr != transactions.end(); itr++) {
+		uniquePayees.insert((*itr)->getPayee());
+	}
+
+	HWND hCombo = GetDlgItem(hParent, resourceId);
+	MakeAutocompleteCombo(hCombo);
+
+	bool selSet = false;
+	for (auto itr = uniquePayees.begin(); itr != uniquePayees.end(); itr++) {
+		if (!itr->empty()) {
+			int pos = (int)SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)itr->c_str());
+			if (szDefaultPayee && _wcsicmp(itr->c_str(), szDefaultPayee) == 0)
+			{
+				selSet = true;
+				ComboBox_SetCurSel(hCombo, pos);
+			}
+		}
+	}
+
+	return selSet;
 }

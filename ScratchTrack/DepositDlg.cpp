@@ -1,12 +1,22 @@
 #include "DepositDlg.h"
 #include "resource.h"
+#include "Utils.h"
+#include "AccountInfo.h"
 #include <Windows.h>
 
 extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 
-DepositDlg::DepositDlg() : _hParent(nullptr), _hThisDialg(nullptr)
+DepositDlg::DepositDlg(Account* pAccount, int amount, const wchar_t* szPayee, const wchar_t* szDescription) 
+    : _pAccount(pAccount), _amount(amount)
 {
+    if (szPayee) {
+        _payee = szPayee;
+    }
+
+    if (szDescription) {
+        _description = szDescription;
+    }
 
 }
 
@@ -26,15 +36,18 @@ bool DepositDlg::ShowDialog()
 
 INT_PTR CALLBACK DepositDlg::DepositDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    DepositDlg* pThis = (DepositDlg*)GetWindowLongPtr(hDlg, GWLP_USERDATA);
+    //IDC_COMBO_PAYEE
 
     UNREFERENCED_PARAMETER(lParam);
     switch (message)
     {
     case WM_INITDIALOG:
-        if (pThis) {
-            // Accounts
-        }
+        // Accounts
+        Utils::populateAccountCombo(hDlg, IDC_COMBO_ACCOUNT, PTHIS->_pAccount->getId());
+        SetDlgItemText(hDlg, IDC_EDIT_DESCRIPTION, PTHIS->_description.c_str());
+        Utils::setDlgItemDollarTet(hDlg, IDC_EDIT_DEPOSIT_AMOUNT, PTHIS->_amount);
+        Utils::populatePayeeCombo(hDlg, IDC_COMBO_PAYEE, PTHIS->_payee.c_str());
+
 
         return (INT_PTR)TRUE;
     case WM_COMMAND:
@@ -42,6 +55,12 @@ INT_PTR CALLBACK DepositDlg::DepositDlgProc(HWND hDlg, UINT message, WPARAM wPar
         {
             if (LOWORD(wParam) == IDOK)
             {
+                PTHIS->_amount = Utils::getDlgItemDollarText(hDlg, IDC_EDIT_DEPOSIT_AMOUNT);
+                PTHIS->_description = Utils::getDlgItemText(hDlg, IDC_EDIT_DESCRIPTION);
+                PTHIS->_payee = Utils::getDlgItemText(hDlg, IDC_COMBO_PAYEE);
+
+                int id = Utils::getAccountIdFromAccountCombo(hDlg, IDC_COMBO_ACCOUNT);
+                PTHIS->_pAccount = (Account*)AccountBase::lookupById(id);
             }
 
             EndDialog(hDlg, LOWORD(wParam));

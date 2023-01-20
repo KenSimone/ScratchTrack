@@ -66,25 +66,7 @@ INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT messag
             }
 
             // Transactions
-            HWND hPayees = GetDlgItem(hDlg, IDC_COMBO_PAYEE);
-            MakeAutocompleteCombo(hPayees);
-
-            std::vector<Transaction*> transactions = Transaction::getAllTransactions();
-            std::set<std::wstring> uniquePayees;
-            for (auto itr = transactions.begin(); itr != transactions.end(); itr++) {
-                uniquePayees.insert((*itr)->getPayee());
-            }
-
-            for (auto itr = uniquePayees.begin(); itr != uniquePayees.end(); itr++) {
-                if (!itr->empty()) {
-                    int pos = (int)SendMessage(hPayees, CB_ADDSTRING, 0, (LPARAM)itr->c_str());
-                    if (_wcsicmp(itr->c_str(), THIS_PTR->getPayee()) == 0)
-                    {
-                        selSet = true;
-                        ComboBox_SetCurSel(hPayees, pos);
-                    }
-                }
-            }
+            Utils::populatePayeeCombo(hDlg, IDC_COMBO_PAYEE, THIS_PTR->getPayee());
 
             // Set expense radio
             int iAmount = THIS_PTR->getAmount();

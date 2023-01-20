@@ -374,7 +374,7 @@ bool addTransaction(HTREEITEM hItem)
 
     if (transactionDlg.ShowDialog())
     {
-        Transaction::addTransaction(transactionDlg.getAmount(), transactionDlg.getAccountFromId(), transactionDlg.getAccountToId(), transactionDlg.getEnvelopeId(), transactionDlg.getPayee(), transactionDlg.getDescription());
+        Transaction::addTransaction(Transaction::EXPENSE, transactionDlg.getAmount(), transactionDlg.getAccountFromId(), transactionDlg.getAccountToId(), transactionDlg.getEnvelopeId(), transactionDlg.getPayee(), transactionDlg.getDescription());
 
         // Apply the amount to the transaction envelope 
         pEnvelope->addBalance(transactionDlg.getAmount());
@@ -527,6 +527,44 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
     return didSomething;
 }
 
+void updateTransactionUiAndSave(Transaction* pTransaction, int listviewItemIndex)
+{
+    Account* pAccountFrom = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountFromId()));
+    Account* pAccountTo = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountToId()));
+
+    // Payee
+    std::wstring payee = pTransaction->getPayee();
+    if (pTransaction->getAccountToId() != INVALID_ACCOUNT_ID && pAccountTo) {
+        wchar_t szBuff[1024] = { 0 };
+        if (pAccountFrom) {
+            swprintf(szBuff, 1024, L"%s->%s", pAccountFrom->getName(), pAccountTo->getName());
+        }
+        else {
+            swprintf(szBuff, 1024, L"%s", pAccountTo->getName());
+        }
+        payee = szBuff;
+    }
+    ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 1, const_cast<wchar_t*>(payee.c_str()));
+
+    // Envelope
+    AccountBase* ati = AccountBase::lookupById(pTransaction->getEnvelopeId());
+    if (ati) {
+        ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 2, const_cast<wchar_t*>(ati->getName()));
+    }
+
+    // Description
+    ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 3, const_cast<wchar_t*>(pTransaction->getDescription()));
+
+    std::wstring amount = Utils::penniesToDollarsString(abs(pTransaction->getAmount()));
+    ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 4, const_cast<wchar_t*>(amount.c_str()));
+    ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 5, const_cast<wchar_t*>(L""));
+
+    // Recalculate dollars in tree and save
+    updateGuiValues();
+    serializeState();
+
+}
+
 void applyModifiedTransaction(Transaction* pTransaction, int listviewItemIndex)
 {
     AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(AccountBase::lookupById(pTransaction->getEnvelopeId()));
@@ -558,37 +596,31 @@ void applyModifiedTransaction(Transaction* pTransaction, int listviewItemIndex)
         pEnvelopeTo->addBalance(-pTransaction->getAmount());
     }
 
-    // Payee
-    std::wstring payee = pTransaction->getPayee();
-    if (pTransaction->getAccountToId() != INVALID_ACCOUNT_ID && pAccountTo) {
-        wchar_t szBuff[1024] = { 0 };
-        if (pAccountFrom) {
-            swprintf(szBuff, 1024, L"%s->%s", pAccountFrom->getName(), pAccountTo->getName());
+    updateTransactionUiAndSave(pTransaction, listviewItemIndex);
+}
+
+void editDeposit(Transaction* pTransaction, int listviewItemIndex)
+{
+    Account* pAcct = (Account*)AccountBase::lookupById(pTransaction->getAccountToId());
+    if (pAcct) {
+        DepositDlg dlg(pAcct, pTransaction->getAmount(), pTransaction->getPayee(), pTransaction->getDescription());
+        if (dlg.ShowDialog()) {
+            // Undo original deposit
+            Account* pOrigAcct = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountToId()));
+            int origAmnt = pTransaction->getAmount();
+            pOrigAcct->addBalance(-origAmnt);
+
+            // Apply new version
+            Account* pNewAcct = dlg.getAccount();
+            pNewAcct->addBalance(dlg.getAmount());
+
+
+            // Apply new balance to the envelope
+            pTransaction->setDetails(dlg.getAmount(), pTransaction->getPayee(), dlg.getDescription(), pTransaction->getEnvelopeId(), pTransaction->getAccountFromId(), pTransaction->getAccountToId());
+
+            updateTransactionUiAndSave(pTransaction, listviewItemIndex);
         }
-        else{ 
-            swprintf(szBuff, 1024, L"%s", pAccountTo->getName());
-        }
-        payee = szBuff;
     }
-    ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 1, const_cast<wchar_t*>(payee.c_str()));
-
-    // Envelope
-    AccountBase* ati = AccountBase::lookupById(pTransaction->getEnvelopeId());
-    if (ati) {
-        ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 2, const_cast<wchar_t*>(ati->getName()));
-    }
-
-    // Description
-    ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 3, const_cast<wchar_t*>(pTransaction->getDescription()));
-
-    std::wstring amount = Utils::penniesToDollarsString(abs(pTransaction->getAmount()));
-    ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 4, const_cast<wchar_t*>(amount.c_str()));
-    ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 5, const_cast<wchar_t*>(L""));
-
-    // Recalculate dollars in tree and save
-    updateGuiValues();
-    serializeState();
-
 }
 
 void editPayCC(Transaction* pTransaction, int listviewItemIndex)
@@ -617,12 +649,8 @@ void editPayCC(Transaction* pTransaction, int listviewItemIndex)
     }
 }
 
-void editTransaction(Transaction* pTransaction, int listviewItemIndex)
+void editExpense(Transaction* pTransaction, int listviewItemIndex)
 {
-    if (pTransaction->getAccountFromId() == INVALID_ACCOUNT_ID) {
-        return editPayCC(pTransaction, listviewItemIndex);
-    }
-
     TransactionDialog dlg;
     dlg.setAmount(pTransaction->getAmount());
     dlg.setPayee(pTransaction->getPayee());
@@ -636,7 +664,7 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
         // This is actually kind of complicated. 
         // We need to undo the original transacation first.
         AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(AccountBase::lookupById(pTransaction->getEnvelopeId()));
-        Account* pAccountFrom = dynamic_cast<Account *>(AccountBase::lookupById(pTransaction->getAccountFromId()));
+        Account* pAccountFrom = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountFromId()));
         Account* pAccountTo = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountToId()));
         AccountEnvelope* pEnvelopeTo = nullptr;
 
@@ -664,6 +692,24 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
         pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), dlg.getEnvelopeId(), dlg.getAccountFromId(), dlg.getAccountToId());
         applyModifiedTransaction(pTransaction, listviewItemIndex);
 
+    }
+}
+
+void editTransaction(Transaction* pTransaction, int listviewItemIndex)
+{
+    switch (pTransaction->getType())
+    {
+    case Transaction::CCPAYMENT:
+        editPayCC(pTransaction, listviewItemIndex);
+        break;
+    case Transaction::EXPENSE:
+        editExpense(pTransaction, listviewItemIndex);
+        break;
+    case Transaction::DEPOSIT:
+        editDeposit(pTransaction, listviewItemIndex);
+        break;
+    case Transaction::TRANSFER:
+        break;
     }
 }
 
@@ -860,8 +906,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 Account* pHitAccount = nullptr;
                 Account::ACTION_FLAG af = hitTestAccountList(pt, &pHitAccount);
                 if (af == Account::ACTION_FLAG::DEPOSIT) {
-                    DepositDlg dlg;
-                    dlg.ShowDialog();
+                    DepositDlg dlg(pHitAccount, 0, nullptr, L"Deposit");
+                    if (dlg.ShowDialog()) {
+                        Transaction::addTransaction(Transaction::DEPOSIT, dlg.getAmount(), INVALID_ACCOUNT_ID, pHitAccount->getId(), INVALID_ACCOUNT_ID, dlg.getPayee(), dlg.getDescription());
+                        pHitAccount->addBalance(dlg.getAmount());
+                        serializeState();
+                        updateGuiValues();
+                        populateTransactions();
+                    }
+
                     return true;
                 }
                 else if (af == Account::ACTION_FLAG::TRANSFER) {
@@ -872,7 +925,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 else if (af == Account::ACTION_FLAG::PAY) {
                     PayCCDlg dlg(pHitAccount, 0, 0);
                     if (dlg.ShowDialog()) {
-                        Transaction::addTransaction(dlg.getAmount(), dlg.getPaidFromId(), pHitAccount->getId(), pHitAccount->paidFromEnvelopeId(), pHitAccount->getName(), dlg.getDescription());
+                        Transaction::addTransaction(Transaction::CCPAYMENT, dlg.getAmount(), dlg.getPaidFromId(), pHitAccount->getId(), pHitAccount->paidFromEnvelopeId(), pHitAccount->getName(), dlg.getDescription());
                         pHitAccount->addBalance(-dlg.getAmount());
                         AccountEnvelope* pEnvelope = (AccountEnvelope * )Account::lookupById(pHitAccount->paidFromEnvelopeId());
                         pEnvelope->addBalance(dlg.getAmount());
