@@ -614,10 +614,32 @@ void editDeposit(Transaction* pTransaction, int listviewItemIndex)
             Account* pNewAcct = dlg.getAccount();
             pNewAcct->addBalance(dlg.getAmount());
 
+            // Apply new balance to the envelope
+            pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), pTransaction->getEnvelopeId(), pTransaction->getAccountFromId(), dlg.getAccount()->getId());
+            updateTransactionUiAndSave(pTransaction, listviewItemIndex);
+        }
+    }
+}
+
+void editTransfer(Transaction* pTransaction, int listviewItemIndex)
+{
+    Account* pAcctTo = (Account*)AccountBase::lookupById(pTransaction->getAccountToId());
+    Account* pAcctFrom = (Account*)AccountBase::lookupById(pTransaction->getAccountFromId());
+    if (pAcctTo && pAcctFrom) {
+        TransferDlg dlg(pAcctTo->getId(), pAcctFrom->getId(), pTransaction->getAmount(), pTransaction->getDescription());
+        if (dlg.ShowDialog()) {
+
+            // Put money back in the "from account"
+            int origAmount = pTransaction->getAmount();
+            pAcctFrom->addBalance(origAmount);
+
+            // Take money away from the 'to' account
+            pAcctTo->addBalance(-origAmount);
 
             // Apply new balance to the envelope
-            pTransaction->setDetails(dlg.getAmount(), pTransaction->getPayee(), dlg.getDescription(), pTransaction->getEnvelopeId(), pTransaction->getAccountFromId(), pTransaction->getAccountToId());
-
+            pAcctFrom->addBalance(-dlg.getAmount());
+            pAcctTo->addBalance(dlg.getAmount());
+            pTransaction->setDetails(dlg.getAmount(), pTransaction->getPayee(), dlg.getDescription(), pTransaction->getEnvelopeId(), dlg.getAccountFromId(), dlg.getAccountToId());
             updateTransactionUiAndSave(pTransaction, listviewItemIndex);
         }
     }
@@ -709,6 +731,7 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
         editDeposit(pTransaction, listviewItemIndex);
         break;
     case Transaction::TRANSFER:
+        editTransfer(pTransaction, listviewItemIndex);
         break;
     }
 }
@@ -918,8 +941,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     return true;
                 }
                 else if (af == Account::ACTION_FLAG::TRANSFER) {
-                    TransferDlg dlg;
-                    dlg.ShowDialog();
+                    TransferDlg dlg(pHitAccount->getId(), INVALID_ACCOUNT_ID, 0, L"Transfer");
+                    if (dlg.ShowDialog()) {
+                        Account* pAccountFrom = (Account*)AccountBase::lookupById(dlg.getAccountFromId());
+                        Account* pAccountTo = (Account*)AccountBase::lookupById(dlg.getAccountToId());
+                        if (pAccountFrom && pAccountTo) {
+                            Transaction::addTransaction(Transaction::TRANSFER, dlg.getAmount(), dlg.getAccountFromId(), dlg.getAccountToId(), INVALID_ACCOUNT_ID, L"Transfer", dlg.getDescription());
+                            pAccountFrom->addBalance(-dlg.getAmount());
+                            pAccountTo->addBalance(dlg.getAmount());
+                            serializeState();
+                            updateGuiValues();
+                            populateTransactions();
+
+                        }
+                    }
                     return true;
                 }
                 else if (af == Account::ACTION_FLAG::PAY) {

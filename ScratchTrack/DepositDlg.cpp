@@ -45,7 +45,7 @@ INT_PTR CALLBACK DepositDlg::DepositDlgProc(HWND hDlg, UINT message, WPARAM wPar
         // Accounts
         Utils::populateAccountCombo(hDlg, IDC_COMBO_ACCOUNT, PTHIS->_pAccount->getId());
         SetDlgItemText(hDlg, IDC_EDIT_DESCRIPTION, PTHIS->_description.c_str());
-        Utils::setDlgItemDollarTet(hDlg, IDC_EDIT_DEPOSIT_AMOUNT, PTHIS->_amount);
+        Utils::setDlgItemDollarText(hDlg, IDC_EDIT_DEPOSIT_AMOUNT, PTHIS->_amount);
         Utils::populatePayeeCombo(hDlg, IDC_COMBO_PAYEE, PTHIS->_payee.c_str());
 
 

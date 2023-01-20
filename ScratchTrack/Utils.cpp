@@ -184,7 +184,7 @@ std::wstring Utils::getDlgItemText(HWND hDlg, int resourceId)
 	return ret;
 }
 
-void Utils::setDlgItemDollarTet(HWND hDlg, int resourceId, int amount)
+void Utils::setDlgItemDollarText(HWND hDlg, int resourceId, int amount)
 {
 	std::wstring theText =  Utils::penniesToDollarsString(amount);
 	SetDlgItemText(hDlg, resourceId, theText.c_str());

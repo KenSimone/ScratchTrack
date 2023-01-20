@@ -22,6 +22,6 @@ public:
 	static std::wstring accountGuiName(Account* pAccount);
 	static std::wstring getDlgItemText(HWND hDlg, int resourceId);
 
-	static void setDlgItemDollarTet(HWND hDlg, int resourceId, int amount);
+	static void setDlgItemDollarText(HWND hDlg, int resourceId, int amount);
 	static int getDlgItemDollarText(HWND hDlg, int resourceId);
 };

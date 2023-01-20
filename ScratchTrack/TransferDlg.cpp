@@ -1,12 +1,18 @@
 #include "TransferDlg.h"
 #include "resource.h"
+#include "AccountInfo.h"
+#include "Utils.h"
 #include <Windows.h>
 
 extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 
-TransferDlg::TransferDlg() : _hParent(nullptr), _hThisDialg(nullptr)
+TransferDlg::TransferDlg(int accountToId, int accountFromId, int amount, const wchar_t* szDescription /*= nullptr*/) :
+    _accountFromId(accountFromId), _accountToId(accountToId), _amount(amount)
 {
+    if (szDescription) {
+        _description = szDescription;
+    }
 
 }
 
@@ -32,9 +38,10 @@ INT_PTR CALLBACK TransferDlg::TransferDlgProc(HWND hDlg, UINT message, WPARAM wP
     switch (message)
     {
     case WM_INITDIALOG:
-        if (pThis) {
-            // Accounts
-        }
+        Utils::setDlgItemDollarText(hDlg, IDC_EDIT_AMOUNT, PTHIS->_amount);
+        Utils::populateAccountCombo(hDlg, IDC_COMBO_ACCOUNT, PTHIS->getAccountFromId());
+        Utils::populateAccountCombo(hDlg, IDC_COMBO_ACCOUNT_TO, PTHIS->getAccountToId());
+        SetDlgItemText(hDlg, IDC_EDIT_DESCRIPTION, PTHIS->getDescription());
 
         return (INT_PTR)TRUE;
     case WM_COMMAND:
@@ -42,6 +49,10 @@ INT_PTR CALLBACK TransferDlg::TransferDlgProc(HWND hDlg, UINT message, WPARAM wP
         {
             if (LOWORD(wParam) == IDOK)
             {
+                PTHIS->_amount = Utils::getDlgItemDollarText(hDlg, IDC_EDIT_AMOUNT);
+                PTHIS->_description = Utils::getDlgItemText(hDlg, IDC_EDIT_DESCRIPTION);
+                PTHIS->_accountFromId = Utils::getAccountIdFromAccountCombo(hDlg, IDC_COMBO_ACCOUNT);
+                PTHIS->_accountToId = Utils::getAccountIdFromAccountCombo(hDlg, IDC_COMBO_ACCOUNT_TO);
             }
 
             EndDialog(hDlg, LOWORD(wParam));
