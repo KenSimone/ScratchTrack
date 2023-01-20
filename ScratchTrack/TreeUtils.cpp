@@ -405,7 +405,6 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
     static const wchar_t* szAddTransaction = L"\u271A";
     static const wchar_t* szEditEnvelope= L"\u270E"; 
     static const wchar_t* szAddEnvelope = L"\u271A";
-    //static const wchar_t* szCreditCard = (wchar_t*)(u"\U0001F4B3");
 
     static const COLORREF ACCOUNT_COLOR = RGB(230, 240, 250);
     static const COLORREF GROUP_COLOR = RGB(230, 240, 250);

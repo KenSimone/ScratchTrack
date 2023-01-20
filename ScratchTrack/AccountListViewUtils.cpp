@@ -272,11 +272,7 @@ void addAccount(Account* pAccount)
     item.iItem = INVALID_ACCOUNT_ID;
 
     // Account name
-    std::wstring name(pAccount->getName());
-    static const wchar_t* szCreditCard = (wchar_t*)(u"\U0001F4B3");
-    if (pAccount->paidFromEnvelopeId() != INVALID_ACCOUNT_ID) {
-        name += szCreditCard;
-    }
+    std::wstring name = Utils::accountGuiName(pAccount);
     item.pszText = const_cast<wchar_t*>(name.c_str());
     int iIndex = ListView_InsertItem(g_hwndAccountLV, &item);
 

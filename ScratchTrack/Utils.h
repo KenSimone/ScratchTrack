@@ -16,4 +16,6 @@ public:
 	// Returns true if default account ID was found
 	static bool populateAccountCombo(HWND hParent, int resourceId, int defaultAcctId = INVALID_ACCOUNT_ID);
 	static int getAccountIdFromAccountCombo(HWND hParent, int resourceId, int defaultAcctId = INVALID_ACCOUNT_ID);
+
+	static std::wstring accountGuiName(Account* pAccount);
 };

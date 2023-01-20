@@ -162,3 +162,13 @@ int Utils::getAccountIdFromAccountCombo(HWND hParent, int resourceId, int defaul
 	}
 	return iRet;
 }
+
+std::wstring Utils::accountGuiName(Account* pAccount)
+{
+	static const wchar_t* szCreditCard = (wchar_t*)(u"\U0001F4B3 ");
+	static const wchar_t* szBank = (wchar_t*)u"\U0001F3E6 ";
+	std::wstring name = (pAccount->paidFromEnvelopeId() == INVALID_ACCOUNT_ID) ? szBank : szCreditCard;
+	name += pAccount->getName();
+
+	return name;
+}

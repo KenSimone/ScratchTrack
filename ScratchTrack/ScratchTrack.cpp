@@ -772,6 +772,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
+    case WM_MOUSEMOVE:
+        if (g_btDragDetails._dragging) {
+            POINT pt = { 0 };
+            pt.x = GET_X_LPARAM(lParam);
+            pt.y = GET_Y_LPARAM(lParam);
+            ClientToScreen(hWnd, &pt);
+            ScreenToClient(g_hwndTV, &pt);
+            budgetTreeHandleMouseMove(pt.x, pt.y);
+        }
+
+        break;
+
     case WM_LBUTTONUP:
         budgetTreeHandleLButtonUp(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
         break;
@@ -1207,12 +1219,7 @@ void updateGuiValues(HTREEITEM item /*= NULL*/)
             ListView_GetItem(g_hwndAccountLV, &listitem);
             Account* pAccount = (Account*)listitem.lParam;
 
-            std::wstring name;
-            static const wchar_t* szCreditCard = (wchar_t*)(u"\U0001F4B3 ");
-            static const wchar_t* szBank = (wchar_t*)u"\U0001F3E6 ";
-            name = (pAccount->paidFromEnvelopeId() == INVALID_ACCOUNT_ID) ? szBank : szCreditCard;
-            name += pAccount->getName();
-
+            std::wstring name = Utils::accountGuiName(pAccount);
             ListView_SetItemText(g_hwndAccountLV, i, 0, const_cast<wchar_t*>(name.c_str()));
 
             std::wstring amount = Utils::penniesToDollarsString(pAccount->getBalance());
