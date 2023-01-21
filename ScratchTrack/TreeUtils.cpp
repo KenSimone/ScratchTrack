@@ -500,7 +500,8 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
     //static const wchar_t* szAddEnvelope = L"\u271A"; // plus sign
     static const wchar_t* szAddEnvelope = L"\u2709"; // Envelope
     static const wchar_t* szAddMoney = L"\U0001F4B2";
-    static const wchar_t* szHide = L"\U0001F576"; // sunglasses
+    //static const wchar_t* szHide = L"\U0001F576"; // sunglasses
+    static const wchar_t* szHide = L"\U0001F441"; // eye
 
     static const COLORREF ACCOUNT_COLOR = RGB(230, 240, 250);
     static const COLORREF GROUP_COLOR = RGB(230, 240, 250);
@@ -766,7 +767,7 @@ void budgetTreeCreateTreeControl()
     ImageList_AddIcon(il, h);
 
 
-    TreeView_SetImageList(g_hwndTV, il, TVSIL_NORMAL);
+    //TreeView_SetImageList(g_hwndTV, il, TVSIL_NORMAL);
 
     // Create a tool tip
     g_hwndTreeToolTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,

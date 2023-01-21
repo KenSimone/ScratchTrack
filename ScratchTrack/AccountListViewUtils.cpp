@@ -25,7 +25,9 @@ static const wchar_t* szDeposit = L"\U0001F4B2"; // Unicode dollar sign heavy
 //static const wchar_t* szTransfer = L"Transfer";
 static const wchar_t* szTransfer = L"\u21c6";
 // x21C6
-static const wchar_t* szHide = L"\U0001F576"; // sunglasses
+//static const wchar_t* szHide = L"\U0001F576"; // sunglasses
+static const wchar_t* szHide = L"\U0001F441"; // eye
+
 
 static const wchar_t* szEdit = L"\u270E";  // pencil
 
@@ -145,7 +147,7 @@ bool accountListHandleMouseMove(LONG xCur, LONG yCur)
         switch (af)
         {
         case Account::DEPOSIT:
-            swprintf(szBuffer, 1024, L"Deposit money into %ls", pAccount->getName());
+            swprintf(szBuffer, 1024, L"Record a deposit into %ls", pAccount->getName());
             break;
         case Account::TRANSFER:
             swprintf(szBuffer, 1024, L"Transfer money into %ls", pAccount->getName());

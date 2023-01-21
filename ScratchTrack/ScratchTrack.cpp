@@ -34,7 +34,7 @@
 #define MAX_LOADSTRING 100
 
 // Global settings
-static const double FONT_SCALE_FACTOR = 1.3;
+static const double FONT_SCALE_FACTOR = 1.4;
 
 
 // Global Variables:
@@ -44,7 +44,6 @@ HWND g_hwndTV = nullptr, g_hwndTransactionLV = nullptr, g_hwndHeader = nullptr, 
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 wchar_t szOneInputText[1024] = { 0 };
-double g_fontScale = 1.0;
 TransactionFilterDlg g_transactionFilterDlg;
 AccountInfoDlg g_accountInfoDlg;
 
@@ -844,12 +843,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             break;
         case IDM_EXIT:
             DestroyWindow(hWnd);
-            break;
-        case ID_FILE_DECREASEFONTSIZE:
-            g_fontScale -= .2;
-            break;
-        case ID_FILE_INCREASEFONTSIZE:
-            g_fontScale += .2;
             break;
         case ID_FILE_ADDACCOUNT:
         {
