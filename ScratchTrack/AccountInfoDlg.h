@@ -25,6 +25,7 @@ protected:
 	static INT_PTR CALLBACK AccountInfoDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 	void appendText(const wchar_t* szText, COLORREF cr, bool bold, bool underline, int sizeInPoints);
 	void getMasterSummary(std::wstring& summary, bool& isError);
+	void doUnhidePopup();
 
 protected:
 	HWND _hParent, _hThisDialg;

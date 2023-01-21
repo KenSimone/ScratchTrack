@@ -2,10 +2,13 @@
 #include "resource.h"
 #include "AccountInfo.h"
 #include "Utils.h"
+#include "TreeUtils.h"
 #include <richedit.h>
 
 
 extern HINSTANCE g_hInst;
+extern HWND g_hTopWindow;
+int serializeState();
 
 AccountInfoDlg::AccountInfoDlg() : _hParent(nullptr), _hThisDialg(nullptr)
 {
@@ -28,8 +31,99 @@ HWND AccountInfoDlg::create(HWND hParent)
     return _hThisDialg;
 }
 
+void AccountInfoDlg::doUnhidePopup()
+{
+    // Get all items
+    auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
+    auto envelopes = AccountBase::getAllAccountsOfType(AccountBase::ENVELOPE);
+    auto folders = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
+
+    HMENU hPopup = CreatePopupMenu();
+    HMENU hAcctMenu = CreatePopupMenu();
+    HMENU hFolderMenu = CreatePopupMenu();
+    HMENU hEnvMenu = CreatePopupMenu();
+
+    AppendMenu(hPopup, MF_STRING | MF_POPUP, (UINT_PTR)hAcctMenu, L"Accounts");
+    AppendMenu(hPopup, MF_STRING | MF_POPUP, (UINT_PTR)hFolderMenu, L"Folders");
+    AppendMenu(hPopup, MF_STRING | MF_POPUP, (UINT_PTR)hEnvMenu, L"Envelopes");
+
+    // A return code of zero from trackpopup means nothing was selected, so we can't
+    // use accounts IDs, which are zero based.
+    int menuIdOffset = 1;
+
+    // Add hidden accounts
+    for (size_t i = 0; i < accounts.size(); i++) {
+        AccountBase* pAcct = accounts[i];
+        if (pAcct->getHidden()) {
+            AppendMenu(hAcctMenu, MF_STRING | MF_POPUP, (UINT_PTR)pAcct->getId() + menuIdOffset, pAcct->getName());
+        }
+    }
+
+    // Add hidden groups
+    for (size_t i = 0; i < folders.size(); i++) {
+        AccountBase* pAcct = folders[i];
+        if (pAcct->getHidden()) {
+            AppendMenu(hFolderMenu, MF_STRING | MF_POPUP, (UINT_PTR)pAcct->getId() + menuIdOffset, pAcct->getName());
+        }
+    }
+
+    // Add hidden envelopes
+    for (size_t i = 0; i < envelopes.size(); i++) {
+        AccountBase* pAcct = envelopes[i];
+        if (pAcct->getHidden()) {
+            AppendMenu(hEnvMenu, MF_STRING | MF_POPUP, (UINT_PTR)pAcct->getId() + menuIdOffset, pAcct->getName());
+        }
+    }
+
+    POINT pt = { 0 };
+    GetCursorPos(&pt);
+    DWORD dwCode = TrackPopupMenu(hPopup, TPM_RETURNCMD, pt.x, pt.y, 0, _hThisDialg, NULL);
+    if (dwCode)
+    {
+        unsigned int acctId = dwCode - menuIdOffset;
+        AccountBase* pAcct = AccountBase::lookupById(acctId);
+        if (pAcct)
+        {
+            // Unhide the item
+            pAcct->setHidden(false);
+
+            // Envelope special work
+            if (pAcct->getType() == AccountBase::ENVELOPE) {
+                AccountBase* pParent = pAcct->getParent();
+
+                // If its parent is hidden, warn.
+                if (pParent && pParent->getHidden()) {
+                    wchar_t szBuff[1024] = { 0 };
+                    swprintf(szBuff, 1024, L"Item '%ls' is now marked as unhidden, but its parent '%ls' is hidden.\n", pAcct->getName(), pParent->getName());
+                    MessageBox(g_hTopWindow, szBuff, L"Unide warning", MB_ICONWARNING);
+                }
+                else
+                {
+                    HTREEITEM hParent = treeItemFromAccount(pParent);
+                    addTreeItem(hParent, pAcct);
+                }
+            }
+
+            // Folder / group special work
+            if (pAcct->getType() == AccountBase::GROUP) {
+                addTreeItem(TVI_ROOT, pAcct);
+
+            }
+
+            // Accounts
+            if (pAcct->getType() == AccountBase::ACCOUNT) {
+                addTreeItem(TVI_ROOT, pAcct);
+            }
+
+            serializeState();
+        }
+    }
+
+}
+
 INT_PTR CALLBACK AccountInfoDlg::AccountInfoDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
+    AccountInfoDlg* pThis = (AccountInfoDlg*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
     switch (Message)
     {
     case WM_SIZE:
@@ -54,7 +148,6 @@ INT_PTR CALLBACK AccountInfoDlg::AccountInfoDlgProc(HWND hwnd, UINT Message, WPA
     case WM_COMMAND:
         if (HIWORD(wParam) == BN_CLICKED)
         {
-            AccountInfoDlg* pThis = (AccountInfoDlg*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
             UINT message = 0;
             switch (LOWORD(wParam))
             {
@@ -63,6 +156,9 @@ INT_PTR CALLBACK AccountInfoDlg::AccountInfoDlgProc(HWND hwnd, UINT Message, WPA
                 break;
             case IDC_BUTTON_ADD_FOLDER:
                 message = NM_ACCOUNT_DIALOG_ADD_FOLDER;
+                break;
+            case IDC_BUTTON_UNHIDE:
+                pThis->doUnhidePopup();
                 break;
             }
 

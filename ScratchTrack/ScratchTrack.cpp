@@ -952,8 +952,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 else if (af == Account::HIDE) {
                     if (Utils::confirmHide(pHitAccount)) {
                         pHitAccount->setHidden(true);
-                        serializeState();
                         ListView_DeleteItem(g_hwndAccountLV, index);
+                        serializeState();
 
                     }
                 }
@@ -1473,7 +1473,7 @@ int serializeState()
 {
     std::vector<AccountBase*> topItems;
 
-    // Collect the accounts
+    // Collect the accounts in order from the UI
     for (int i = 0; i < ListView_GetItemCount(g_hwndAccountLV); i++)
     {
         LVITEM item = { 0 };
@@ -1484,13 +1484,30 @@ int serializeState()
         topItems.push_back(pAccount);
     }
 
-    // Collect Categories and subcategories
+    // Collect Categories and subcategories from the UI
     HTREEITEM hItem = TreeView_GetChild(g_hwndTV, TVI_ROOT);
     while (hItem){
         AccountBase* item = accountFromTreeItem(hItem);
         topItems.push_back(item);
         hItem = TreeView_GetNextSibling(g_hwndTV, hItem);
     }
+
+    // Collect hidden accounts
+    auto accts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
+    for (size_t i = 0; i < accts.size(); i++) {
+        if (accts[i]->getHidden()) {
+            topItems.push_back(accts[i]);
+        }
+    }
+
+    // Collect hidden folders
+    accts = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
+    for (size_t i = 0; i < accts.size(); i++) {
+        if (accts[i]->getHidden()) {
+            topItems.push_back(accts[i]);
+        }
+    }
+
 
     serialize(topItems, getPersistFile());
 
