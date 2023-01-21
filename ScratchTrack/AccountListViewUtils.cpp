@@ -23,6 +23,7 @@ static const wchar_t* szTransfer = L"Transfer";
 static HWND g_hwndListToolTip = nullptr;
 static TTTOOLINFO g_toolTip = { 0 };
 static bool g_isToolTipActive = false;
+static bool _trackingMouse = false;
 
 Account::ACTION_FLAG hitTestAccountList(POINT pt, Account** ppAccount /*= nullptr*/)
 {
@@ -104,6 +105,16 @@ bool accountListHandleMouseMove(LONG xCur, LONG yCur)
 
     if (hit)
     {
+        if (!_trackingMouse)
+        {
+            TRACKMOUSEEVENT tme = { sizeof(TRACKMOUSEEVENT) };
+            tme.hwndTrack = g_hwndAccountLV;
+            tme.dwFlags = TME_LEAVE;
+
+            TrackMouseEvent(&tme);
+            _trackingMouse = true;
+        }
+
         static wchar_t szBuffer[1024] = { 0 };
         wcscpy_s(szBuffer, 1024, L"No hint. File a bug.");
         switch (af)
@@ -157,6 +168,12 @@ LRESULT CALLBACK acctListViewSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
         accountListHandleMouseMove(point.x, point.y);
         return true;
     }
+    else if (uMsg == WM_MOUSELEAVE)
+    {
+        SendMessage(g_hwndListToolTip, TTM_TRACKACTIVATE, (WPARAM)FALSE, (LPARAM)&g_toolTip);
+        _trackingMouse = FALSE;
+    }
+
     return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }
 

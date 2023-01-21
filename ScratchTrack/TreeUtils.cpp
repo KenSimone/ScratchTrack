@@ -21,6 +21,7 @@ std::map< BUDGET_TREE_LINK_ITEM_TYPE, RECT> g_budgetTreeLinkSpots;
 HWND g_hwndTreeToolTip = nullptr;
 TTTOOLINFO g_toolTip = { 0 };
 bool g_isToolTipActive = false;
+static bool _trackingMouse = false;
 
 
 HTREEITEM hotLinkFromPoint(POINT pt)
@@ -38,7 +39,13 @@ LRESULT CALLBACK treeViewSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
         budgetTreeHandleMouseMove(point.x, point.y);
         return true;
     }
+    else if (uMsg == WM_MOUSELEAVE)
+    {
+        SendMessage(g_hwndTreeToolTip, TTM_TRACKACTIVATE, (WPARAM)FALSE, (LPARAM)&g_toolTip);
+        _trackingMouse = FALSE;
+    }
     return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+
 }
 
 // This function comes up with initial column sizes
@@ -371,6 +378,15 @@ bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
     }
     else
     {
+        if (!_trackingMouse)
+        {
+            TRACKMOUSEEVENT tme = { sizeof(TRACKMOUSEEVENT) };
+            tme.hwndTrack = g_hwndTV;
+            tme.dwFlags = TME_LEAVE;
+
+            TrackMouseEvent(&tme);
+            _trackingMouse = true;
+        }
         // Hotspot check
         HCURSOR hCursor = nullptr;
 
