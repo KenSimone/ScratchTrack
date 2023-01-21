@@ -131,6 +131,7 @@ void setupPaymentEnvelopeForAccount(Account* pAccount)
             if (_wcsicmp(catName.c_str(), categories[i]->getName()) == 0) {
                 // This seems to be the right envelope
                 pAccount->setPaidFromEnvelopeId(categories[i]->getId());
+                pAccount->setReadOnly(true);
                 return;
             }
         }
@@ -144,6 +145,7 @@ void setupPaymentEnvelopeForAccount(Account* pAccount)
         {
             if (_wcsicmp(groupName.c_str(), groups[i]->getName()) == 0) {
                 pGroup = (AccountGroup * )groups[i];
+                pGroup->setReadOnly(true);
                 hItemGroup = treeItemFromAccount(pGroup);
             }
         }
@@ -152,6 +154,7 @@ void setupPaymentEnvelopeForAccount(Account* pAccount)
         {
             pGroup = new AccountGroup;
             pGroup->setName(groupName.c_str());
+            pGroup->setReadOnly(true);
             hItemGroup = addTreeItem(TVI_ROOT, pGroup);
         }
 
@@ -162,7 +165,7 @@ void setupPaymentEnvelopeForAccount(Account* pAccount)
         pEnvelope->setDefaultTransactionPayToAccount(pAccount);
         pEnvelope->setIsExpense(true);
         pEnvelope->setIsVirtualAccount(true);
-        pEnvelope->setIsCreditCardPayer(true);
+        pEnvelope->setReadOnly(true);
 
         pAccount->setPaidFromEnvelopeId(pEnvelope->getId());
 
@@ -986,7 +989,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     ListView_GetItem(g_hwndAccountLV, &item);
 
                     Account* pAccount = (Account*)item.lParam;
-                    editAccount(pAccount);
+                    if (!pAccount->getReadOnly()) {
+                        editAccount(pAccount);
+                    }
                     return true;
                 }
 
@@ -1146,7 +1151,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 TreeView_HitTest(g_hwndTV, &tvhi);
                 HTREEITEM hItem = tvhi.hItem;
                 auto acctBase = accountFromTreeItem(hItem);
-                if (acctBase)
+                if (acctBase && !acctBase->getReadOnly())
                 {
                     AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(acctBase);
                     if (pEnvelope && editEnvelope(pEnvelope) ){

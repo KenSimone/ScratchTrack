@@ -308,9 +308,8 @@ HTREEITEM treeViewHitTestLinks(LONG xCur, LONG yCur, BUDGET_TREE_LINK_ITEM_TYPE&
 
     HTREEITEM hItem = TreeView_HitTest(g_hwndTV, &tvhi);
     AccountBase* pItem = accountFromTreeItem(hItem);
-    AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(pItem);
 
-    if (pItem && !(pEnvelope && pEnvelope->isCreditCardPayer()) )
+    if (pItem && !pItem->getReadOnly())
     {
         RECT r = { 0 };
         TreeView_GetItemRect(g_hwndTV, hItem, &r, false);
@@ -629,7 +628,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             case AccountBase::ENVELOPE:
             {
                 AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(pItem);
-                if (!pEnvelope->isCreditCardPayer()) {
+                if (!pEnvelope->getReadOnly()) {
                     rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szHide, ENV_HIDE, rightEdge, rcText.top);
                     rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditEnvelope, ENV_ENVELOPE_EDIT, rightEdge, rcText.top);
                     rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddMoney, ENV_MONEY_ADD, rightEdge, rcText.top);
@@ -639,9 +638,11 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
                 break;
             }
             case AccountBase::GROUP:
-                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szHide, GRP_FOLDER_HIDE, rightEdge, rcText.top);
-                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditEnvelope, GRP_FOLDER_EDIT, rightEdge, rcText.top);
-                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddEnvelope, GRP_ENVELOPE_ADD, rightEdge, rcText.top);
+                if (!pItem->getReadOnly()) {
+                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szHide, GRP_FOLDER_HIDE, rightEdge, rcText.top);
+                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditEnvelope, GRP_FOLDER_EDIT, rightEdge, rcText.top);
+                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddEnvelope, GRP_ENVELOPE_ADD, rightEdge, rcText.top);
+                }
                 break;
 
             }
