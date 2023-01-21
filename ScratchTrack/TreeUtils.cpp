@@ -481,10 +481,9 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
     //static const wchar_t* szAddTransaction = L"\U0001F4E9"; // Envelope in
 
     
-
-    
     static const wchar_t* szEditEnvelope= L"\u270E";  // pencil
-    static const wchar_t* szAddEnvelope = L"\u271A";
+    //static const wchar_t* szAddEnvelope = L"\u271A"; // plus sign
+    static const wchar_t* szAddEnvelope = L"\u2709"; // Envelope
     static const wchar_t* szAddMoney = L"\U0001F4B2";
 
     static const COLORREF ACCOUNT_COLOR = RGB(230, 240, 250);
