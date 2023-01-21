@@ -5,6 +5,8 @@
 #include "AccountInfo.h"
 #include "AutoCombo.h"
 
+extern HWND g_hTopWindow;
+
 bool Utils::searchText(const wchar_t* szString, const wchar_t* szSearchText)
 {
 	if (!szString || !szSearchText) {
@@ -240,4 +242,15 @@ LRESULT Utils::customDrawListViewAlternatingColors(NMLVCUSTOMDRAW* pCustomDrawIt
 		return CDRF_DODEFAULT;
 	}
 	return 0;
+}
+
+bool Utils::confirmHide(AccountBase* pAccount)
+{
+	wchar_t szBuff[1024] = { 0 };
+	swprintf(szBuff, 1024, L"Are you sure you want to hide account %ls?", pAccount->getName());
+	if (IDYES == MessageBox(g_hTopWindow, szBuff, L"Confirm Hide", MB_YESNO)) {
+		return true;
+	}
+
+	return false;
 }

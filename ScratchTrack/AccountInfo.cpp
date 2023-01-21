@@ -12,7 +12,7 @@ using namespace tinyxml2;
 AccountBase* AccountItemFromXmlElement(tinyxml2::XMLElement* pAccount);
 
 
-AccountBase::AccountBase(accountItemType type) : _balance(0), _budgeted(0)
+AccountBase::AccountBase(accountItemType type) : _balance(0), _budgeted(0), _hidden(false)
 {
 	if (_curId != UINT_MAX) {
 		_id = _curId;
@@ -56,6 +56,8 @@ int AccountBase::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement**
 	pElement->SetAttribute("id", _id);
 	pElement->SetAttribute("balance", _balance);
 	pElement->SetAttribute("budgeted", _budgeted);
+	pElement->SetAttribute("hidden", _hidden);
+	pElement->SetAttribute("readOnly", _readOnly);
 
 	pParent->InsertEndChild(pElement);
 
@@ -98,9 +100,13 @@ int AccountBase::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	// deserialize
 	unsigned int id = 0;
 	int balance = 0, budgeted = 0;
+	bool hidden = false, readOnly = false;
 	pAccount->QueryIntAttribute("budgeted", &budgeted);
 	pAccount->QueryIntAttribute("balance", &balance);
 	pAccount->QueryUnsignedAttribute("id", &id);
+	pAccount->QueryBoolAttribute("hidden", &hidden);
+	pAccount->QueryBoolAttribute("readOnly", &readOnly);
+
 
 	const char* szName;
 	pAccount->QueryStringAttribute("name", &szName);
@@ -111,6 +117,8 @@ int AccountBase::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	addBalance(balance);
 	setBudgeted(budgeted);
 	setId(id);
+	setHidden(hidden);
+	setReadOnly(readOnly);
 
 	return ERROR_SUCCESS;
 }

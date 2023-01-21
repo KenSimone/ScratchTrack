@@ -58,6 +58,12 @@ public:
 	virtual int getBudgeted() { return _budgeted; }
 	virtual void setBudgeted(int budgeted) { _budgeted = budgeted; }
 
+	virtual bool getHidden() { return _hidden; }
+	virtual void setHidden(bool hidden) { _hidden = hidden; }
+
+	virtual bool getReadOnly() { return _readOnly; }
+	virtual void setReadOnly(bool readOnly) { _readOnly = readOnly; }
+
 	// Transaction for self and sub accounts
 	int getCurrentMonthTransacationTotal();
 
@@ -87,6 +93,8 @@ protected:
 	int _balance;
 	int _budgeted;
 	unsigned int _id;
+	bool _hidden;
+	bool _readOnly;
 };
 
 // Group / folder class and implementation
@@ -265,7 +273,8 @@ public:
 		DEPOSIT = 1,
 		TRANSFER = 2,
 		PAY = 4,
-		EDIT = 8
+		EDIT = 8,
+		HIDE = 16
 	};
 
 	// Returns a mask of the actions that apply to this account
@@ -277,10 +286,10 @@ public:
 	static int getActionFlags(bool forCC)
 	{
 		if (forCC) {
-			return PAY | EDIT;
+			return PAY | EDIT | HIDE;
 		}
 
-		return TRANSFER | DEPOSIT | EDIT;
+		return TRANSFER | DEPOSIT | EDIT | HIDE;
 	}
 
 

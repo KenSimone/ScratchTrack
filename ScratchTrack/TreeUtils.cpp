@@ -245,6 +245,10 @@ HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountBase* pAccount, HTREEITEM hI
     static const DWORD IMG_ADDMONEY = 3;
     static const DWORD IMG_SUBTRACTMONEY = 4;
 
+    if (pAccount->getHidden()) {
+        return nullptr;
+    }
+
 
     TVINSERTSTRUCT tvi = { 0 };
     tvi.itemex.mask = TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
@@ -449,11 +453,12 @@ bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
 
 int addLinkText(HTREEITEM hItem, HDC hDc, const wchar_t* szLinkText, BUDGET_TREE_LINK_ITEM_TYPE type, int rightEdge, int top)
 {
+    static const int iconSpacing = 5;
     SIZE textSize = { 0 };
     GetTextExtentPoint(hDc, szLinkText, (int)wcslen(szLinkText), &textSize);
 
     RECT rHitArea = { 0 };
-    rHitArea.left = rightEdge - textSize.cx - 10;
+    rHitArea.left = rightEdge - textSize.cx - iconSpacing;
     rHitArea.top = top;
     rHitArea.right = rHitArea.left + textSize.cx;
     rHitArea.bottom = rHitArea.top + textSize.cy;

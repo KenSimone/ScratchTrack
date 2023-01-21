@@ -28,4 +28,6 @@ public:
 	static int getDlgItemDollarText(HWND hDlg, int resourceId);
 
 	static LRESULT customDrawListViewAlternatingColors(NMLVCUSTOMDRAW* pCustomDrawItem);
+
+	static bool confirmHide(AccountBase* pAccount);
 };

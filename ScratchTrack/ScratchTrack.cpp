@@ -902,7 +902,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 ScreenToClient(g_hwndAccountLV, &pt);
 
                 Account* pHitAccount = nullptr;
-                Account::ACTION_FLAG af = hitTestAccountList(pt, &pHitAccount);
+                int index = -1;
+                Account::ACTION_FLAG af = hitTestAccountList(pt, &pHitAccount, &index);
                 if (af == Account::ACTION_FLAG::DEPOSIT) {
                     DepositDlg dlg(pHitAccount, 0, nullptr, L"Deposit");
                     if (dlg.ShowDialog()) {
@@ -947,6 +948,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
                     }
                     return true;
+                }
+                else if (af == Account::HIDE) {
+                    if (Utils::confirmHide(pHitAccount)) {
+                        pHitAccount->setHidden(true);
+                        serializeState();
+                        ListView_DeleteItem(g_hwndAccountLV, index);
+
+                    }
                 }
                 else if (af == Account::EDIT) {
                     editAccount(pHitAccount);

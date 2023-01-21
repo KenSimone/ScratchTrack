@@ -25,8 +25,11 @@ static const wchar_t* szDeposit = L"\U0001F4B2"; // Unicode dollar sign heavy
 //static const wchar_t* szTransfer = L"Transfer";
 static const wchar_t* szTransfer = L"\u21c6";
 // x21C6
+static const wchar_t* szHide = L"\U0001F576"; // sunglasses
 
 static const wchar_t* szEdit = L"\u270E";  // pencil
+
+static const wchar_t* szIconSpacing = L"";
 
 static HWND g_hwndListToolTip = nullptr;
 static TTTOOLINFO g_toolTip = { 0 };
@@ -34,7 +37,7 @@ static bool g_isToolTipActive = false;
 static bool _trackingMouse = false;
 static const int _iconOffset = 5;
 
-Account::ACTION_FLAG hitTestAccountList(POINT pt, Account** ppAccount /*= nullptr*/)
+Account::ACTION_FLAG hitTestAccountList(POINT pt, Account** ppAccount /*= nullptr*/, int* pIndex /*= nullptr*/)
 {
     LVHITTESTINFO hitInfo = { 0 };
     hitInfo.pt = pt;
@@ -42,6 +45,9 @@ Account::ACTION_FLAG hitTestAccountList(POINT pt, Account** ppAccount /*= nullpt
     Account::ACTION_FLAG ret = Account::ACTION_FLAG::NO_ACTION;
     Account* pAccount = nullptr;
 
+    if (pIndex) {
+        *pIndex = hitInfo.iItem;
+    }
 
     if (hitInfo.iSubItem == 2 && hitInfo.flags & LVHT_ONITEMLABEL)
     {
@@ -60,14 +66,19 @@ Account::ACTION_FLAG hitTestAccountList(POINT pt, Account** ppAccount /*= nullpt
             RECT rPay = g_actionRects[Account::ACTION_FLAG::PAY];
             RECT rTransfer = g_actionRects[Account::ACTION_FLAG::TRANSFER];
             RECT rEdit = g_actionRects[Account::ACTION_FLAG::EDIT];
+            RECT rHide = g_actionRects[Account::ACTION_FLAG::HIDE];
 
             // Top and bottom is set to current rect. We just care about left and right
-            rTransfer.top = rEdit.top = rPay.top = rDeposit.top = rSubItem.top;
-            rTransfer.bottom = rEdit.bottom = rPay.bottom = rDeposit.bottom = rSubItem.bottom;
+            rTransfer.top = rHide.top = rEdit.top = rPay.top = rDeposit.top = rSubItem.top;
+            rTransfer.bottom = rHide.bottom = rEdit.bottom = rPay.bottom = rDeposit.bottom = rSubItem.bottom;
 
             if (pAccount->getActionFlags() & Account::ACTION_FLAG::EDIT && PtInRect(&rEdit, hitInfo.pt) )
             {
                 ret = Account::ACTION_FLAG::EDIT;
+            }
+            else if (pAccount->getActionFlags() & Account::ACTION_FLAG::HIDE && PtInRect(&rHide, hitInfo.pt))
+            {
+                ret = Account::ACTION_FLAG::HIDE;
             }
             else if (pAccount->paidFromEnvelopeId() != INVALID_ACCOUNT_ID)
             {
@@ -145,7 +156,9 @@ bool accountListHandleMouseMove(LONG xCur, LONG yCur)
         case Account::EDIT:
             swprintf(szBuffer, 1024, L"Edit account %ls", pAccount->getName());
             break;
-
+        case Account::HIDE:
+            swprintf(szBuffer, 1024, L"Hide account %ls", pAccount->getName());
+            break;
         }
 
         g_toolTip.lpszText = szBuffer;
@@ -199,37 +212,51 @@ void calcActionRects(HDC hdc)
     // Figure out the total area
     RECT rSubItem = { 0 }, rTemp = { 0 };
     ListView_GetSubItemRect(g_hwndAccountLV, 0, 2, LVIR_BOUNDS, &rSubItem);
+    int curLeft = rSubItem.left + _iconOffset;;
 
     // All accounts have edit
     SIZE sizeEdit = { 0 }, sizeSpaces = { 0 }, sizeDeposit = { 0 }, sizeTransfer = { 0 };
     GetTextExtentPoint(hdc, szEdit, (int)wcslen(szEdit), &sizeEdit);
-    GetTextExtentPoint(hdc, L"  ", (int)wcslen(L"  "), &sizeSpaces);
+    GetTextExtentPoint(hdc, szIconSpacing, (int)wcslen(szIconSpacing), &sizeSpaces);
     rTemp = rSubItem;
-    rTemp.left += _iconOffset;
+    rTemp.left = curLeft;
     rTemp.right = rTemp.left + sizeEdit.cx;
-
     g_actionRects[Account::ACTION_FLAG::EDIT] = rTemp;
+    curLeft += sizeEdit.cx + sizeSpaces.cx;
+
+    // All accounts have hide
+    SIZE sizeHide = { 0 };
+    GetTextExtentPoint(hdc, szHide, (int)wcslen(szHide), &sizeHide);
+    rTemp = rSubItem;
+    rTemp.left = curLeft;
+    rTemp.right = rTemp.left + sizeHide.cx;
+    g_actionRects[Account::ACTION_FLAG::HIDE] = rTemp;
+    curLeft += sizeHide.cx + sizeSpaces.cx;
 
     // Credit card accounts
     SIZE sizePay = { 0 };
     GetTextExtentPoint(hdc, szPay, (int)wcslen(szPay), &sizePay);
     rTemp = rSubItem;
-    rTemp.left += _iconOffset + sizeEdit.cx + sizeSpaces.cx;
+    rTemp.left = curLeft;
     rTemp.right = rTemp.left + sizePay.cx;
     g_actionRects[Account::ACTION_FLAG::PAY] = rTemp;
+    // We don't move curLeft here, because the next two start at the same spot as this one
+    // curLeft += sizePay.cx + sizeSpaces.cx;
 
     // Regular accounts
     GetTextExtentPoint(hdc, szDeposit, (int)wcslen(szDeposit), &sizeDeposit);
     rTemp = rSubItem;
-    rTemp.left += _iconOffset + sizeEdit.cx + sizeSpaces.cx;
+    rTemp.left = curLeft;
     rTemp.right = rTemp.left + sizeDeposit.cx;
     g_actionRects[Account::ACTION_FLAG::DEPOSIT] = rTemp;
+    curLeft += sizeDeposit.cx + sizeSpaces.cx;
 
     GetTextExtentPoint(hdc, szTransfer, (int)wcslen(szTransfer), &sizeTransfer);
     rTemp = rSubItem;
-    rTemp.left += _iconOffset + sizeEdit.cx + sizeSpaces.cx + sizeDeposit.cx + sizeSpaces.cx;
+    rTemp.left = curLeft;
     rTemp.right = rTemp.left + sizeTransfer.cx;
     g_actionRects[Account::ACTION_FLAG::TRANSFER] = rTemp;
+    curLeft += sizeTransfer.cx + sizeSpaces.cx;
 }
 
 LRESULT accountListCustomDraw(LPNMLVCUSTOMDRAW  pCustomDraw)
@@ -293,30 +320,44 @@ LRESULT accountListCustomDraw(LPNMLVCUSTOMDRAW  pCustomDraw)
             SelectObject(pCustomDraw->nmcd.hdc, hOldBrush);
             DeleteObject(brush);
 
-
-            
             SIZE sizeEdit = { 0 };
+            iR.left += _iconOffset;
             GetTextExtentPoint(pCustomDraw->nmcd.hdc, szEdit, (int)wcslen(szEdit), &sizeEdit);
-            TextOut(pCustomDraw->nmcd.hdc, iR.left + _iconOffset, iR.top, szEdit, (int)wcslen(szEdit));
+            TextOut(pCustomDraw->nmcd.hdc, iR.left, iR.top, szEdit, (int)wcslen(szEdit));
 
             SIZE sizeSpaces = { 0 };
-            GetTextExtentPoint(pCustomDraw->nmcd.hdc, L"  ", 2, &sizeSpaces);
+            GetTextExtentPoint(pCustomDraw->nmcd.hdc, szIconSpacing, (int)wcslen(szIconSpacing), &sizeSpaces);
+            iR.left += sizeEdit.cx + sizeSpaces.cx;
+
+            // Everyone can show and hide
+            SIZE sizeHide = { 0 };
+            GetTextExtentPoint(pCustomDraw->nmcd.hdc, szHide, (int)wcslen(szHide), &sizeHide);
+            TextOut(pCustomDraw->nmcd.hdc, iR.left, iR.top, szHide, (int)wcslen(szHide));
+            iR.left += sizeSpaces.cx + sizeHide.cx;
 
             if (pAccount->paidFromEnvelopeId() != INVALID_ACCOUNT_ID)
             {
                 // This is a credit card
-                iR.left += sizeEdit.cx + sizeSpaces.cx;
-                TextOut(pCustomDraw->nmcd.hdc, iR.left + _iconOffset, iR.top, szPay, (int)wcslen(szPay));
+                SIZE sizePay = { 0 };
+                GetTextExtentPoint(pCustomDraw->nmcd.hdc, szPay, (int)wcslen(szPay), &sizePay);
+                TextOut(pCustomDraw->nmcd.hdc, iR.left, iR.top, szPay, (int)wcslen(szPay));
+
+                // Adjust for anything that follows
+                iR.left += sizeSpaces.cx + sizePay.cx;
             }
             else
             {
                 SIZE sizeDeposit = { 0 };
-                iR.left += sizeEdit.cx + sizeSpaces.cx;
-                TextOut(pCustomDraw->nmcd.hdc, iR.left + _iconOffset, iR.top, szDeposit, (int)wcslen(szDeposit));
+                TextOut(pCustomDraw->nmcd.hdc, iR.left, iR.top, szDeposit, (int)wcslen(szDeposit));
                 GetTextExtentPoint(pCustomDraw->nmcd.hdc, szDeposit, (int)wcslen(szDeposit), &sizeDeposit);
 
+                SIZE sizeTransfer = { 0 };
                 iR.left += sizeSpaces.cx + sizeDeposit.cx;
-                TextOut(pCustomDraw->nmcd.hdc, iR.left + _iconOffset, iR.top, szTransfer, (int)wcslen(szTransfer));
+                GetTextExtentPoint(pCustomDraw->nmcd.hdc, szTransfer, (int)wcslen(szTransfer), &sizeTransfer);
+                TextOut(pCustomDraw->nmcd.hdc, iR.left, iR.top, szTransfer, (int)wcslen(szTransfer));
+
+                // Adjust for anything afterwards
+                iR.left += sizeSpaces.cx + sizeTransfer.cx;
             }
 
 
