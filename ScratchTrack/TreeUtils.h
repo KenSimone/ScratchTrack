@@ -54,4 +54,5 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem);
 void budgetTreeCreateTreeControl();
 void budgetTreeSetItemText(HTREEITEM hItem, const wchar_t* szText);
 HTREEITEM hotLinkFromPoint(POINT pt);
-HTREEITEM treeViewHitTestLinks(LONG xCur, LONG yCur, BUDGET_TREE_LINK_ITEM_TYPE& itemType);
+HTREEITEM treeViewHitTestLinks(LONG xCur, LONG yCur, BUDGET_TREE_LINK_ITEM_TYPE& itemType, AccountBase** pAccountItem = nullptr);
+void killToolTips();

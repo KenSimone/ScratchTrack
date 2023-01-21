@@ -1079,6 +1079,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             else if (pHeader->code == NM_CLICK)
             {
+                killToolTips();
                 POINT pt = { 0 };
                 TVHITTESTINFO tvhi = { 0 };
                 GetCursorPos(&pt);
@@ -1105,11 +1106,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 else if (hItem && type == ENV_ENVELOPE_EDIT)
                 {
                     AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(accountFromTreeItem(hItem));
-                    if (!pEnvelope)
-                    {
-                        int x = 5;
-                    }
-
                     if (editEnvelope(pEnvelope)) {
                         serializeState();
                     }

@@ -18,6 +18,10 @@ int serializeState();
 BUDGET_TREE_COLUMN_SIZES g_columnSizes;
 
 std::map< BUDGET_TREE_LINK_ITEM_TYPE, RECT> g_budgetTreeLinkSpots;
+HWND g_hwndTreeToolTip = nullptr;
+TTTOOLINFO g_toolTip = { 0 };
+bool g_isToolTipActive = false;
+
 
 HTREEITEM hotLinkFromPoint(POINT pt)
 {
@@ -284,7 +288,7 @@ HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountBase* pAccount, HTREEITEM hI
 
 }
 
-HTREEITEM treeViewHitTestLinks(LONG xCur, LONG yCur, BUDGET_TREE_LINK_ITEM_TYPE& itemType)
+HTREEITEM treeViewHitTestLinks(LONG xCur, LONG yCur, BUDGET_TREE_LINK_ITEM_TYPE& itemType, AccountBase** pAccountItem /*= nullptr*/)
 {
     TVHITTESTINFO tvhi = { 0 };
     tvhi.pt.x = xCur;
@@ -318,12 +322,18 @@ HTREEITEM treeViewHitTestLinks(LONG xCur, LONG yCur, BUDGET_TREE_LINK_ITEM_TYPE&
             rHitArea.bottom = r.bottom;
             if (PtInRect(&rHitArea, tvhi.pt))
             {
+                if (pAccountItem) {
+                    *pAccountItem = pItem;
+                }
                 itemType = itr->first;
                 return hItem;
             }
         }
     }
 
+    if (pAccountItem) {
+        *pAccountItem = nullptr;
+    }
     return nullptr;
 }
 
@@ -366,8 +376,47 @@ bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
 
         BUDGET_TREE_LINK_ITEM_TYPE type = INVALID_LINK_ITEM_TYPE;
 
-        if (treeViewHitTestLinks(point.x, point.y, type)){
+        static wchar_t szBuffer[1024] = { 0 };
+        AccountBase* pHitItem = nullptr;
+        if (treeViewHitTestLinks(point.x, point.y, type, &pHitItem)){
             hCursor = LoadCursor(nullptr, IDC_HAND);
+
+            // Show tool tip
+            wcscpy_s(szBuffer, 1024, L"No hint. File a bug.");
+            switch (type) 
+            {
+            case ENV_ENVELOPE_EDIT:
+                swprintf(szBuffer, 1024, L"Edit the '%ls' envelope", pHitItem->getName());
+                break;
+            case ENV_TRANS_ADD:
+                swprintf(szBuffer, 1024, L"Add a new expense paid from the '%ls' envelope", pHitItem->getName());
+                break;
+            case GRP_ENVELOPE_ADD:
+                swprintf(szBuffer, 1024, L"Add a new envelope to the '%ls' folder", pHitItem->getName());
+                break;
+            case GRP_FOLDER_EDIT:
+                swprintf(szBuffer, 1024, L"Edit the '%ls' folder", pHitItem->getName());
+                break;
+            }
+            g_toolTip.lpszText = szBuffer;
+            ClientToScreen(g_hwndTV, &point);
+            static POINT old = { 0 };
+            if (memcmp(&old, &point, sizeof(point)) != 0 ) {
+                if (!g_isToolTipActive) {
+                    SendMessage(g_hwndTreeToolTip, TTM_TRACKACTIVATE, (WPARAM)TRUE, (LPARAM)&g_toolTip);
+                    g_isToolTipActive = true;
+                }
+                SendMessage(g_hwndTreeToolTip, TTM_SETTOOLINFO, 0, (LPARAM)&g_toolTip);
+                SendMessage(g_hwndTreeToolTip, TTM_TRACKPOSITION, 0, (LPARAM)MAKELONG(point.x + 10, point.y - 20));
+                old = point;
+            }
+        }
+        else
+        {
+            if (g_isToolTipActive) {
+                SendMessage(g_hwndTreeToolTip, TTM_TRACKACTIVATE, (WPARAM)FALSE, (LPARAM)&g_toolTip);
+                g_isToolTipActive = false;
+            }
         }
 
         if ( !hCursor ) {
@@ -660,6 +709,21 @@ void budgetTreeCreateTreeControl()
 
 
     TreeView_SetImageList(g_hwndTV, il, TVSIL_NORMAL);
+
+    // Create a tool tip
+    g_hwndTreeToolTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
+        WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+        g_hwndTV, NULL, g_hInst, NULL);
+
+    g_toolTip.cbSize = TTTOOLINFO_V1_SIZE; 
+    g_toolTip.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
+    g_toolTip.hwnd = g_hwndTV;
+    g_toolTip.hinst = g_hInst;
+    g_toolTip.lpszText = const_cast<wchar_t*>(L"Dude!");
+    g_toolTip.uId = (UINT_PTR)g_hwndTV;
+
+    GetClientRect(g_hwndTV, &g_toolTip.rect);
+    SendMessage(g_hwndTreeToolTip, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO)&g_toolTip);
 }
 
 void budgetTreeSetItemText(HTREEITEM hItem, const wchar_t* szText)
@@ -700,4 +764,12 @@ HTREEITEM treeItemFromAccount(AccountBase* pItem, HTREEITEM hItem /*= TVI_ROOT*/
     // Oops. Couldn't find it.
     return nullptr;
 
+}
+
+void killToolTips()
+{
+    if (g_isToolTipActive) {
+        SendMessage(g_hwndTreeToolTip, TTM_TRACKACTIVATE, (WPARAM)FALSE, (LPARAM)&g_toolTip);
+        g_isToolTipActive = false;
+    }
 }
