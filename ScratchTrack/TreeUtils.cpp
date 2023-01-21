@@ -405,13 +405,16 @@ bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
             wcscpy_s(szBuffer, 1024, L"No hint. File a bug.");
             switch (type) 
             {
+            case ENV_HIDE:
+                swprintf(szBuffer, 1024, L"Hide the '%ls' envelope", pHitItem->getName());
+                break;
             case ENV_ENVELOPE_EDIT:
                 swprintf(szBuffer, 1024, L"Edit the '%ls' envelope", pHitItem->getName());
                 break;
             case ENV_TRANS_ADD:
                 swprintf(szBuffer, 1024, L"Record expense in the '%ls' envelope", pHitItem->getName());
                 break;
-            case EMV_MONEY_ADD:
+            case ENV_MONEY_ADD:
                 swprintf(szBuffer, 1024, L"Assign money to the '%ls' envelope", pHitItem->getName());
                 break;
             case GRP_ENVELOPE_ADD:
@@ -419,6 +422,9 @@ bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
                 break;
             case GRP_FOLDER_EDIT:
                 swprintf(szBuffer, 1024, L"Edit the '%ls' folder", pHitItem->getName());
+                break;
+            case GRP_FOLDER_HIDE:
+                swprintf(szBuffer, 1024, L"Hide the '%ls' folder", pHitItem->getName());
                 break;
             }
             g_toolTip.lpszText = szBuffer;
@@ -490,6 +496,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
     //static const wchar_t* szAddEnvelope = L"\u271A"; // plus sign
     static const wchar_t* szAddEnvelope = L"\u2709"; // Envelope
     static const wchar_t* szAddMoney = L"\U0001F4B2";
+    static const wchar_t* szHide = L"\U0001F576"; // sunglasses
 
     static const COLORREF ACCOUNT_COLOR = RGB(230, 240, 250);
     static const COLORREF GROUP_COLOR = RGB(230, 240, 250);
@@ -623,15 +630,18 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             {
                 AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(pItem);
                 if (!pEnvelope->isCreditCardPayer()) {
+                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szHide, ENV_HIDE, rightEdge, rcText.top);
                     rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditEnvelope, ENV_ENVELOPE_EDIT, rightEdge, rcText.top);
-                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddMoney, EMV_MONEY_ADD, rightEdge, rcText.top);
+                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddMoney, ENV_MONEY_ADD, rightEdge, rcText.top);
                     rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddTransaction, ENV_TRANS_ADD, rightEdge, rcText.top);
+
                 }
                 break;
             }
             case AccountBase::GROUP:
-                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddEnvelope, GRP_ENVELOPE_ADD, rightEdge, rcText.top);
+                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szHide, GRP_FOLDER_HIDE, rightEdge, rcText.top);
                 rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditEnvelope, GRP_FOLDER_EDIT, rightEdge, rcText.top);
+                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddEnvelope, GRP_ENVELOPE_ADD, rightEdge, rcText.top);
                 break;
 
             }

@@ -1083,7 +1083,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     }
                     return true;
                 }
-                else if (hItem && type == EMV_MONEY_ADD)
+                else if (hItem && type == ENV_MONEY_ADD)
                 {
                     AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(accountFromTreeItem(hItem));
                     std::wstring temp;
@@ -1118,7 +1118,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         serializeState();
                     }
                 }
-                else 
+                else if (hItem && (type == GRP_FOLDER_HIDE || type == ENV_HIDE)) {
+                    AccountBase* pAcct = accountFromTreeItem(hItem);
+                    if (Utils::confirmHide(pAcct)) {
+                        TreeView_DeleteItem(g_hwndTV, hItem);
+                        pAcct->setHidden(true);
+                        serializeState();
+                    }
+                }
+                else
                 {
                     TreeView_HitTest(g_hwndTV, &tvhi);
                     if (tvhi.hItem) {

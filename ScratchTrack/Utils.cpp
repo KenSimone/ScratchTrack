@@ -247,7 +247,7 @@ LRESULT Utils::customDrawListViewAlternatingColors(NMLVCUSTOMDRAW* pCustomDrawIt
 bool Utils::confirmHide(AccountBase* pAccount)
 {
 	wchar_t szBuff[1024] = { 0 };
-	swprintf(szBuff, 1024, L"Are you sure you want to hide account %ls?", pAccount->getName());
+	swprintf(szBuff, 1024, L"Are you sure you want to hide '%ls'?", pAccount->getName());
 	if (IDYES == MessageBox(g_hTopWindow, szBuff, L"Confirm Hide", MB_YESNO)) {
 		return true;
 	}
