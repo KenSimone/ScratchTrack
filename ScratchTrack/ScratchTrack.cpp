@@ -352,13 +352,6 @@ bool addTransaction(HTREEITEM hItem)
         transactionDlg.setPayee(pEnvelope->getDefaultTransactionPayee());
         transactionDlg.setAmount(pEnvelope->getDefaultTransactionAmount());
 
-        if (pEnvelope->getDefaultTransactionPayToAccount()) {
-            transactionDlg.setAccountToId(pEnvelope->getDefaultTransactionPayToAccount()->getId());
-        }
-        else {
-            transactionDlg.setAccountToId(INVALID_ACCOUNT_ID);
-        }
-
         if (pEnvelope->getDefaultTransactionPayFromAccount()) {
             transactionDlg.setAccountFromId(pEnvelope->getDefaultTransactionPayFromAccount()->getId());
         }
@@ -366,7 +359,6 @@ bool addTransaction(HTREEITEM hItem)
             transactionDlg.setAccountFromId(INVALID_ACCOUNT_ID);
         }
 
-        transactionDlg.setIsExpense(pEnvelope->isExpense());
         if (pEnvelope->getDefaultTransactionPayFromAccount()) {
             transactionDlg.setAccountFromId(pEnvelope->getDefaultTransactionPayFromAccount()->getId());
         }
@@ -374,7 +366,7 @@ bool addTransaction(HTREEITEM hItem)
 
     if (transactionDlg.ShowDialog())
     {
-        Transaction::addTransaction(Transaction::EXPENSE, transactionDlg.getAmount(), transactionDlg.getAccountFromId(), transactionDlg.getAccountToId(), transactionDlg.getEnvelopeId(), transactionDlg.getPayee(), transactionDlg.getDescription());
+        Transaction::addTransaction(Transaction::EXPENSE, transactionDlg.getAmount(), transactionDlg.getAccountFromId(), INVALID_ACCOUNT_ID, transactionDlg.getEnvelopeId(), transactionDlg.getPayee(), transactionDlg.getDescription());
 
         // Apply the amount to the transaction envelope 
         pEnvelope->addBalance(transactionDlg.getAmount());
@@ -386,24 +378,14 @@ bool addTransaction(HTREEITEM hItem)
             // We have the "from" account. Add the transaction amount.
             pFromAccount->addBalance(transactionDlg.getAmount());
 
-            // Is this a transfer?
-            Account* pAccountTo = dynamic_cast<Account*>(AccountBase::lookupById(transactionDlg.getAccountToId()));
-            if (pAccountTo)
+            // See if this is a payment from a CC account
+            AccountEnvelope* pToEnvelope = dynamic_cast<AccountEnvelope*>(AccountBase::lookupById(pFromAccount->paidFromEnvelopeId()));
+            if (pToEnvelope)
             {
-                // This is a transfer, so add the opposite amount to the target account
-                pAccountTo->addBalance(-transactionDlg.getAmount());
-            }
-            else
-            {
-                // See if this is a payment from a CC account
-                AccountEnvelope* pToEnvelope = dynamic_cast<AccountEnvelope*>(AccountBase::lookupById(pFromAccount->paidFromEnvelopeId()));
-                if (pToEnvelope)
+                pToEnvelope->addBalance(-transactionDlg.getAmount());
+                if (pEnvelope->getBalance() < 0)
                 {
-                    pToEnvelope->addBalance(-transactionDlg.getAmount());
-                    if (pEnvelope->getBalance() < 0)
-                    {
-                        pEnvelope->addBalance(-pEnvelope->getBalance());
-                    }
+                    pEnvelope->addBalance(-pEnvelope->getBalance());
                 }
             }
         } // if pFromAccount
@@ -428,20 +410,14 @@ bool editEnvelope(AccountEnvelope* pEnvelope)
     dlg.setBudget(pEnvelope->getBudgeted());
     dlg.setEnvelopeName(pEnvelope->getName());
     dlg.setDefaultTransactionPayFromAccount(pEnvelope->getDefaultTransactionPayFromAccount());
-    dlg.setDefaultTransactionPayToAccount(pEnvelope->getDefaultTransactionPayToAccount());
     dlg.setDefaultTransactionAmount(pEnvelope->getDefaultTransactionAmount());
     dlg.setDefaultTransactionPayee(pEnvelope->getDefaultTransactionPayee());
-    dlg.setIsIncome(!pEnvelope->isExpense());
-    dlg.setIsVirtualAccount(pEnvelope->isVirtualAccount());
     if (dlg.ShowDialog())
     {
         pEnvelope->setBudgeted(dlg.getBudget());
         pEnvelope->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
-        pEnvelope->setDefaultTransactionPayToAccount(dlg.getDefaultTransactionPayToAccount());
         pEnvelope->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
         pEnvelope->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
-        pEnvelope->setIsExpense(!dlg.getIsIncome());
-        pEnvelope->setIsVirtualAccount(dlg.getIsVirtual());
         pEnvelope->setName(dlg.getEnvelopeName());
         
         updateGuiValues();
@@ -459,11 +435,11 @@ bool doEnvelopeAdd(AccountGroup* pParent, HTREEITEM hParent)
         AccountEnvelope* pEnvelope = new AccountEnvelope;
         pEnvelope->setName(dlg.getEnvelopeName());
         pEnvelope->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
-        pEnvelope->setDefaultTransactionPayToAccount(dlg.getDefaultTransactionPayToAccount());
+        pEnvelope->setDefaultTransactionPayToAccount(nullptr);
         pEnvelope->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
         pEnvelope->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
-        pEnvelope->setIsExpense(!dlg.getIsIncome());
-        pEnvelope->setIsVirtualAccount(dlg.getIsVirtual());
+        pEnvelope->setIsExpense(true);
+        pEnvelope->setIsVirtualAccount(true);
         pEnvelope->setBudgeted(dlg.getBudget());
 
         pParent->addChild(pEnvelope);
@@ -678,7 +654,6 @@ void editExpense(Transaction* pTransaction, int listviewItemIndex)
     dlg.setPayee(pTransaction->getPayee());
     dlg.setDescription(pTransaction->getDescription());
     dlg.setAccountFromId(pTransaction->getAccountFromId());
-    dlg.setAccountToId(pTransaction->getAccountToId());
     dlg.setEnvelopeId(pTransaction->getEnvelopeId());
 
     if (dlg.ShowDialog())
@@ -711,7 +686,7 @@ void editExpense(Transaction* pTransaction, int listviewItemIndex)
         }
 
         // Now this is basically the same as add
-        pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), dlg.getEnvelopeId(), dlg.getAccountFromId(), dlg.getAccountToId());
+        pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), dlg.getEnvelopeId(), dlg.getAccountFromId(), INVALID_ACCOUNT_ID);
         applyModifiedTransaction(pTransaction, listviewItemIndex);
 
     }
@@ -921,6 +896,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             if (pHeader->code == NM_CLICK)
             {
+                killAccountListToolTips();
                 POINT pt = { 0 };
                 TVHITTESTINFO tvhi = { 0 };
                 GetCursorPos(&pt);

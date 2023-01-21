@@ -10,7 +10,7 @@
 extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 
-EnvelopeDialog::EnvelopeDialog() : _amount(0), _isIncome(false), _pDefaultTransactionPayFromAccount(nullptr), _isVirtual(true), _budget(0)
+EnvelopeDialog::EnvelopeDialog() : _amount(0), _pDefaultTransactionPayFromAccount(nullptr), _budget(0)
 {
 
 }
@@ -33,16 +33,6 @@ bool EnvelopeDialog::ShowDialog()
 void enableDisableUi(HWND hDlg)
 {
     bool income = SendDlgItemMessage(hDlg, IDC_RADIO_INCOME, BM_GETCHECK, 0, 0);
-
-    //HWND hBudget = GetDlgItem(hDlg, IDC_EDIT_CAT_MONTHLY_BUDGET);
-    //EnableWindow(hBudget, !income);
-    HWND hVirtAcct = GetDlgItem(hDlg, IDC_CHECK_VIRTUAL_ACCOUNT);
-    EnableWindow(hVirtAcct, !income);
-
-    bool isTransfer = SendDlgItemMessage(hDlg, IDC_CHECK_PAY_TO_ACCOUNT, BM_GETCHECK, 0, 0);
-    EnableWindow(GetDlgItem(hDlg, IDC_COMBO_ACCOUNT_TO2), isTransfer);
-    EnableWindow(GetDlgItem(hDlg, IDC_COMBO_CAT_PAYEE), !isTransfer);
-
 }
 
 INT_PTR CALLBACK EnvelopeDialog::EnvelopeDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -52,15 +42,11 @@ INT_PTR CALLBACK EnvelopeDialog::EnvelopeDialogProc(HWND hDlg, UINT message, WPA
     {
     case WM_INITDIALOG:
         if (PTHIS) {
-            HWND hExpenseRadio = GetDlgItem(hDlg, IDC_RADIO_EXPENSE);
-            HWND hIncomeRadio = GetDlgItem(hDlg, IDC_RADIO_INCOME);
-            SendDlgItemMessage(hDlg, IDC_CHECK_VIRTUAL_ACCOUNT, BM_SETCHECK, PTHIS->getIsVirtual() ? BST_CHECKED : BST_UNCHECKED, 0);
 
             HWND hCatNameEdit = GetDlgItem(hDlg, IDC_EDIT_CAT_NAME);
             SetWindowText(hCatNameEdit, const_cast<wchar_t*>(PTHIS->getEnvelopeName()));
 
             HWND hAccountCombo = GetDlgItem(hDlg, IDC_COMBO_CAT_ACCOUNT);
-            HWND hAccountToCombo = GetDlgItem(hDlg, IDC_COMBO_ACCOUNT_TO2);
             auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
             bool selSet = false;
 
@@ -78,22 +64,6 @@ INT_PTR CALLBACK EnvelopeDialog::EnvelopeDialogProc(HWND hDlg, UINT message, WPA
             if (!selSet) {
                 ComboBox_SetCurSel(hAccountCombo, 0);
             }
-
-            // Accounts to
-            selSet = false;
-            for (auto itr = accounts.begin(); itr != accounts.end(); itr++) {
-                AccountBase* pAccount = *itr;
-                int pos = (int)SendMessage(hAccountToCombo, CB_ADDSTRING, 0, (LPARAM)pAccount->getName());
-                SendMessage(hAccountToCombo, CB_SETITEMDATA, pos, (LPARAM)pAccount);
-                if (pAccount == PTHIS->getDefaultTransactionPayToAccount()) {
-                    selSet = true;
-                    ComboBox_SetCurSel(hAccountToCombo, pos);
-                }
-            }
-            if (!selSet) {
-                ComboBox_SetCurSel(hAccountToCombo, 0);
-            }
-
 
             // Budget
             HWND hBudget = GetDlgItem(hDlg, IDC_EDIT_CAT_MONTHLY_BUDGET);
@@ -118,18 +88,9 @@ INT_PTR CALLBACK EnvelopeDialog::EnvelopeDialogProc(HWND hDlg, UINT message, WPA
 
             ComboBox_SetText(hPayeeCombo, PTHIS->getDefaultTransactionPayee());
 
-            bool check = PTHIS->getDefaultTransactionPayToAccount() != nullptr;
-
-            SendDlgItemMessage(hDlg, IDC_CHECK_PAY_TO_ACCOUNT, BM_SETCHECK, check ? BST_CHECKED : BST_UNCHECKED, 0);
 
             // Default amount
             int iAmount = abs(PTHIS->getDefaultTransactionAmount());
-            if (PTHIS->_isIncome) {
-                SendDlgItemMessage(hDlg, IDC_RADIO_INCOME, BM_SETCHECK, BST_CHECKED, 0);
-            }
-            else {
-                SendDlgItemMessage(hDlg, IDC_RADIO_EXPENSE, BM_SETCHECK, BST_CHECKED, 0);
-            }
 
             HWND hAmount = GetDlgItem(hDlg, IDC_EDIT_CAT_AMOUNT);
             SetWindowText(hAmount, Utils::penniesToDollarsString(iAmount).c_str());
@@ -164,21 +125,6 @@ INT_PTR CALLBACK EnvelopeDialog::EnvelopeDialogProc(HWND hDlg, UINT message, WPA
                         PTHIS->setDefaultTransactionPayFromAccount(pParentAccount);
                     }
 
-                    // Account to
-                    bool isTransfer = SendDlgItemMessage(hDlg, IDC_CHECK_PAY_TO_ACCOUNT, BM_GETCHECK, 0, 0);
-                    if (isTransfer) {
-                        HWND hAccountToCombo = GetDlgItem(hDlg, IDC_COMBO_ACCOUNT_TO2);
-                        int curSel = ComboBox_GetCurSel(hAccountToCombo);
-                        if (curSel >= 0) {
-                            Account* pParentAccount = (Account*)ComboBox_GetItemData(hAccountToCombo, curSel);
-                            PTHIS->setDefaultTransactionPayToAccount(pParentAccount);
-                        }
-                    }
-                    else
-                    {
-                        PTHIS->setDefaultTransactionPayToAccount(nullptr);
-                    }
-
 
                     // Payee
                     szBuff[0] = 0;
@@ -192,9 +138,6 @@ INT_PTR CALLBACK EnvelopeDialog::EnvelopeDialogProc(HWND hDlg, UINT message, WPA
                     GetWindowText(hAmount, szBuff, 1024);
                     int amt = abs(Utils::dollarsStringToPennies(szBuff));
 
-                    // Income or expense
-                    bool income = SendDlgItemMessage(hDlg, IDC_RADIO_INCOME, BM_GETCHECK, 0, 0);
-                    PTHIS->setIsIncome(income);
 
                     szBuff[0] = 0;
                     HWND hBudget = GetDlgItem(hDlg, IDC_EDIT_CAT_MONTHLY_BUDGET);
@@ -202,15 +145,9 @@ INT_PTR CALLBACK EnvelopeDialog::EnvelopeDialogProc(HWND hDlg, UINT message, WPA
                     int budgetedAmt = Utils::dollarsStringToPennies(szBuff);
 
                     // Budgeted amount
-                    if (income) {
-                        PTHIS->setIsVirtualAccount(false);
-                    }
-                    else
-                    {
-                        PTHIS->setIsVirtualAccount(SendDlgItemMessage(hDlg, IDC_CHECK_VIRTUAL_ACCOUNT, BM_GETCHECK, 0, 0) == BST_CHECKED);
-                        budgetedAmt *= -1;
-                        amt *= -1;
-                    }
+                    budgetedAmt *= -1;
+                    amt *= -1;
+
                     PTHIS->setBudget(budgetedAmt);
                     PTHIS->setDefaultTransactionAmount(amt);
                 }
