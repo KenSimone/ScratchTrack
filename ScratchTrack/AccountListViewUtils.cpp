@@ -16,7 +16,9 @@ void setGuiFont(HWND hCtrl);
 
 // Globals
 std::map<Account::ACTION_FLAG, RECT> g_actionRects;
-static const wchar_t* szPay = L"Pay";
+static const wchar_t* szPay = L"Record payment";
+//static const wchar_t* szPay = L"\U0001F4B2"; // Unicode dollar sign heavy
+
 static const wchar_t* szDeposit = L"Deposit";
 static const wchar_t* szTransfer = L"Transfer";
 
@@ -259,7 +261,7 @@ LRESULT accountListCustomDraw(LPNMLVCUSTOMDRAW  pCustomDraw)
             if (pAccount->paidFromEnvelopeId() != INVALID_ACCOUNT_ID)
             {
                 // This is a credit card
-                TextOut(pCustomDraw->nmcd.hdc, iR.left, iR.top, L"Pay", 3);
+                TextOut(pCustomDraw->nmcd.hdc, iR.left, iR.top, szPay, (int)wcslen(szPay));
             }
             else
             {
@@ -366,7 +368,7 @@ void addAccount(Account* pAccount)
         ListView_SetItemText(g_hwndAccountLV, iIndex, 2, const_cast<wchar_t*>(L"Deposit  Transfer"));
     }
     else {
-        ListView_SetItemText(g_hwndAccountLV, iIndex, 2, const_cast<wchar_t*>(L"Pay"));
+        ListView_SetItemText(g_hwndAccountLV, iIndex, 2, const_cast<wchar_t*>(szPay));
     }
 
 

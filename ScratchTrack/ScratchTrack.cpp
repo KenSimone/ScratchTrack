@@ -159,6 +159,7 @@ void setupPaymentEnvelopeForAccount(Account* pAccount)
         pEnvelope->setDefaultTransactionPayToAccount(pAccount);
         pEnvelope->setIsExpense(true);
         pEnvelope->setIsVirtualAccount(true);
+        pEnvelope->setIsCreditCardPayer(true);
 
         pAccount->setPaidFromEnvelopeId(pEnvelope->getId());
 
@@ -1071,6 +1072,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         serializeState();
                     }
                     return true;
+                }
+                else if (hItem && type == EMV_MONEY_ADD)
+                {
+                    AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(accountFromTreeItem(hItem));
+                    std::wstring temp;
+                    if (pEnvelope && getOneText(temp)) {
+                        // Add funds to this item
+                        int amount = Utils::dollarsStringToPennies(temp.c_str());
+                        pEnvelope->addBalance(amount);
+
+                        updateGuiValues();
+                        serializeState();
+                    }
+
                 }
                 else if (hItem && type == GRP_ENVELOPE_ADD)
                 {

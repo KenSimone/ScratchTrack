@@ -288,7 +288,7 @@ class AccountEnvelope : public AccountBase
 {
 public:
 	AccountEnvelope() : AccountBase(ENVELOPE), _pDefaultTransactionPayFromAccount(nullptr), _defaultTransactionAmount(0), 
-		_isExpense(true), _isVirtualAccount(false), _pDefaultTransactionPayToAccount(nullptr) {};
+		_isExpense(true), _isVirtualAccount(false), _pDefaultTransactionPayToAccount(nullptr), _isCreditCardPayer(false){};
 
 	virtual accountItemType getType() { return AccountBase::ENVELOPE; }
 
@@ -303,9 +303,11 @@ public:
 	Account* getDefaultTransactionPayToAccount() { return _pDefaultTransactionPayToAccount; }
 	void setDefaultTransactionPayToAccount(Account* pAccount) { _pDefaultTransactionPayToAccount = pAccount; }
 
-
 	bool isExpense() { return _isExpense; }
 	bool isVirtualAccount() { return _isVirtualAccount; }
+
+	bool isCreditCardPayer() { return _isCreditCardPayer; }
+	void setIsCreditCardPayer(bool ccPayer) { _isCreditCardPayer = ccPayer; }
 
 	virtual void addBalance(int balance) 
 	{ 
@@ -330,5 +332,6 @@ protected:
 	int _defaultTransactionAmount;
 	bool _isExpense;
 	bool _isVirtualAccount;
+	bool _isCreditCardPayer;
 }; // class Envelope
 

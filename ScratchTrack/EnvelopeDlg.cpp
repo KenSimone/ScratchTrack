@@ -30,11 +30,6 @@ bool EnvelopeDialog::ShowDialog()
 
 }
 
-void enableDisableUi(HWND hDlg)
-{
-    bool income = SendDlgItemMessage(hDlg, IDC_RADIO_INCOME, BM_GETCHECK, 0, 0);
-}
-
 INT_PTR CALLBACK EnvelopeDialog::EnvelopeDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     UNREFERENCED_PARAMETER(lParam);
@@ -94,17 +89,11 @@ INT_PTR CALLBACK EnvelopeDialog::EnvelopeDialogProc(HWND hDlg, UINT message, WPA
 
             HWND hAmount = GetDlgItem(hDlg, IDC_EDIT_CAT_AMOUNT);
             SetWindowText(hAmount, Utils::penniesToDollarsString(iAmount).c_str());
-            enableDisableUi(hDlg);
         }
 
         return (INT_PTR)TRUE;
 
     case WM_COMMAND:
-        if (HIWORD(wParam) == BN_CLICKED)
-        {
-            // Income or expense
-            enableDisableUi(hDlg);
-        }
         if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
         {
             if (LOWORD(wParam) == IDOK)

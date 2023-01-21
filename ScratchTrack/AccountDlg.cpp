@@ -27,6 +27,15 @@ bool AccountDlg::ShowDialog()
 
 }
 
+void enableDisableUi(HWND hDlg)
+{
+    bool isCC = SendDlgItemMessage(hDlg, IDC_CHECK_CREDIT_CARD, BM_GETCHECK, 0, 0);
+    if (isCC) {
+        SendDlgItemMessage(hDlg, IDC_CHECK_BUDGETED, BM_SETCHECK, BST_UNCHECKED, 0);
+    }
+    EnableWindow(GetDlgItem(hDlg, IDC_CHECK_BUDGETED), !isCC);
+}
+
 INT_PTR CALLBACK AccountDlg::AccountDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     UNREFERENCED_PARAMETER(lParam);
@@ -52,10 +61,18 @@ INT_PTR CALLBACK AccountDlg::AccountDlgProc(HWND hDlg, UINT message, WPARAM wPar
             hWndCtrl = GetDlgItem(hDlg, IDC_CHECK_CREDIT_CARD);
             Button_SetCheck(hWndCtrl, PTHIS->getCreditCard() ? BST_CHECKED : BST_UNCHECKED);
 
+            enableDisableUi(hDlg);
+
         }
 
         return (INT_PTR)TRUE;
     case WM_COMMAND:
+        if (HIWORD(wParam) == BN_CLICKED)
+        {
+            // Income or expense
+            enableDisableUi(hDlg);
+        }
+
         if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
         {
             if (LOWORD(wParam) == IDOK)

@@ -304,8 +304,9 @@ HTREEITEM treeViewHitTestLinks(LONG xCur, LONG yCur, BUDGET_TREE_LINK_ITEM_TYPE&
 
     HTREEITEM hItem = TreeView_HitTest(g_hwndTV, &tvhi);
     AccountBase* pItem = accountFromTreeItem(hItem);
+    AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(pItem);
 
-    if (pItem)
+    if (pItem && !(pEnvelope && pEnvelope->isCreditCardPayer()) )
     {
         RECT r = { 0 };
         TreeView_GetItemRect(g_hwndTV, hItem, &r, false);
@@ -322,7 +323,6 @@ HTREEITEM treeViewHitTestLinks(LONG xCur, LONG yCur, BUDGET_TREE_LINK_ITEM_TYPE&
             {
                 continue;
             }
-
 
             RECT rHitArea = itr->second;
             rHitArea.top = r.top;
@@ -407,6 +407,9 @@ bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
             case ENV_TRANS_ADD:
                 swprintf(szBuffer, 1024, L"Add a new expense paid from the '%ls' envelope", pHitItem->getName());
                 break;
+            case EMV_MONEY_ADD:
+                swprintf(szBuffer, 1024, L"Assign money to envelope '%ls'", pHitItem->getName());
+                break;
             case GRP_ENVELOPE_ADD:
                 swprintf(szBuffer, 1024, L"Add a new envelope to the '%ls' folder", pHitItem->getName());
                 break;
@@ -480,6 +483,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
     
     static const wchar_t* szEditEnvelope= L"\u270E"; 
     static const wchar_t* szAddEnvelope = L"\u271A";
+    static const wchar_t* szAddMoney = L"\U0001F4B2";
 
     static const COLORREF ACCOUNT_COLOR = RGB(230, 240, 250);
     static const COLORREF GROUP_COLOR = RGB(230, 240, 250);
@@ -610,9 +614,15 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             switch (pItem->getType())
             {
             case AccountBase::ENVELOPE:
-                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddTransaction, ENV_TRANS_ADD, rightEdge, rcText.top);
-                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditEnvelope, ENV_ENVELOPE_EDIT, rightEdge, rcText.top);
+            {
+                AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(pItem);
+                if (!pEnvelope->isCreditCardPayer()) {
+                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddTransaction, ENV_TRANS_ADD, rightEdge, rcText.top);
+                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditEnvelope, ENV_ENVELOPE_EDIT, rightEdge, rcText.top);
+                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddMoney, EMV_MONEY_ADD, rightEdge, rcText.top);
+                }
                 break;
+            }
             case AccountBase::GROUP:
                 rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddEnvelope, GRP_ENVELOPE_ADD, rightEdge, rcText.top);
                 //rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditEnvelope, ENVELOPE_TREE_LINK_ITEM::ENVELOPE_EDIT, rightEdge, rcText.top);

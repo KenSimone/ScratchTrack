@@ -285,6 +285,7 @@ int AccountEnvelope::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	pAccount->QueryIntAttribute("defaultAmount", &_defaultTransactionAmount);
 	pAccount->QueryBoolAttribute("isExpense", &_isExpense);
 	pAccount->QueryBoolAttribute("virtualAccount", &_isVirtualAccount);
+	pAccount->QueryBoolAttribute("isCCPayer", &_isCreditCardPayer);
 
 	AccountBase* pDefAcct = AccountBase::lookupById(accountId);
 	if (pDefAcct && pDefAcct->getType() == ACCOUNT) {
@@ -323,6 +324,7 @@ int AccountEnvelope::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLEleme
 	pNewElement->SetAttribute("defaultPayee", szBuff);
 	pNewElement->SetAttribute("defaultAmount", _defaultTransactionAmount);
 	pNewElement->SetAttribute("isExpense", _isExpense);
+	pNewElement->SetAttribute("isCCPayer", _isCreditCardPayer);
 	pNewElement->SetAttribute("virtualAccount", _isVirtualAccount);
 	if (_pDefaultTransactionPayFromAccount) {
 		pNewElement->SetAttribute("defaultPayFromAccount", _pDefaultTransactionPayFromAccount->getId());
