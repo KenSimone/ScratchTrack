@@ -34,7 +34,7 @@
 #define MAX_LOADSTRING 100
 
 // Global settings
-static const double FONT_SCALE_FACTOR = 1.6;
+static const double FONT_SCALE_FACTOR = 1.3;
 
 
 // Global Variables:

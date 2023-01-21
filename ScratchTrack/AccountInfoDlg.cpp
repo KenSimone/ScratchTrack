@@ -268,7 +268,7 @@ void AccountInfoDlg::updateReport()
         COLORREF cr = errorState ? RGB(255, 0, 0) : RGB(0, 0, 255);
         appendText(L"Folder '", cr, false, false, TEXT_SIZE);
         appendText(group->getName(), cr, false, false, TEXT_SIZE);
-        appendText(L"'\n\tSet expense limit: ", cr, false, false, TEXT_SIZE);
+        appendText(L"'\n\tExpense limit: ", cr, false, false, TEXT_SIZE);
         std::wstring amt = Utils::penniesToDollarsString(limit);
         appendText(amt.c_str(), cr, false, false, TEXT_SIZE);
         appendText(L"\n\tBudgeted expenses: ", cr, false, false, TEXT_SIZE);
@@ -276,7 +276,7 @@ void AccountInfoDlg::updateReport()
         appendText(amt.c_str(), cr, false, false, TEXT_SIZE);
 
         int delta = limit - budgeted;
-        amt = Utils::penniesToDollarsString(budgeted);
+        amt = Utils::penniesToDollarsString(delta);
         if (errorState) {
             appendText(L"\n\tOVERBUDGETED BY ", cr, false, false, TEXT_SIZE);
         }

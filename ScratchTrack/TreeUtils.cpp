@@ -77,8 +77,13 @@ COLORREF setTextColorForAmount(HDC hDC, int iAmount, bool bSelected, bool colori
     static const COLORREF NEGATIVE_BALANCE_COLOR = RGB(255, 0, 0);
     static const COLORREF NEGATIVE_BALANCE_COLOR_SEL = RGB(255, 200, 200);
 
+    static const COLORREF TEXT_COLOR_ZERO = GetSysColor(COLOR_GRAYTEXT);
+
     COLORREF crRet = { 0 };
-    if (iAmount >= 0 || !colorizeNegative) {
+    if (iAmount == 0) {
+        crRet = SetTextColor(hDC, bSelected ? SEL_TEXT_COLOR : TEXT_COLOR_ZERO);
+    }
+    else if (iAmount >= 0 || !colorizeNegative) {
         crRet = SetTextColor(hDC, bSelected ? SEL_TEXT_COLOR : TEXT_COLOR);
     }
     else {
@@ -592,7 +597,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             SetBkMode(pCustomDrawItem->nmcd.hdc, TRANSPARENT);
 
             // Name
-            setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 0, selected, false);
+            setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 1, selected, false);
             TextOut(pCustomDrawItem->nmcd.hdc, nameSpot /*rcText.left*/, rcText.top, pItem->getName(), (int)wcslen(pItem->getName()));
 
             // Budgeted dollars
