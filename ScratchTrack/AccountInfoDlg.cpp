@@ -146,17 +146,50 @@ void AccountInfoDlg::getMasterSummary(std::wstring& summary, bool& isError)
 
 void AccountInfoDlg::updateReport()
 {
+    static const int HEADER_SIZE = 14;
+    static const int TEXT_SIZE = 11;
     HWND hRichText = GetDlgItem(_hThisDialg, IDC_RICHEDIT_SUMMARY);
     //SendMessageW(hRichText, WM_SETREDRAW, false, 0);
     SendMessageW(hRichText, WM_SETTEXT, 0, (LPARAM)L"");
 
-    appendText(L"State of the budget\n", RGB(0, 0, 0), false, true, 14);
+    appendText(L"State of the budget\n", RGB(0, 0, 0), false, true, HEADER_SIZE);
 
     std::wstring summary;
     bool isErrorState = false;
     getMasterSummary(summary, isErrorState);
-    appendText(summary.c_str(), isErrorState ? RGB(255, 0, 0) : RGB(0,127,0), false, false, 13);
+    appendText(summary.c_str(), isErrorState ? RGB(255, 0, 0) : RGB(0,127,0), false, false, TEXT_SIZE);
 
+    auto groups = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
+    for (size_t i = 0; i < groups.size(); i++) {
+        AccountGroup* group = dynamic_cast<AccountGroup* >(groups[i]);
+        int limit = group->getExpenseLimit();
+        if (!limit) {
+            continue;
+        }
+        int budgeted = -1*group->budgetedToSubAccounts();
+
+        bool errorState = limit < budgeted;
+        COLORREF cr = errorState ? RGB(255, 0, 0) : RGB(0, 0, 255);
+        appendText(L"Folder '", cr, false, false, TEXT_SIZE);
+        appendText(group->getName(), cr, false, false, TEXT_SIZE);
+        appendText(L"'\n\tSet expense limit: ", cr, false, false, TEXT_SIZE);
+        std::wstring amt = Utils::penniesToDollarsString(limit);
+        appendText(amt.c_str(), cr, false, false, TEXT_SIZE);
+        appendText(L"\n\tBudgeted expenses: ", cr, false, false, TEXT_SIZE);
+        amt = Utils::penniesToDollarsString(budgeted);
+        appendText(amt.c_str(), cr, false, false, TEXT_SIZE);
+
+        int delta = limit - budgeted;
+        amt = Utils::penniesToDollarsString(budgeted);
+        if (errorState) {
+            appendText(L"\n\tOVERBUDGETED BY ", cr, false, false, TEXT_SIZE);
+        }
+        else {
+            appendText(L"\n\tUnder budget by ", cr, false, false, TEXT_SIZE);
+        }
+        appendText(amt.c_str(), cr, false, false, TEXT_SIZE);
+        appendText(L"\n", cr, false, false, TEXT_SIZE);
+    }
     auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
     for (size_t i = 0; i < accounts.size(); i++)
     {
@@ -165,11 +198,11 @@ void AccountInfoDlg::updateReport()
         {
             std::wstring balance = Utils::penniesToDollarsString(account->getBalance());
             appendText(L"\u26A0 : ", RGB(255, 0, 0), false, false, 13);
-            appendText(L"Account '", RGB(255, 0, 0), false, false, 12);
-            appendText(account->getName(), RGB(255, 0, 0), false, false, 12);
-            appendText(L"' negative balance ", RGB(255, 0, 0), false, false, 12);
-            appendText(balance.c_str(), RGB(255, 0, 0), false, false, 12);
-            appendText(L"\n", RGB(255, 0, 0), false, false, 12);
+            appendText(L"Account '", RGB(255, 0, 0), false, false, TEXT_SIZE);
+            appendText(account->getName(), RGB(255, 0, 0), false, false, TEXT_SIZE);
+            appendText(L"' negative balance ", RGB(255, 0, 0), false, false, TEXT_SIZE);
+            appendText(balance.c_str(), RGB(255, 0, 0), false, false, TEXT_SIZE);
+            appendText(L"\n", RGB(255, 0, 0), false, false, TEXT_SIZE);
         }
     }
 
@@ -181,11 +214,11 @@ void AccountInfoDlg::updateReport()
         {
             std::wstring balance = Utils::penniesToDollarsString(envelope->getBalance());
             appendText(L"\u26A0 : ", RGB(255, 0, 0), false, false, 13);
-            appendText(L"Envelope '", RGB(255, 0, 0), false, false, 12);
-            appendText(envelope->getName(), RGB(255, 0, 0), false, false, 12);
-            appendText(L"' negative balance ", RGB(255, 0, 0), false, false, 12);
-            appendText(balance.c_str(), RGB(255, 0, 0), false, false, 12);
-            appendText(L"\n", RGB(255, 0, 0), false, false, 12);
+            appendText(L"Envelope '", RGB(255, 0, 0), false, false, TEXT_SIZE);
+            appendText(envelope->getName(), RGB(255, 0, 0), false, false, TEXT_SIZE);
+            appendText(L"' negative balance ", RGB(255, 0, 0), false, false, TEXT_SIZE);
+            appendText(balance.c_str(), RGB(255, 0, 0), false, false, TEXT_SIZE);
+            appendText(L"\n", RGB(255, 0, 0), false, false, TEXT_SIZE);
         }
         
     }

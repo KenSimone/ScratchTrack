@@ -142,6 +142,7 @@
     <ClInclude Include="AutoCombo.h" />
     <ClInclude Include="DepositDlg.h" />
     <ClInclude Include="EnvelopeDlg.h" />
+    <ClInclude Include="FolderDlg.h" />
     <ClInclude Include="PayCCDlg.h" />
     <ClInclude Include="Transaction.h" />
     <ClInclude Include="TransactionDialog.h" />
@@ -163,6 +164,7 @@
     <ClCompile Include="AutoCombo.cpp" />
     <ClCompile Include="DepositDlg.cpp" />
     <ClCompile Include="EnvelopeDlg.cpp" />
+    <ClCompile Include="FolderDlg.cpp" />
     <ClCompile Include="PayCCDlg.cpp" />
     <ClCompile Include="Transaction.cpp" />
     <ClCompile Include="TransactionDialog.cpp" />

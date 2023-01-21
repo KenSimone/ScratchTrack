@@ -13,6 +13,24 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\Dialogs">
+      <UniqueIdentifier>{04049f8b-bb2b-4336-bc33-42c5b2bdadc5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Dialogs">
+      <UniqueIdentifier>{b41767cf-f751-4abd-9981-344c319b284f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\MainGui">
+      <UniqueIdentifier>{977b81f2-69b5-4764-ae39-67594e9706ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\MainGui">
+      <UniqueIdentifier>{35ac7f7f-558e-4ecc-a182-c28700ff6ae8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Utility">
+      <UniqueIdentifier>{ca3d97fc-f5b0-4ec5-8aa8-0b3f0a64ab31}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Utility">
+      <UniqueIdentifier>{65351daf-001e-4c5f-a521-17b37d3b43ee}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -21,56 +39,59 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ScratchTrack.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="AccountInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TinyXml2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TransactionDialog.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AccountDlg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Transaction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AutoCombo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TreeUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TransactionFilterDlg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AccountInfoDlg.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="DepositDlg.h">
+      <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="EnvelopeDlg.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
-    <ClInclude Include="AccountListViewUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="DepositDlg.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="FolderDlg.h">
+      <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="PayCCDlg.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="TransactionDialog.h">
+      <Filter>Header Files\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="TransactionFilterDlg.h">
+      <Filter>Header Files\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="AccountInfoDlg.h">
+      <Filter>Header Files\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="TreeUtils.h">
+      <Filter>Header Files\MainGui</Filter>
+    </ClInclude>
+    <ClInclude Include="AccountListViewUtils.h">
+      <Filter>Header Files\MainGui</Filter>
+    </ClInclude>
+    <ClInclude Include="AccountDlg.h">
+      <Filter>Header Files\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="TinyXml2.h">
+      <Filter>Header Files\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils.h">
+      <Filter>Header Files\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="AutoCombo.h">
+      <Filter>Header Files\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Header Files\MainGui</Filter>
     </ClInclude>
     <ClInclude Include="TransferDlg.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -80,47 +101,50 @@
     <ClCompile Include="AccountInfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TinyXml2.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TransactionDialog.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AccountDlg.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Transaction.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AutoCombo.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TreeUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TransactionFilterDlg.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AccountInfoDlg.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="DepositDlg.cpp">
+      <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
     <ClCompile Include="EnvelopeDlg.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
-    <ClCompile Include="AccountListViewUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TransferDlg.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DepositDlg.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="FolderDlg.cpp">
+      <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
     <ClCompile Include="PayCCDlg.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="TransactionDialog.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="TransactionFilterDlg.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="TransferDlg.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="AccountInfoDlg.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="TreeUtils.cpp">
+      <Filter>Source Files\MainGui</Filter>
+    </ClCompile>
+    <ClCompile Include="AccountListViewUtils.cpp">
+      <Filter>Source Files\MainGui</Filter>
+    </ClCompile>
+    <ClCompile Include="AccountDlg.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="TinyXml2.cpp">
+      <Filter>Source Files\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils.cpp">
+      <Filter>Source Files\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="AutoCombo.cpp">
+      <Filter>Source Files\Utility</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

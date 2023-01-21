@@ -405,7 +405,7 @@ bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
                 swprintf(szBuffer, 1024, L"Edit the '%ls' envelope", pHitItem->getName());
                 break;
             case ENV_TRANS_ADD:
-                swprintf(szBuffer, 1024, L"Record expense from the '%ls' envelope", pHitItem->getName());
+                swprintf(szBuffer, 1024, L"Record expense in the '%ls' envelope", pHitItem->getName());
                 break;
             case EMV_MONEY_ADD:
                 swprintf(szBuffer, 1024, L"Assign money to the '%ls' envelope", pHitItem->getName());
@@ -627,7 +627,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             }
             case AccountBase::GROUP:
                 rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddEnvelope, GRP_ENVELOPE_ADD, rightEdge, rcText.top);
-                //rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditEnvelope, ENVELOPE_TREE_LINK_ITEM::ENVELOPE_EDIT, rightEdge, rcText.top);
+                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditEnvelope, GRP_FOLDER_EDIT, rightEdge, rcText.top);
                 break;
 
             }

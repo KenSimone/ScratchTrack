@@ -57,17 +57,6 @@ int AccountBase::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement**
 	pElement->SetAttribute("balance", _balance);
 	pElement->SetAttribute("budgeted", _budgeted);
 
-	// Serialize children
-	AccountGroup* pGroup = nullptr;
-	if (getType() == GROUP) {
-		pGroup = (AccountGroup * )this;
-	}
-
-	for (size_t i = 0; pGroup && i < pGroup->getChildren().size(); i++)
-	{
-		pGroup->getChildren()[i]->serialize(pElement, nullptr);
-	}
-
 	pParent->InsertEndChild(pElement);
 
 	if (ppSerializedElement) {
@@ -260,9 +249,36 @@ int AccountBase::getCurrentMonthTransacationTotal()
 	return ret;
 }
 
+int AccountGroup::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement)
+{
+	// Serialize base
+	tinyxml2::XMLElement* pGroupElement = nullptr;
+	AccountBase::serialize(pParent, &pGroupElement);
+
+	// Expense limit
+	pGroupElement->SetAttribute("expenseLimit", getExpenseLimit());
+
+	// Serialize children
+	for (size_t i = 0; i < getChildren().size(); i++) {
+		getChildren()[i]->serialize(pGroupElement, nullptr);
+	}
+
+	if (ppSerializedElement) {
+		*ppSerializedElement = pGroupElement;
+	}
+
+	return ERROR_SUCCESS;
+}
+
 int AccountGroup::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 {
 	AccountBase::initItemFromXmlElement(pAccount);
+
+	// Expense limit
+	int limit = 0;
+	pAccount->QueryIntAttribute("expenseLimit", &limit);
+	setExpenseLimit(limit);
+
 
 	tinyxml2::XMLElement* pChild = pAccount->FirstChildElement("accountItem");
 	while (pChild)

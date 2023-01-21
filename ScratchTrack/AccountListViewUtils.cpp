@@ -16,16 +16,21 @@ void setGuiFont(HWND hCtrl);
 
 // Globals
 std::map<Account::ACTION_FLAG, RECT> g_actionRects;
-static const wchar_t* szPay = L"Record payment";
+//static const wchar_t* szPay = L"Record payment";
 //static const wchar_t* szPay = L"\U0001F4B2"; // Unicode dollar sign heavy
+static const wchar_t* szPay = L"\U0001F9FE"; // Receipt
 
-static const wchar_t* szDeposit = L"Deposit";
-static const wchar_t* szTransfer = L"Transfer";
+//static const wchar_t* szDeposit = L"Deposit";
+static const wchar_t* szDeposit = L"\U0001F4B2"; // Unicode dollar sign heavy
+//static const wchar_t* szTransfer = L"Transfer";
+static const wchar_t* szTransfer = L"\u21c6";
+// x21C6
 
 static HWND g_hwndListToolTip = nullptr;
 static TTTOOLINFO g_toolTip = { 0 };
 static bool g_isToolTipActive = false;
 static bool _trackingMouse = false;
+static const int _iconOffset = 5;
 
 Account::ACTION_FLAG hitTestAccountList(POINT pt, Account** ppAccount /*= nullptr*/)
 {
@@ -128,7 +133,7 @@ bool accountListHandleMouseMove(LONG xCur, LONG yCur)
             swprintf(szBuffer, 1024, L"Transfer money into %ls", pAccount->getName());
             break;
         case Account::PAY:
-            swprintf(szBuffer, 1024, L"Pay credit card account %ls", pAccount->getName());
+            swprintf(szBuffer, 1024, L"Record payment to credit card account %ls", pAccount->getName());
             break;
 
         }
@@ -189,12 +194,14 @@ void calcActionRects(HDC hdc)
     SIZE size = { 0 };
     GetTextExtentPoint(hdc, szPay, (int)wcslen(szPay), &size);
     rTemp = rSubItem;
+    rTemp.left += _iconOffset;
     rTemp.right = rSubItem.left + size.cx;
     g_actionRects[Account::ACTION_FLAG::PAY] = rTemp;
 
     // Regular accounts
     GetTextExtentPoint(hdc, szDeposit, (int)wcslen(szDeposit), &size);
     rTemp = rSubItem;
+    rTemp.left += _iconOffset;
     rTemp.right = rSubItem.left + size.cx;
     g_actionRects[Account::ACTION_FLAG::DEPOSIT] = rTemp;
 
@@ -205,6 +212,7 @@ void calcActionRects(HDC hdc)
     GetTextExtentPoint(hdc, szTransfer, (int)wcslen(szTransfer), &size);
     rTemp = rSubItem;
     rTemp.left += sizePrefix.cx;
+    rTemp.left += _iconOffset;
     rTemp.right = rTemp.left + size.cx;
     g_actionRects[Account::ACTION_FLAG::TRANSFER] = rTemp;
 }
@@ -219,7 +227,7 @@ LRESULT accountListCustomDraw(LPNMLVCUSTOMDRAW  pCustomDraw)
 
     COLORREF crBackground = GetSysColor(COLOR_WINDOW);
 
-    // Alternating row backgrounds
+    // Alternating row backgrounds  
     //if (pCustomDraw->nmcd.dwItemSpec % 2) {
     //    crBackground = RGB(GetRValue(crBackground) - darkerAmt, GetGValue(crBackground) - darkerAmt, GetBValue(crBackground) - darkerAmt);
     //}
@@ -247,7 +255,7 @@ LRESULT accountListCustomDraw(LPNMLVCUSTOMDRAW  pCustomDraw)
             HFONT hOrigFont = (HFONT)GetCurrentObject(pCustomDraw->nmcd.hdc, OBJ_FONT);
             LOGFONT lf = { 0 };
             GetObject(hOrigFont, sizeof(LOGFONT), &lf);
-            lf.lfUnderline = true;
+            //lf.lfUnderline = true;
             HFONT hNewFont = CreateFontIndirect(&lf);
             SelectObject(pCustomDraw->nmcd.hdc, hNewFont);
 
@@ -274,18 +282,18 @@ LRESULT accountListCustomDraw(LPNMLVCUSTOMDRAW  pCustomDraw)
             if (pAccount->paidFromEnvelopeId() != INVALID_ACCOUNT_ID)
             {
                 // This is a credit card
-                TextOut(pCustomDraw->nmcd.hdc, iR.left, iR.top, szPay, (int)wcslen(szPay));
+                TextOut(pCustomDraw->nmcd.hdc, iR.left + _iconOffset, iR.top, szPay, (int)wcslen(szPay));
             }
             else
             {
                 SIZE size = { 0 };
                 GetTextExtentPoint(pCustomDraw->nmcd.hdc, szDeposit, (int)wcslen(szDeposit), &size);
-                TextOut(pCustomDraw->nmcd.hdc, iR.left, iR.top, szDeposit, (int)wcslen(szDeposit));
+                TextOut(pCustomDraw->nmcd.hdc, iR.left + _iconOffset, iR.top, szDeposit, (int)wcslen(szDeposit));
 
                 SIZE size2 = { 0 };
                 GetTextExtentPoint(pCustomDraw->nmcd.hdc, L"  ", 2, &size2);
                 iR.left += size.cx + size2.cx;
-                TextOut(pCustomDraw->nmcd.hdc, iR.left, iR.top, szTransfer, (int)wcslen(szTransfer));
+                TextOut(pCustomDraw->nmcd.hdc, iR.left + _iconOffset, iR.top, szTransfer, (int)wcslen(szTransfer));
             }
 
 

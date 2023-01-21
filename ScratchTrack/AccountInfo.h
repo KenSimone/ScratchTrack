@@ -93,7 +93,8 @@ protected:
 class AccountGroup : public AccountBase
 {
 public:
-	AccountGroup() : AccountBase(GROUP) {};
+	AccountGroup() : AccountBase(GROUP), _expenselimit(0) {};
+	virtual int serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement);
 	virtual int initItemFromXmlElement(tinyxml2::XMLElement* pAccount);
 
 	// The item-type (account/group/envelope)
@@ -102,6 +103,10 @@ public:
 	// Groups only have aggregate balances from their children and hold no value on their own
 	virtual int getBalance() { return 0; }
 	virtual void addBalance(int balance) { _balance = 0; }
+
+	int getExpenseLimit() { return _expenselimit; }
+	void setExpenseLimit(int limit) { _expenselimit = limit; }
+
 
 	// Get the IDs for this item and all child items. 
 	virtual void getIdsForSelfAndChildren(std::set<unsigned int>& ids)
@@ -219,6 +224,7 @@ public:
 
 protected:
 	std::vector<AccountBase*> _children;
+	int _expenselimit;
 };
 
 // Account class and implementation

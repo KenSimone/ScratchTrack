@@ -35,6 +35,7 @@
 #define IDD_DEPOSIT_DIALOG              158
 #define IDD_TRANSFER_DIALOG             159
 #define IDD_PAYCC_DIALOG                160
+#define IDD_FOLDER_DIALOG               161
 #define IDC_ONE_INPUT_TEXT              1000
 #define IDC_EDIT_Transaction_AMOUNT     1001
 #define IDC_RADIO1                      1002
@@ -71,6 +72,8 @@
 #define IDC_EDIT_ACCOUNT                1028
 #define IDC_EDIT_ENVELOPE               1029
 #define IDC_COMBO_ACCOUNT_FROM          1030
+#define IDC_EDIT_FOLDER_NAME            1031
+#define IDC_EDIT_EXPENSE_LIMIT          1032
 #define ID_ROOT_ADD_GROUP               32771
 #define ID_ROOT_RENAMEACCOUNT           32772
 #define ID_ROOT_SETBALANCE              32773
@@ -111,9 +114,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        161
+#define _APS_NEXT_RESOURCE_VALUE        162
 #define _APS_NEXT_COMMAND_VALUE         33021
-#define _APS_NEXT_CONTROL_VALUE         1031
+#define _APS_NEXT_CONTROL_VALUE         1033
 #define _APS_NEXT_SYMED_VALUE           113
 #endif
 #endif

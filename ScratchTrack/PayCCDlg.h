@@ -9,7 +9,7 @@ class PayCCDlg
 {
 public:
 	PayCCDlg(Account* pAccount, int amount, int payFromAcctId, const wchar_t* szDescription = nullptr) : 
-		_pAccount(pAccount), _amount(amount), _hParent(nullptr), _hThisDialg(nullptr), _payFromAcctId(payFromAcctId)
+		_pAccount(pAccount), _amount(amount), _payFromAcctId(payFromAcctId)
 	{
 		if (szDescription) {
 			_description = szDescription;
@@ -19,7 +19,6 @@ public:
 	~PayCCDlg();
 
 	bool ShowDialog();
-	operator HWND() { return _hThisDialg; }
 
 	int getAmount() { return _amount; }
 	const wchar_t* getDescription() { return _description.c_str(); }
@@ -33,7 +32,6 @@ protected:
 	int _amount;
 	Account* _pAccount;
 
-	HWND _hParent, _hThisDialg;
 	std::wstring _description;
 	static PayCCDlg* PTHIS;
 	int _payFromAcctId;

@@ -9,16 +9,19 @@
 #include "ScratchTrack.h"
 #include "resource.h"
 #include "TransactionDialog.h"
-#include "EnvelopeDlg.h"
-#include "AccountDlg.h"
 #include "Utils.h"
 #include "TreeUtils.h"
 #include "AccountListViewUtils.h"
+
+// Dialogs
 #include "TransactionFilterDlg.h"
 #include "AccountInfoDlg.h"
 #include "DepositDlg.h"
 #include "TransferDlg.h"
 #include "PayCCDlg.h"
+#include "EnvelopeDlg.h"
+#include "AccountDlg.h"
+#include "FolderDlg.h"
 
 #include <commctrl.h>
 #include <Windows.h>
@@ -403,6 +406,23 @@ bool getOneText(std::wstring& result)
     DialogBox(g_hInst, MAKEINTRESOURCE(IDD_ONE_INPUT), g_hTopWindow, OneInputProc);
     result = szOneInputText;
     return result[0] ? true : false;
+}
+
+bool editFolder(AccountGroup* pGroup)
+{
+    FolderDlg dlg(pGroup, pGroup->getName(), pGroup->getExpenseLimit());
+
+    if (dlg.ShowDialog())
+    {
+        pGroup->setName(dlg.getName());
+        pGroup->setExpenseLimit(dlg.getLimit());
+
+        updateGuiValues();
+        g_accountInfoDlg.updateReport();
+
+        return true;
+    }
+    return false;
 }
 
 bool editEnvelope(AccountEnvelope* pEnvelope)
@@ -1079,6 +1099,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         serializeState();
                     }
                     
+                }
+                else if (hItem && type == GRP_FOLDER_EDIT) {
+                    AccountGroup* pGroup = dynamic_cast<AccountGroup*>(accountFromTreeItem(hItem));
+                    if (editFolder(pGroup)) {
+                        serializeState();
+                    }
                 }
                 else 
                 {
