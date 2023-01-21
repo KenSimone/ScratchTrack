@@ -264,7 +264,8 @@ public:
 		NO_ACTION = 0,
 		DEPOSIT = 1,
 		TRANSFER = 2,
-		PAY = 4
+		PAY = 4,
+		EDIT = 8
 	};
 
 	// Returns a mask of the actions that apply to this account
@@ -276,10 +277,10 @@ public:
 	static int getActionFlags(bool forCC)
 	{
 		if (forCC) {
-			return PAY;
+			return PAY | EDIT;
 		}
 
-		return TRANSFER | DEPOSIT;
+		return TRANSFER | DEPOSIT | EDIT;
 	}
 
 

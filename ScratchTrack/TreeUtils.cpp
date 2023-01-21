@@ -483,7 +483,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
     
 
     
-    static const wchar_t* szEditEnvelope= L"\u270E"; 
+    static const wchar_t* szEditEnvelope= L"\u270E";  // pencil
     static const wchar_t* szAddEnvelope = L"\u271A";
     static const wchar_t* szAddMoney = L"\U0001F4B2";
 

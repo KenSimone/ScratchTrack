@@ -26,6 +26,8 @@ static const wchar_t* szDeposit = L"\U0001F4B2"; // Unicode dollar sign heavy
 static const wchar_t* szTransfer = L"\u21c6";
 // x21C6
 
+static const wchar_t* szEdit = L"\u270E";  // pencil
+
 static HWND g_hwndListToolTip = nullptr;
 static TTTOOLINFO g_toolTip = { 0 };
 static bool g_isToolTipActive = false;
@@ -57,12 +59,17 @@ Account::ACTION_FLAG hitTestAccountList(POINT pt, Account** ppAccount /*= nullpt
             RECT rDeposit = g_actionRects[Account::ACTION_FLAG::DEPOSIT];
             RECT rPay = g_actionRects[Account::ACTION_FLAG::PAY];
             RECT rTransfer = g_actionRects[Account::ACTION_FLAG::TRANSFER];
+            RECT rEdit = g_actionRects[Account::ACTION_FLAG::EDIT];
 
             // Top and bottom is set to current rect. We just care about left and right
-            rTransfer.top = rPay.top = rDeposit.top = rSubItem.top;
-            rTransfer.bottom = rPay.bottom = rDeposit.bottom = rSubItem.bottom;
+            rTransfer.top = rEdit.top = rPay.top = rDeposit.top = rSubItem.top;
+            rTransfer.bottom = rEdit.bottom = rPay.bottom = rDeposit.bottom = rSubItem.bottom;
 
-            if (pAccount->paidFromEnvelopeId() != INVALID_ACCOUNT_ID)
+            if (pAccount->getActionFlags() & Account::ACTION_FLAG::EDIT && PtInRect(&rEdit, hitInfo.pt) )
+            {
+                ret = Account::ACTION_FLAG::EDIT;
+            }
+            else if (pAccount->paidFromEnvelopeId() != INVALID_ACCOUNT_ID)
             {
                 if (pAccount->getActionFlags() & Account::ACTION_FLAG::PAY && PtInRect(&rPay, hitInfo.pt) && pAccount->paidFromEnvelopeId() != INVALID_ACCOUNT_ID)
                 {
@@ -135,6 +142,9 @@ bool accountListHandleMouseMove(LONG xCur, LONG yCur)
         case Account::PAY:
             swprintf(szBuffer, 1024, L"Record payment to credit card account %ls", pAccount->getName());
             break;
+        case Account::EDIT:
+            swprintf(szBuffer, 1024, L"Edit account %ls", pAccount->getName());
+            break;
 
         }
 
@@ -190,30 +200,35 @@ void calcActionRects(HDC hdc)
     RECT rSubItem = { 0 }, rTemp = { 0 };
     ListView_GetSubItemRect(g_hwndAccountLV, 0, 2, LVIR_BOUNDS, &rSubItem);
 
-    // Credit card accounts
-    SIZE size = { 0 };
-    GetTextExtentPoint(hdc, szPay, (int)wcslen(szPay), &size);
+    // All accounts have edit
+    SIZE sizeEdit = { 0 }, sizeSpaces = { 0 }, sizeDeposit = { 0 }, sizeTransfer = { 0 };
+    GetTextExtentPoint(hdc, szEdit, (int)wcslen(szEdit), &sizeEdit);
+    GetTextExtentPoint(hdc, L"  ", (int)wcslen(L"  "), &sizeSpaces);
     rTemp = rSubItem;
     rTemp.left += _iconOffset;
-    rTemp.right = rSubItem.left + size.cx;
+    rTemp.right = rTemp.left + sizeEdit.cx;
+
+    g_actionRects[Account::ACTION_FLAG::EDIT] = rTemp;
+
+    // Credit card accounts
+    SIZE sizePay = { 0 };
+    GetTextExtentPoint(hdc, szPay, (int)wcslen(szPay), &sizePay);
+    rTemp = rSubItem;
+    rTemp.left += _iconOffset + sizeEdit.cx + sizeSpaces.cx;
+    rTemp.right = rTemp.left + sizePay.cx;
     g_actionRects[Account::ACTION_FLAG::PAY] = rTemp;
 
     // Regular accounts
-    GetTextExtentPoint(hdc, szDeposit, (int)wcslen(szDeposit), &size);
+    GetTextExtentPoint(hdc, szDeposit, (int)wcslen(szDeposit), &sizeDeposit);
     rTemp = rSubItem;
-    rTemp.left += _iconOffset;
-    rTemp.right = rSubItem.left + size.cx;
+    rTemp.left += _iconOffset + sizeEdit.cx + sizeSpaces.cx;
+    rTemp.right = rTemp.left + sizeDeposit.cx;
     g_actionRects[Account::ACTION_FLAG::DEPOSIT] = rTemp;
 
-    std::wstring temp(szDeposit);
-    temp += L"  ";
-    SIZE sizePrefix = { 0 };
-    GetTextExtentPoint(hdc, temp.c_str(), (int)temp.length(), &sizePrefix);
-    GetTextExtentPoint(hdc, szTransfer, (int)wcslen(szTransfer), &size);
+    GetTextExtentPoint(hdc, szTransfer, (int)wcslen(szTransfer), &sizeTransfer);
     rTemp = rSubItem;
-    rTemp.left += sizePrefix.cx;
-    rTemp.left += _iconOffset;
-    rTemp.right = rTemp.left + size.cx;
+    rTemp.left += _iconOffset + sizeEdit.cx + sizeSpaces.cx + sizeDeposit.cx + sizeSpaces.cx;
+    rTemp.right = rTemp.left + sizeTransfer.cx;
     g_actionRects[Account::ACTION_FLAG::TRANSFER] = rTemp;
 }
 
@@ -279,20 +294,28 @@ LRESULT accountListCustomDraw(LPNMLVCUSTOMDRAW  pCustomDraw)
             DeleteObject(brush);
 
 
+            
+            SIZE sizeEdit = { 0 };
+            GetTextExtentPoint(pCustomDraw->nmcd.hdc, szEdit, (int)wcslen(szEdit), &sizeEdit);
+            TextOut(pCustomDraw->nmcd.hdc, iR.left + _iconOffset, iR.top, szEdit, (int)wcslen(szEdit));
+
+            SIZE sizeSpaces = { 0 };
+            GetTextExtentPoint(pCustomDraw->nmcd.hdc, L"  ", 2, &sizeSpaces);
+
             if (pAccount->paidFromEnvelopeId() != INVALID_ACCOUNT_ID)
             {
                 // This is a credit card
+                iR.left += sizeEdit.cx + sizeSpaces.cx;
                 TextOut(pCustomDraw->nmcd.hdc, iR.left + _iconOffset, iR.top, szPay, (int)wcslen(szPay));
             }
             else
             {
-                SIZE size = { 0 };
-                GetTextExtentPoint(pCustomDraw->nmcd.hdc, szDeposit, (int)wcslen(szDeposit), &size);
+                SIZE sizeDeposit = { 0 };
+                iR.left += sizeEdit.cx + sizeSpaces.cx;
                 TextOut(pCustomDraw->nmcd.hdc, iR.left + _iconOffset, iR.top, szDeposit, (int)wcslen(szDeposit));
+                GetTextExtentPoint(pCustomDraw->nmcd.hdc, szDeposit, (int)wcslen(szDeposit), &sizeDeposit);
 
-                SIZE size2 = { 0 };
-                GetTextExtentPoint(pCustomDraw->nmcd.hdc, L"  ", 2, &size2);
-                iR.left += size.cx + size2.cx;
+                iR.left += sizeSpaces.cx + sizeDeposit.cx;
                 TextOut(pCustomDraw->nmcd.hdc, iR.left + _iconOffset, iR.top, szTransfer, (int)wcslen(szTransfer));
             }
 

@@ -948,6 +948,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     }
                     return true;
                 }
+                else if (af == Account::EDIT) {
+                    editAccount(pHitAccount);
+                }
             }
             else if (pHeader->code == NM_CUSTOMDRAW)
             {
