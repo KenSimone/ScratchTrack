@@ -214,6 +214,15 @@ LRESULT accountListCustomDraw(LPNMLVCUSTOMDRAW  pCustomDraw)
     LRESULT ret = CDRF_NOTIFYITEMDRAW;
     static const COLORREF SEL_LINK_COLOR = GetSysColor(COLOR_HIGHLIGHTTEXT);
     static const COLORREF LINK_COLOR = GetSysColor(COLOR_HIGHLIGHT);
+    static const int darkerAmt = 25;
+
+
+    COLORREF crBackground = GetSysColor(COLOR_WINDOW);
+
+    // Alternating row backgrounds
+    //if (pCustomDraw->nmcd.dwItemSpec % 2) {
+    //    crBackground = RGB(GetRValue(crBackground) - darkerAmt, GetGValue(crBackground) - darkerAmt, GetBValue(crBackground) - darkerAmt);
+    //}
 
     switch (pCustomDraw->nmcd.dwDrawStage)
     {
@@ -222,6 +231,10 @@ LRESULT accountListCustomDraw(LPNMLVCUSTOMDRAW  pCustomDraw)
     case CDDS_ITEMPREPAINT:
     {
         calcActionRects(pCustomDraw->nmcd.hdc);
+
+        // Put this in for alternating row backgrounds
+        //pCustomDraw->clrTextBk = crBackground;// RGB(GetRValue(crOrig) - darkerAmt, GetGValue(crOrig) - darkerAmt, GetBValue(crOrig) - darkerAmt);
+
         return CDRF_NOTIFYSUBITEMDRAW;
     }
     case CDDS_SUBITEM | CDDS_ITEMPREPAINT:
@@ -251,7 +264,7 @@ LRESULT accountListCustomDraw(LPNMLVCUSTOMDRAW  pCustomDraw)
 
             // Draw our background rect
             SelectObject(pCustomDraw->nmcd.hdc, GetStockObject(NULL_PEN));
-            HBRUSH brush = CreateSolidBrush(selected ? GetSysColor(COLOR_HIGHLIGHT) : GetSysColor(COLOR_WINDOW));
+            HBRUSH brush = CreateSolidBrush(selected ? GetSysColor(COLOR_HIGHLIGHT) : crBackground);// GetSysColor(COLOR_WINDOW));
             HBRUSH hOldBrush = (HBRUSH )SelectObject(pCustomDraw->nmcd.hdc, brush);
             Rectangle(pCustomDraw->nmcd.hdc, iR.left, iR.top, iR.right, iR.bottom);
             SelectObject(pCustomDraw->nmcd.hdc, hOldBrush);

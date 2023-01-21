@@ -3,7 +3,9 @@
 #include <string>
 #include <Windows.h>
 #include <cmath>
+#include <commctrl.h>
 #include "AccountInfo.h"
+
 
 class Utils
 {
@@ -24,4 +26,6 @@ public:
 
 	static void setDlgItemDollarText(HWND hDlg, int resourceId, int amount);
 	static int getDlgItemDollarText(HWND hDlg, int resourceId);
+
+	static LRESULT customDrawListViewAlternatingColors(NMLVCUSTOMDRAW* pCustomDrawItem);
 };

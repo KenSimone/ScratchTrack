@@ -712,28 +712,6 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
     }
 }
 
-LRESULT customDrawListControl(NMLVCUSTOMDRAW* pCustomDrawItem)
-{
-    LRESULT ret = CDRF_NOTIFYITEMDRAW;
-
-    static const COLORREF SEL_COLOR = GetSysColor(COLOR_HIGHLIGHT);
-    static const COLORREF SEL_TEXT_COLOR = GetSysColor(COLOR_HIGHLIGHTTEXT);
-    Transaction* pItem = (Transaction*)pCustomDrawItem->nmcd.lItemlParam;
-
-    if (pItem)
-    {
-
-        // https://learn.microsoft.com/en-us/windows/win32/controls/list-view-item-states
-        //if (pCustomDrawItem->iStateId & LVIS_SELECTED)
-        //{
-        //}
-    }
-
-
-    return ret;
-}
-
-
 void doTreeDrag(LPNMTREEVIEW nmTreeItem)
 {
     // Tell the tree-view control to create an image to use 
@@ -1207,7 +1185,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             if (pHeader->code == NM_CUSTOMDRAW)
             {
-                return customDrawListControl((NMLVCUSTOMDRAW*)lParam);
+                return Utils::customDrawListViewAlternatingColors((NMLVCUSTOMDRAW*)lParam);
             }
             else if (pHeader->code == NM_DBLCLK || pHeader->code == NM_RCLICK )
             {

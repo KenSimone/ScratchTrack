@@ -221,3 +221,23 @@ bool Utils::populatePayeeCombo(HWND hParent, int resourceId, const wchar_t* szDe
 
 	return selSet;
 }
+
+LRESULT Utils::customDrawListViewAlternatingColors(NMLVCUSTOMDRAW* pCustomDrawItem)
+{
+	static const int darkerAmt = 25;
+	switch (pCustomDrawItem->nmcd.dwDrawStage)
+	{
+	case CDDS_PREPAINT:
+		return CDRF_NOTIFYITEMDRAW;
+	case CDDS_ITEMPREPAINT:
+		if (pCustomDrawItem->nmcd.dwItemSpec % 2)
+		{
+			COLORREF crOrig = pCustomDrawItem->clrTextBk;
+			pCustomDrawItem->clrTextBk = RGB(GetRValue(crOrig) - darkerAmt, GetGValue(crOrig) - darkerAmt, GetBValue(crOrig) - darkerAmt);
+		}
+		return CDRF_DODEFAULT;
+	default:
+		return CDRF_DODEFAULT;
+	}
+	return 0;
+}
