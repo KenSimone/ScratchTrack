@@ -20,6 +20,10 @@ static const wchar_t* szPay = L"Pay";
 static const wchar_t* szDeposit = L"Deposit";
 static const wchar_t* szTransfer = L"Transfer";
 
+static HWND g_hwndListToolTip = nullptr;
+static TTTOOLINFO g_toolTip = { 0 };
+static bool g_isToolTipActive = false;
+
 Account::ACTION_FLAG hitTestAccountList(POINT pt, Account** ppAccount /*= nullptr*/)
 {
     LVHITTESTINFO hitInfo = { 0 };
@@ -88,12 +92,56 @@ bool accountListHandleMouseMove(LONG xCur, LONG yCur)
 
     HCURSOR hCursor = nullptr;
 
-    bool hit = hitTestAccountList(pt) != Account::ACTION_FLAG::NO_ACTION;
+    Account* pAccount = nullptr;
+    Account::ACTION_FLAG af = hitTestAccountList(pt, &pAccount);
+    bool hit = af != Account::ACTION_FLAG::NO_ACTION;
+
     hCursor = LoadCursor(nullptr, hit ? IDC_HAND : IDC_ARROW);
 
     if (hCursor) {
         SetCursor(hCursor);
     }
+
+    if (hit)
+    {
+        static wchar_t szBuffer[1024] = { 0 };
+        wcscpy_s(szBuffer, 1024, L"No hint. File a bug.");
+        switch (af)
+        {
+        case Account::DEPOSIT:
+            swprintf(szBuffer, 1024, L"Deposit money into %ls", pAccount->getName());
+            break;
+        case Account::TRANSFER:
+            swprintf(szBuffer, 1024, L"Transfer money into %ls", pAccount->getName());
+            break;
+        case Account::PAY:
+            swprintf(szBuffer, 1024, L"Pay credit card account %ls", pAccount->getName());
+            break;
+
+        }
+
+        g_toolTip.lpszText = szBuffer;
+        ClientToScreen(g_hwndAccountLV, &pt);
+        static POINT old = { 0 };
+        if (memcmp(&old, &pt, sizeof(pt)) != 0) {
+            SendMessage(g_hwndListToolTip, TTM_SETTOOLINFO, 0, (LPARAM)&g_toolTip);
+            SendMessage(g_hwndListToolTip, TTM_TRACKPOSITION, 0, (LPARAM)MAKELONG(pt.x + 10, pt.y - 20));
+
+            if (!g_isToolTipActive) {
+                SendMessage(g_hwndListToolTip, TTM_TRACKACTIVATE, (WPARAM)TRUE, (LPARAM)&g_toolTip);
+                g_isToolTipActive = true;
+            }
+            old = pt;
+        }
+    }
+    else
+    {
+        if (g_isToolTipActive) {
+            SendMessage(g_hwndListToolTip, TTM_TRACKACTIVATE, (WPARAM)FALSE, (LPARAM)&g_toolTip);
+            g_isToolTipActive = false;
+        }
+    }
+
 
     return true;
 }
@@ -256,6 +304,22 @@ void createAccountListControl()
         ListView_SetColumnWidth(g_hwndAccountLV, i, LVSCW_AUTOSIZE_USEHEADER);
     }
 
+    // Create a tool tip
+    g_hwndListToolTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
+        WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+        g_hwndAccountLV, NULL, g_hInst, NULL);
+
+    g_toolTip.cbSize = TTTOOLINFO_V1_SIZE;
+    g_toolTip.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
+    g_toolTip.hwnd = g_hwndAccountLV;
+    g_toolTip.hinst = g_hInst;
+    g_toolTip.lpszText = const_cast<wchar_t*>(L"");
+    g_toolTip.uId = (UINT_PTR)g_hwndAccountLV;
+
+    GetClientRect(g_hwndAccountLV, &g_toolTip.rect);
+    SendMessage(g_hwndListToolTip, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO)&g_toolTip);
+
+
 }
 
 void addAccount(Account* pAccount)
@@ -296,3 +360,10 @@ void addAccount(Account* pAccount)
 
 }
 
+void killAccountListToolTips()
+{
+    if (g_isToolTipActive) {
+        SendMessage(g_hwndListToolTip, TTM_TRACKACTIVATE, (WPARAM)FALSE, (LPARAM)&g_toolTip);
+        g_isToolTipActive = false;
+    }
+}

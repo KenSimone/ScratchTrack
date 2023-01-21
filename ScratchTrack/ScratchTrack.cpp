@@ -1079,7 +1079,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             else if (pHeader->code == NM_CLICK)
             {
-                killToolTips();
+                killTreeToolTips();
                 POINT pt = { 0 };
                 TVHITTESTINFO tvhi = { 0 };
                 GetCursorPos(&pt);

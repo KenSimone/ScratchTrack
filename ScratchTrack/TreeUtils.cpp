@@ -402,12 +402,12 @@ bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
             ClientToScreen(g_hwndTV, &point);
             static POINT old = { 0 };
             if (memcmp(&old, &point, sizeof(point)) != 0 ) {
+                SendMessage(g_hwndTreeToolTip, TTM_SETTOOLINFO, 0, (LPARAM)&g_toolTip);
+                SendMessage(g_hwndTreeToolTip, TTM_TRACKPOSITION, 0, (LPARAM)MAKELONG(point.x + 10, point.y - 20));
                 if (!g_isToolTipActive) {
                     SendMessage(g_hwndTreeToolTip, TTM_TRACKACTIVATE, (WPARAM)TRUE, (LPARAM)&g_toolTip);
                     g_isToolTipActive = true;
                 }
-                SendMessage(g_hwndTreeToolTip, TTM_SETTOOLINFO, 0, (LPARAM)&g_toolTip);
-                SendMessage(g_hwndTreeToolTip, TTM_TRACKPOSITION, 0, (LPARAM)MAKELONG(point.x + 10, point.y - 20));
                 old = point;
             }
         }
@@ -451,7 +451,17 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
     LRESULT ret = CDRF_NOTIFYITEMDRAW;
     AccountBase* pItem = (AccountBase*)pCustomDrawItem->nmcd.lItemlParam;
 
-    static const wchar_t* szAddTransaction = L"\u271A";
+    static const wchar_t* szAddTransaction = L"\u271A"; // big plus
+    //static const wchar_t* szAddTransaction = L"\U0001F4B8"; // money flying away
+    //static const wchar_t* szAddTransaction = L"\U0001F4E4"; // outbox tray
+    // static const wchar_t* szAddTransaction = L"\U0001F4B5"; // cash stack
+    //static const wchar_t* szAddTransaction = L"\U0001F4B2"; // dollar sign
+    //static const wchar_t* szAddTransaction = L"\U0001f4c9"; // downward graph
+    //static const wchar_t* szAddTransaction = L"\U0001F4E9"; // Envelope in
+
+    
+
+    
     static const wchar_t* szEditEnvelope= L"\u270E"; 
     static const wchar_t* szAddEnvelope = L"\u271A";
 
@@ -719,7 +729,7 @@ void budgetTreeCreateTreeControl()
     g_toolTip.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
     g_toolTip.hwnd = g_hwndTV;
     g_toolTip.hinst = g_hInst;
-    g_toolTip.lpszText = const_cast<wchar_t*>(L"Dude!");
+    g_toolTip.lpszText = const_cast<wchar_t*>(L"");
     g_toolTip.uId = (UINT_PTR)g_hwndTV;
 
     GetClientRect(g_hwndTV, &g_toolTip.rect);
@@ -766,7 +776,7 @@ HTREEITEM treeItemFromAccount(AccountBase* pItem, HTREEITEM hItem /*= TVI_ROOT*/
 
 }
 
-void killToolTips()
+void killTreeToolTips()
 {
     if (g_isToolTipActive) {
         SendMessage(g_hwndTreeToolTip, TTM_TRACKACTIVATE, (WPARAM)FALSE, (LPARAM)&g_toolTip);

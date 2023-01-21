@@ -10,3 +10,4 @@ LRESULT accountListCustomDraw(LPNMLVCUSTOMDRAW  pCustomDraw);
 void createAccountListControl();
 void addAccount(Account* pAccount);
 Account::ACTION_FLAG hitTestAccountList(POINT pt, Account** ppAccount = nullptr);
+void killAccountListToolTips();
