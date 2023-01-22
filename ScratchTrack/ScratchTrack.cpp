@@ -1719,7 +1719,7 @@ void positionControls()
     if (showTransactionList) {
         envelopeTreeHeigth = transactionFilterTop - rClient.top - wpTreeHeaderSize.cy;
     } else{ 
-        envelopeTreeHeigth = rClient.bottom - rClient.top - wpTreeHeaderSize.cy;
+        envelopeTreeHeigth = rClient.bottom - rClient.top - wpTreeHeaderSize.cy - transactionFilterHeight;
     }
 
     SetWindowPos(g_hwndTV, nullptr, middleEdge, rTree.top, rSideWidth, envelopeTreeHeigth, SWP_NOZORDER);
