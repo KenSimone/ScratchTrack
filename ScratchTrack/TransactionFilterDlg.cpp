@@ -25,6 +25,9 @@ INT_PTR CALLBACK TransactionFilterDlg::TransactionFilterDlgProc(HWND hwnd, UINT 
 {
     switch (Message)
     {
+    case WM_INITDIALOG:
+        return SendDlgItemMessage(hwnd, IDC_CHECK_SHOW_TRANSACTION_LIST, BM_SETCHECK, BST_CHECKED, 0);
+        break;
     case WM_COMMAND:
         if (HIWORD(wParam) == BN_CLICKED)
         {
@@ -37,14 +40,6 @@ INT_PTR CALLBACK TransactionFilterDlg::TransactionFilterDlgProc(HWND hwnd, UINT 
         }
     }
     return false;
-    //switch (Message)
-    //{
-    //case WM_COMMAND:
-    //    switch (LOWORD(wParam))
-    //default:
-    //    return FALSE;
-    //}
-    //return TRUE;
 }
 
 bool TransactionFilterDlg::filterToEnvelopeSelection()
@@ -57,4 +52,14 @@ std::wstring TransactionFilterDlg::filterText()
     wchar_t szBuffer[1024] = { 0 };
     GetWindowText(GetDlgItem(_hThisDialg, IDC_EDIT_TRANSACTION_FILTER), szBuffer, 1024);
     return std::wstring(szBuffer);
+}
+
+bool TransactionFilterDlg::showTransactionList()
+{
+    return SendDlgItemMessage(_hThisDialg, IDC_CHECK_SHOW_TRANSACTION_LIST, BM_GETCHECK, 0, 0);
+}
+
+bool TransactionFilterDlg::filterToAccount()
+{
+    return SendDlgItemMessage(_hThisDialg, IDC_CHECK_FILTER_TO_ACCOUNT, BM_GETCHECK, 0, 0);
 }

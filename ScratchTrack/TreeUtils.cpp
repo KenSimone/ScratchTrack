@@ -8,7 +8,7 @@ void setGuiFont(HWND hCtrl);
 extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 extern HWND g_hwndTV;
-extern HWND g_hwndHeader;
+extern HWND g_hwndTreeHeader;
 extern HWND g_hwndAccountLV;
 BUDGET_TREE_DRAG_DETAILS g_btDragDetails;;
 
@@ -97,19 +97,19 @@ void getColumnSpots()
 {
     HDITEM hdi = { 0 };
     hdi.mask = HDI_WIDTH;
-    Header_GetItem(g_hwndHeader, 0, &hdi);
+    Header_GetItem(g_hwndTreeHeader, 0, &hdi);
     g_columnSizes._name = hdi.cxy;
 
-    Header_GetItem(g_hwndHeader, 1, &hdi);
+    Header_GetItem(g_hwndTreeHeader, 1, &hdi);
     g_columnSizes._budgeted = hdi.cxy;
 
-    Header_GetItem(g_hwndHeader, 2, &hdi);
+    Header_GetItem(g_hwndTreeHeader, 2, &hdi);
     g_columnSizes._inCategories = hdi.cxy;
 
-    Header_GetItem(g_hwndHeader, 3, &hdi);
+    Header_GetItem(g_hwndTreeHeader, 3, &hdi);
     g_columnSizes._balance = hdi.cxy;
 
-    Header_GetItem(g_hwndHeader, 4, &hdi);
+    Header_GetItem(g_hwndTreeHeader, 4, &hdi);
     g_columnSizes._available = hdi.cxy;
 
     g_columnSizes._endSpot = hdi.cxy;
@@ -688,7 +688,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
 void budgetTreeCreateTreeControl()
 {
     // Create tree header
-    g_hwndHeader = CreateWindowEx(0, WC_HEADER, nullptr, WS_CHILD | HDS_FULLDRAG, 0, 0, 0, 0, g_hTopWindow, (HMENU)IDC_SIMPLEBUDGET_TREEHEADER, g_hInst, nullptr);
+    g_hwndTreeHeader = CreateWindowEx(0, WC_HEADER, nullptr, WS_CHILD | HDS_FULLDRAG, 0, 0, 0, 0, g_hTopWindow, (HMENU)IDC_SIMPLEBUDGET_TREEHEADER, g_hInst, nullptr);
 
 
     RECT rClient = { 0 };
@@ -700,11 +700,11 @@ void budgetTreeCreateTreeControl()
 
     HWND lvHeader = ListView_GetHeader(g_hwndAccountLV);
     HFONT hFont = (HFONT)SendMessageW(lvHeader, WM_GETFONT, 0, 0);
-    SendMessageW(g_hwndHeader, WM_SETFONT, (WPARAM)hFont, 0);
+    SendMessageW(g_hwndTreeHeader, WM_SETFONT, (WPARAM)hFont, 0);
 
 
-    SendMessage(g_hwndHeader, HDM_LAYOUT, 0, (LPARAM)&hdl);
-    SetWindowPos(g_hwndHeader, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, wp.flags | SWP_SHOWWINDOW);
+    SendMessage(g_hwndTreeHeader, HDM_LAYOUT, 0, (LPARAM)&hdl);
+    SetWindowPos(g_hwndTreeHeader, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, wp.flags | SWP_SHOWWINDOW);
 
     g_hwndTV = CreateWindowEx(0, WC_TREEVIEW, TEXT("Simple Budget Tree"), WS_VISIBLE | WS_CHILD | WS_BORDER | WS_VSCROLL | WS_HSCROLL | TVS_HASBUTTONS  | TVS_HASLINES | TVS_LINESATROOT,
         rClient.left, rClient.top,
@@ -727,24 +727,24 @@ void budgetTreeCreateTreeControl()
     item.cxy = g_columnSizes._name;
     item.pszText = const_cast<wchar_t*>(L"Envelope");
     item.mask = HDI_TEXT | HDI_WIDTH;
-    Header_InsertItem(g_hwndHeader, 99, &item);
+    Header_InsertItem(g_hwndTreeHeader, 99, &item);
 
     item.pszText = const_cast<wchar_t*>(L"Budgeted");
     item.cxy = g_columnSizes._budgeted;
-    Header_InsertItem(g_hwndHeader, 99, &item);
+    Header_InsertItem(g_hwndTreeHeader, 99, &item);
 
     item.pszText = const_cast<wchar_t*>(L"Actual");
     item.cxy = g_columnSizes._inCategories;
-    Header_InsertItem(g_hwndHeader, 99, &item);
+    Header_InsertItem(g_hwndTreeHeader, 99, &item);
 
     item.pszText = const_cast<wchar_t*>(L"Balance");
     item.cxy = g_columnSizes._balance;
-    Header_InsertItem(g_hwndHeader, 99, &item);
+    Header_InsertItem(g_hwndTreeHeader, 99, &item);
 
     //item.pszText = const_cast<wchar_t*>(L"Available balance");
     ////item.cxy = d - c;
     //item.mask = HDI_TEXT;
-    //Header_InsertItem(g_hwndHeader, 99, &item);
+    //Header_InsertItem(g_hwndTreeHeader, 99, &item);
 
     SendMessage(g_hwndTV, WM_CHANGEUISTATE, MAKEWPARAM(UIS_SET, UISF_HIDEFOCUS), 0);
 
