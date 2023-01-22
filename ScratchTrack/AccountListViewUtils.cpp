@@ -448,21 +448,7 @@ void addAccount(Account* pAccount)
 
     // Actions - We'll draw icons here. Just set some aribtrary text for column width
     ListView_SetItemText(g_hwndAccountLV, iIndex, 2, const_cast<wchar_t*>(L"--------"));
-
-    HDC hdc = GetDC(g_hwndAccountLV);
-    SIZE size = { 0 };
-    static const wchar_t* szTypicalName = L"Typical Act Name";
-    static const wchar_t* szBigAmount = L"$1,000,000.00";
-    GetTextExtentPoint(hdc, szTypicalName, (int)wcslen(szTypicalName), &size);
-    ListView_SetColumnWidth(g_hwndAccountLV, 0, (int)size.cx);
-
-    GetTextExtentPoint(hdc, szBigAmount, (int)wcslen(szBigAmount), &size);
-    ListView_SetColumnWidth(g_hwndAccountLV, 1, (int)size.cx);
-    ListView_SetColumnWidth(g_hwndAccountLV, 2, (int)size.cx);
-    ReleaseDC(g_hwndAccountLV, hdc);
-
     SendMessage(g_hwndAccountLV, WM_SETREDRAW, TRUE, 0);
-
 }
 
 void killAccountListToolTips()

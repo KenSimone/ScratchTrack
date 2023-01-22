@@ -187,10 +187,6 @@ void createTransactionListControl()
         g_hInst,
         NULL);
 
-    // Filter bar
-    //HWND hHdrWnd = ListView_GetHeader(g_hwndTransactionLV);
-    //SetWindowLong(hHdrWnd, GWL_STYLE, HDS_FILTERBAR);
-
     ListView_SetExtendedListViewStyle(g_hwndTransactionLV, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 
     setGuiFont(g_hwndTransactionLV);
@@ -214,10 +210,6 @@ void createTransactionListControl()
 
     column.pszText = const_cast<wchar_t*>(L"Inflow");
     ListView_InsertColumn(g_hwndTransactionLV, 5, &column);
-
-    for (int i = 0; i < 6; i++) {
-        ListView_SetColumnWidth(g_hwndTransactionLV, i, LVSCW_AUTOSIZE_USEHEADER);
-    }
 }
 
 //
@@ -1458,11 +1450,6 @@ void populateTransactions()
         ListView_SetItemText(g_hwndTransactionLV, 0, isIncome ? 5 : 4, const_cast<wchar_t*>(amount.c_str()));
     }
 
-    DWORD dwFlags = LVSCW_AUTOSIZE_USEHEADER;
-    for (DWORD i = 0; i < 5; i++) {
-        ListView_SetColumnWidth(g_hwndTransactionLV, i, dwFlags);
-    }    
-
     SendMessage(g_hwndTransactionLV, WM_SETREDRAW, TRUE, 0);
 
 }
@@ -1567,6 +1554,15 @@ void positionControls()
     // Transactions list view
     SetWindowPos(g_hwndTransactionLV, nullptr, rClient.left, transListTop, 
         rClient.right - rClient.left, transListHeight, SWP_NOZORDER);
+
+
+    for (size_t i = 0; i < 3; i++) {
+        ListView_SetColumnWidth(g_hwndAccountLV, i, LVSCW_AUTOSIZE_USEHEADER);
+    }
+
+    for (size_t i = 0; i < 6; i++) {
+        ListView_SetColumnWidth(g_hwndTransactionLV, i, LVSCW_AUTOSIZE_USEHEADER);
+    }
 
     ShowWindow(g_transactionFilterDlg, SW_SHOW);
     ShowWindow(g_accountInfoDlg, SW_SHOW);
