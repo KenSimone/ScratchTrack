@@ -143,6 +143,7 @@
     <ClInclude Include="DepositDlg.h" />
     <ClInclude Include="EnvelopeDlg.h" />
     <ClInclude Include="FolderDlg.h" />
+    <ClInclude Include="FundEnvelopeDlg.h" />
     <ClInclude Include="PayCCDlg.h" />
     <ClInclude Include="Transaction.h" />
     <ClInclude Include="TransactionDialog.h" />
@@ -165,6 +166,7 @@
     <ClCompile Include="DepositDlg.cpp" />
     <ClCompile Include="EnvelopeDlg.cpp" />
     <ClCompile Include="FolderDlg.cpp" />
+    <ClCompile Include="FundEnvelopeDlg.cpp" />
     <ClCompile Include="PayCCDlg.cpp" />
     <ClCompile Include="Transaction.cpp" />
     <ClCompile Include="TransactionDialog.cpp" />

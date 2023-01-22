@@ -22,6 +22,7 @@
 #include "EnvelopeDlg.h"
 #include "AccountDlg.h"
 #include "FolderDlg.h"
+#include "FundEnvelopeDlg.h"
 
 #include <commctrl.h>
 #include <Windows.h>
@@ -1087,10 +1088,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 {
                     AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(accountFromTreeItem(hItem));
                     std::wstring temp;
-                    if (pEnvelope && getOneText(temp)) {
+                    FundEnvelopeDlg dlg(pEnvelope);
+                    if (pEnvelope && dlg.ShowDialog()) {
                         // Add funds to this item
-                        int amount = Utils::dollarsStringToPennies(temp.c_str());
-                        pEnvelope->addBalance(amount);
+                        int newBalance = dlg.getNewBalance();
+                        pEnvelope->addBalance(-pEnvelope->getBalance() + newBalance);
 
                         updateGuiValues();
                         serializeState();
