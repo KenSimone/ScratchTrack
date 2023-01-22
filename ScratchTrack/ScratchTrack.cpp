@@ -1529,7 +1529,8 @@ void positionControls()
 
     GetWindowRect(g_transactionFilterDlg, &rTransFilter);
 
-    int treeleft = (int)(rClient.right * (1.0 - TREE_HORIZONTAL_SPACE)); // Left size of the tree, the account stuff is to the right
+    int treeleft = (int)(rClient.right * (1.0 - TREE_HORIZONTAL_SPACE)); // Left side of the tree, the account stuff is to the right
+    int treeWidth = rClient.right - treeleft;
     int accountListTop = 0;
     int accountListLeft = 0;
     int accountListRight = treeleft - 1;
@@ -1543,31 +1544,32 @@ void positionControls()
     int transListHeight = rClient.bottom - transListTop; // From the top of the transaction list to the bottom of the screen
 
     // Envelope tree header
-    SetWindowPos(g_hwndHeader, wp.hwndInsertAfter, treeleft, 0, wp.cx, wp.cy, wp.flags | SWP_SHOWWINDOW);
+    SetWindowPos(g_hwndHeader, wp.hwndInsertAfter, 
+        treeleft, 0, treeWidth, wp.cy, wp.flags | SWP_SHOWWINDOW);
 
     // Envelope tree control
-    SetWindowPos(g_hwndTV, nullptr, treeleft, rClient.top, rClient.right, transFilterTop - 1 - wp.cy, SWP_NOZORDER);
+    SetWindowPos(g_hwndTV, nullptr, treeleft, rClient.top, treeWidth, transFilterTop - 1 - wp.cy, SWP_NOZORDER);
 
     // Accounts listview
     SetWindowPos(g_hwndAccountLV, nullptr, 
         accountListLeft, accountListTop,  // Top left
-        accountListRight, (accountListBottom - accountListTop) - 1,  // left edge of the tree, above the transaction filter
+        accountListRight - accountListLeft, (accountListBottom - accountListTop) - 1,  // left edge of the tree, above the transaction filter
         SWP_NOZORDER);
 
     // Account info dlg
-    SetWindowPos(g_accountInfoDlg, nullptr, accountListLeft, accountInfoTop, accountListRight, accountInfoBottom - accountInfoTop, SWP_NOZORDER);
+    SetWindowPos(g_accountInfoDlg, nullptr, accountListLeft, accountInfoTop, 
+        accountListRight - accountListLeft, accountInfoBottom - accountInfoTop, SWP_NOZORDER);
 
     // Transaction filter
-    SetWindowPos(g_transactionFilterDlg, nullptr, rClient.left, transFilterTop, rClient.right, rTransFilter.bottom - rTransFilter.top, SWP_NOZORDER);
+    SetWindowPos(g_transactionFilterDlg, nullptr, rClient.left, transFilterTop, 
+        rClient.right - rClient.left, rTransFilter.bottom - rTransFilter.top, SWP_NOZORDER);
 
     // Transactions list view
-    SetWindowPos(g_hwndTransactionLV, nullptr, rClient.left, transListTop, rClient.right, transListHeight, SWP_NOZORDER);
-
+    SetWindowPos(g_hwndTransactionLV, nullptr, rClient.left, transListTop, 
+        rClient.right - rClient.left, transListHeight, SWP_NOZORDER);
 
     ShowWindow(g_transactionFilterDlg, SW_SHOW);
     ShowWindow(g_accountInfoDlg, SW_SHOW);
-
-    //g_hwndAccountLV;
 }
 
 void setGuiFont(HWND hCtrl)

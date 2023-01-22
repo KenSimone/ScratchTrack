@@ -51,8 +51,8 @@ LRESULT CALLBACK treeViewSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 // This function comes up with initial column sizes
 void calcColumnSpots()
 {
-    static const wchar_t* szMaxNameLength = L"THIS IS A LONG NAME------------------------ADD TRANSACTION";
-    static const wchar_t* szMaxValueLength = L"In cagtegory(s): $1,000,000,000";
+    static const wchar_t* szMaxNameLength = L"THIS IS A LONG NAME-----------ADD TRANSACTION";
+    static const wchar_t* szMaxValueLength = L"$1,000,000,000";
 
     HDC dc = GetDC(g_hwndTV);
     SIZE textSizeA = { 0 }, textSizeB = { 0 };
@@ -706,7 +706,7 @@ void budgetTreeCreateTreeControl()
     SendMessage(g_hwndHeader, HDM_LAYOUT, 0, (LPARAM)&hdl);
     SetWindowPos(g_hwndHeader, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, wp.flags | SWP_SHOWWINDOW);
 
-    g_hwndTV = CreateWindowEx(0, WC_TREEVIEW, TEXT("Simple Budget Tree"), WS_VISIBLE | WS_CHILD | WS_BORDER | TVS_HASBUTTONS  | TVS_HASLINES | TVS_LINESATROOT,
+    g_hwndTV = CreateWindowEx(0, WC_TREEVIEW, TEXT("Simple Budget Tree"), WS_VISIBLE | WS_CHILD | WS_BORDER | WS_VSCROLL | WS_HSCROLL | TVS_HASBUTTONS  | TVS_HASLINES | TVS_LINESATROOT,
         rClient.left, rClient.top,
         rClient.right,
         rClient.bottom / 2,

@@ -406,10 +406,6 @@ void createAccountListControl()
     column.pszText = const_cast<wchar_t*>(L"Actions");
     ListView_InsertColumn(g_hwndAccountLV, columnCount++, &column);
 
-    for (int i = 0; i < columnCount; i++) {
-        ListView_SetColumnWidth(g_hwndAccountLV, i, LVSCW_AUTOSIZE_USEHEADER);
-    }
-
     // Create a tool tip
     g_hwndListToolTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
         WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
@@ -450,18 +446,21 @@ void addAccount(Account* pAccount)
     std::wstring balance = Utils::penniesToDollarsString(pAccount->getBalance());
     ListView_SetItemText(g_hwndAccountLV, iIndex, 1, const_cast<wchar_t*>(balance.c_str()));
 
-    // Actions
-    if (pAccount->paidFromEnvelopeId() == INVALID_ACCOUNT_ID ){
-        ListView_SetItemText(g_hwndAccountLV, iIndex, 2, const_cast<wchar_t*>(L"Deposit  Transfer"));
-    }
-    else {
-        ListView_SetItemText(g_hwndAccountLV, iIndex, 2, const_cast<wchar_t*>(szPay));
-    }
+    // Actions - We'll draw icons here. Just set some aribtrary text for column width
+    ListView_SetItemText(g_hwndAccountLV, iIndex, 2, const_cast<wchar_t*>(L"--------"));
 
+    HDC hdc = GetDC(g_hwndAccountLV);
+    SIZE size = { 0 };
+    static const wchar_t* szTypicalName = L"Typical Act Name";
+    static const wchar_t* szBigAmount = L"$1,000,000.00";
+    GetTextExtentPoint(hdc, szTypicalName, (int)wcslen(szTypicalName), &size);
+    ListView_SetColumnWidth(g_hwndAccountLV, 0, (int)size.cx);
 
-    ListView_SetColumnWidth(g_hwndAccountLV, 0, 200);
-    ListView_SetColumnWidth(g_hwndAccountLV, 1, 200);
-    ListView_SetColumnWidth(g_hwndAccountLV, 2, 160); //LVSCW_AUTOSIZE_USEHEADER
+    GetTextExtentPoint(hdc, szBigAmount, (int)wcslen(szBigAmount), &size);
+    ListView_SetColumnWidth(g_hwndAccountLV, 1, (int)size.cx);
+    ListView_SetColumnWidth(g_hwndAccountLV, 2, (int)size.cx);
+    ReleaseDC(g_hwndAccountLV, hdc);
+
     SendMessage(g_hwndAccountLV, WM_SETREDRAW, TRUE, 0);
 
 }
