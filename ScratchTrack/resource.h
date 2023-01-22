@@ -88,7 +88,7 @@
 #define IDC_EDIT_CUR_BALANCE            1040
 #define IDC_EDIT_NEW_BALANCE            1041
 #define ID_ROOT_ADD_GROUP               32771
-#define IDM_EDIT_FOLDER           32772
+#define IDM_EDIT_FOLDER                 32772
 #define ID_ROOT_SETBALANCE              32773
 #define ID_ROOT_DELETEITEM              32776
 #define ID_Menu                         32777
@@ -117,8 +117,13 @@
 #define ID_FILE_ADDACCOUNT              33016
 #define ID_FILE_ADDENVELOPE             33017
 #define ID_ROOT_EDITACCOUNT             33018
+#define IDR_MENU_ACCOUNT_CC             33018
 #define ID_ENVELOPE_RESERVE_FUNDS       33019
 #define ID_ROOT_EDITENVELOPE            33020
+#define ID_ROOT_EDITACCOUNT33021        33021
+#define ID_ROOT_PAYCREDITCARD           33022
+#define ID_ROOT_TRANSFER                33023
+#define ID_ROOT_DEPOSIT                 33024
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -126,8 +131,8 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        164
-#define _APS_NEXT_COMMAND_VALUE         33021
+#define _APS_NEXT_RESOURCE_VALUE        165
+#define _APS_NEXT_COMMAND_VALUE         33025
 #define _APS_NEXT_CONTROL_VALUE         1041
 #define _APS_NEXT_SYMED_VALUE           113
 #endif

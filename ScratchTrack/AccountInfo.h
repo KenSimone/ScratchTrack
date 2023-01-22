@@ -261,6 +261,8 @@ public:
 	unsigned int paidFromEnvelopeId() { return _paidFromEnvelopeId; }
 	void setPaidFromEnvelopeId(unsigned int paidFromEnvelopeId) { _paidFromEnvelopeId = paidFromEnvelopeId; }
 
+	bool isCCAccount() { return paidFromEnvelopeId() != INVALID_ACCOUNT_ID; }
+
 	// The item-type (account/group/envelope)
 	virtual accountItemType getType() { return AccountBase::ACCOUNT; }
 

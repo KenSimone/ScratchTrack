@@ -588,6 +588,52 @@ void applyModifiedTransaction(Transaction* pTransaction, int listviewItemIndex)
     updateTransactionUiAndSave(pTransaction, listviewItemIndex);
 }
 
+void doPayCC(Account* pAccount)
+{
+    PayCCDlg dlg(pAccount, 0, 0);
+    if (dlg.ShowDialog()) {
+        Transaction::addTransaction(Transaction::CCPAYMENT, dlg.getAmount(), dlg.getPaidFromId(), pAccount->getId(), pAccount->paidFromEnvelopeId(), pAccount->getName(), dlg.getDescription());
+        pAccount->addBalance(-dlg.getAmount());
+        AccountEnvelope* pEnvelope = (AccountEnvelope*)Account::lookupById(pAccount->paidFromEnvelopeId());
+        pEnvelope->addBalance(dlg.getAmount());
+        Account* pFrom = (Account*)Account::lookupById(dlg.getPaidFromId());
+        pFrom->addBalance(dlg.getAmount());
+        serializeState();
+        updateGuiValues();
+        populateTransactions();
+
+    }
+}
+
+void doTransfer(Account* pAccount)
+{
+    TransferDlg dlg(pAccount->getId(), INVALID_ACCOUNT_ID, 0, L"Transfer");
+    if (dlg.ShowDialog()) {
+        Account* pAccountFrom = (Account*)AccountBase::lookupById(dlg.getAccountFromId());
+        Account* pAccountTo = (Account*)AccountBase::lookupById(dlg.getAccountToId());
+        if (pAccountFrom && pAccountTo) {
+            Transaction::addTransaction(Transaction::TRANSFER, dlg.getAmount(), dlg.getAccountFromId(), dlg.getAccountToId(), INVALID_ACCOUNT_ID, L"Transfer", dlg.getDescription());
+            pAccountFrom->addBalance(-dlg.getAmount());
+            pAccountTo->addBalance(dlg.getAmount());
+            serializeState();
+            updateGuiValues();
+            populateTransactions();
+
+        }
+    }
+}
+void addDeposit(Account* pAccount)
+{
+    DepositDlg dlg(pAccount, 0, nullptr, L"Deposit");
+    if (dlg.ShowDialog()) {
+        Transaction::addTransaction(Transaction::DEPOSIT, dlg.getAmount(), INVALID_ACCOUNT_ID, pAccount->getId(), INVALID_ACCOUNT_ID, dlg.getPayee(), dlg.getDescription());
+        pAccount->addBalance(dlg.getAmount());
+        serializeState();
+        updateGuiValues();
+        populateTransactions();
+    }
+}
+
 void editDeposit(Transaction* pTransaction, int listviewItemIndex)
 {
     Account* pAcct = (Account*)AccountBase::lookupById(pTransaction->getAccountToId());
@@ -901,48 +947,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 int index = -1;
                 Account::ACTION_FLAG af = hitTestAccountList(pt, &pHitAccount, &index);
                 if (af == Account::ACTION_FLAG::DEPOSIT) {
-                    DepositDlg dlg(pHitAccount, 0, nullptr, L"Deposit");
-                    if (dlg.ShowDialog()) {
-                        Transaction::addTransaction(Transaction::DEPOSIT, dlg.getAmount(), INVALID_ACCOUNT_ID, pHitAccount->getId(), INVALID_ACCOUNT_ID, dlg.getPayee(), dlg.getDescription());
-                        pHitAccount->addBalance(dlg.getAmount());
-                        serializeState();
-                        updateGuiValues();
-                        populateTransactions();
-                    }
-
+                    addDeposit(pHitAccount);
                     return true;
                 }
                 else if (af == Account::ACTION_FLAG::TRANSFER) {
-                    TransferDlg dlg(pHitAccount->getId(), INVALID_ACCOUNT_ID, 0, L"Transfer");
-                    if (dlg.ShowDialog()) {
-                        Account* pAccountFrom = (Account*)AccountBase::lookupById(dlg.getAccountFromId());
-                        Account* pAccountTo = (Account*)AccountBase::lookupById(dlg.getAccountToId());
-                        if (pAccountFrom && pAccountTo) {
-                            Transaction::addTransaction(Transaction::TRANSFER, dlg.getAmount(), dlg.getAccountFromId(), dlg.getAccountToId(), INVALID_ACCOUNT_ID, L"Transfer", dlg.getDescription());
-                            pAccountFrom->addBalance(-dlg.getAmount());
-                            pAccountTo->addBalance(dlg.getAmount());
-                            serializeState();
-                            updateGuiValues();
-                            populateTransactions();
-
-                        }
-                    }
+                    doTransfer(pHitAccount);
                     return true;
                 }
                 else if (af == Account::ACTION_FLAG::PAY) {
-                    PayCCDlg dlg(pHitAccount, 0, 0);
-                    if (dlg.ShowDialog()) {
-                        Transaction::addTransaction(Transaction::CCPAYMENT, dlg.getAmount(), dlg.getPaidFromId(), pHitAccount->getId(), pHitAccount->paidFromEnvelopeId(), pHitAccount->getName(), dlg.getDescription());
-                        pHitAccount->addBalance(-dlg.getAmount());
-                        AccountEnvelope* pEnvelope = (AccountEnvelope * )Account::lookupById(pHitAccount->paidFromEnvelopeId());
-                        pEnvelope->addBalance(dlg.getAmount());
-                        Account* pFrom = (Account*)Account::lookupById(dlg.getPaidFromId());
-                        pFrom->addBalance(dlg.getAmount());
-                        serializeState();
-                        updateGuiValues();
-                        populateTransactions();
-
-                    }
+                    doPayCC(pHitAccount);
                     return true;
                 }
                 else if (af == Account::HIDE) {
@@ -1004,17 +1017,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
                 if (lvhi.iItem != -1) 
                 {
-                    HMENU hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_MENU_ACCOUNT));
-                    hMenu = GetSubMenu(hMenu, 0);
-                    DWORD dwCode = TrackPopupMenu(hMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hWnd, NULL);
                     LVITEM item = { 0 };
                     item.iItem = lvhi.iItem;
                     item.mask = LVIF_PARAM;
                     ListView_GetItem(g_hwndAccountLV, &item);
                     Account* pAccount = (Account*)item.lParam;
+
+                    HMENU hMenu = LoadMenu(NULL, MAKEINTRESOURCE(pAccount->isCCAccount() ? IDR_MENU_ACCOUNT_CC : IDR_MENU_ACCOUNT));
+                    hMenu = GetSubMenu(hMenu, 0);
+                    DWORD dwCode = TrackPopupMenu(hMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hWnd, NULL);
                     std::wstring temp;
+
                     switch (dwCode)
                     {
+                    case ID_ROOT_DEPOSIT:
+                        addDeposit(pAccount);
+                        break;
+                    case ID_ROOT_TRANSFER:
+                        doTransfer(pAccount);
+                        break;
+                    case ID_ROOT_PAYCREDITCARD:
+                        doPayCC(pAccount);
+                        break;
                     case ID_ACCOUNT_RENAME:
                         if (pAccount && getOneText(temp)) {
                             pAccount->setName(temp.c_str());
