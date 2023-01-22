@@ -878,6 +878,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         else if (pHeader->idFrom == IDD_TRANSACTION_FILTER_DIALOG && pHeader->code == TransactionFilterDlg::NM_TRANS_DIALOG_FILTER_CHANGED)
         {
             populateTransactions();
+            positionControls();
         }
         else if (pHeader->idFrom == IDC_SIMPLEBUDGET_ACCOUNT_LIST)
         {
