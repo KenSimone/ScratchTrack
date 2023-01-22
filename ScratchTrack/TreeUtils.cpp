@@ -430,6 +430,9 @@ bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
             case GRP_FOLDER_HIDE:
                 swprintf(szBuffer, 1024, L"Hide the '%ls' folder", pHitItem->getName());
                 break;
+            case GRP_FUND_CHILDREN:
+                swprintf(szBuffer, 1024, L"Assign money to the envelopes in the '%ls' folder", pHitItem->getName());
+                break;
             }
             g_toolTip.lpszText = szBuffer;
             ClientToScreen(g_hwndTV, &point);
@@ -647,6 +650,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
                 if (!pItem->getReadOnly()) {
                     rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szHide, GRP_FOLDER_HIDE, rightEdge, rcText.top);
                     rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditEnvelope, GRP_FOLDER_EDIT, rightEdge, rcText.top);
+                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddMoney, GRP_FUND_CHILDREN, rightEdge, rcText.top);
                     rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddEnvelope, GRP_ENVELOPE_ADD, rightEdge, rcText.top);
                 }
                 break;

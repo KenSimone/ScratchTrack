@@ -65,6 +65,7 @@ void positionControls();
 void calcColumnSpots();
 void addAccount(Account* pAccount);
 void setGuiFont(HWND hCtrl);
+bool doFundEnvelopes(AccountGroup* pGroup);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -1176,6 +1177,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         pAcct->setHidden(true);
                         serializeState();
                     }
+                }
+                else if (hItem && (type == GRP_FUND_CHILDREN)) {
+                    AccountBase* pAcct = accountFromTreeItem(hItem);
+                    doFundEnvelopes((AccountGroup*)pAcct);
                 }
                 else
                 {
