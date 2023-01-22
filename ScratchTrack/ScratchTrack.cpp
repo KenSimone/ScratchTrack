@@ -476,26 +476,18 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
     switch (dwCommand)
     {
     case ID_ENVELOPE_RESERVE_FUNDS:
-        if (pItem && getOneText(temp)) {
-            // Add funds to this item
-            int amount = Utils::dollarsStringToPennies(temp.c_str());
-            pItem->addBalance(amount);
-
+    {
+        AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(pItem);
+        FundEnvelopeDlg dlg(pEnvelope);
+        if (pEnvelope && dlg.ShowDialog()) {
+            pEnvelope->addBalance(-pEnvelope->getBalance() + dlg.getNewBalance());
             updateGuiValues();
             didSomething = true;
         }
         break;
+    }
     case ID_ROOT_EDITENVELOPE:
-        //zzzz
         didSomething = editEnvelope((AccountEnvelope*)pItem);
-        break;
-    case ID_ROOT_ADD_TOP_LEVEL_ACCOUNT:
-        if (pItem && getOneText(temp)) {
-            Account* pAccount = new Account;
-            pAccount->setName(temp.c_str());
-            addTreeItem(TVI_ROOT, pAccount);
-            didSomething = true;
-        }
         break;
     case ID_ROOT_SETBUDGETEDAMOUNT:
         if (pItem && getOneText(temp)) {
@@ -504,6 +496,11 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
             didSomething = true;
         }
         break;
+    case IDM_EDIT_FOLDER:
+    {
+        didSomething = editFolder((AccountGroup*)pItem);
+        break;
+    }
     case ID_ROOT_ADDENVELOPE:
     {
         didSomething = doEnvelopeAdd(pParentGroup, hItem);
@@ -1215,10 +1212,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         //if (added) {
                         //    AppendMenu(hMenu, MF_POPUP, (UINT_PTR)accountMenu, L"Move to account...");
                         //}
-                    }
-                    else {
-                        hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_MENU_TREEVIEW));
-                        hMenu = GetSubMenu(hMenu, 0);
                     }
 
                     DWORD dwCode = TrackPopupMenu(hMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hWnd, NULL);

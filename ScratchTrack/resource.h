@@ -88,9 +88,8 @@
 #define IDC_EDIT_CUR_BALANCE            1040
 #define IDC_EDIT_NEW_BALANCE            1041
 #define ID_ROOT_ADD_GROUP               32771
-#define ID_ROOT_RENAMEACCOUNT           32772
+#define IDM_EDIT_FOLDER           32772
 #define ID_ROOT_SETBALANCE              32773
-#define ID_ROOT_ADD_TOP_LEVEL_ACCOUNT   32774
 #define ID_ROOT_DELETEITEM              32776
 #define ID_Menu                         32777
 #define ID_ROOT_ADDENVELOPE             32778
