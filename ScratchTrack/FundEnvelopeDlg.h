@@ -15,6 +15,7 @@ public:
 	~FundEnvelopeDlg() {};
 
 	bool ShowDialog();
+
 	int getNewBalance() { return _newBalance; }
 
 protected:
@@ -30,4 +31,3 @@ protected:
 	static FundEnvelopeDlg* PTHIS;
 
 }; // class FundEnvelopeDlg
-#pragma once

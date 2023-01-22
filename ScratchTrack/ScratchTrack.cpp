@@ -23,6 +23,7 @@
 #include "AccountDlg.h"
 #include "FolderDlg.h"
 #include "FundEnvelopeDlg.h"
+#include "FundEnvelopesDlg.h"
 
 #include <commctrl.h>
 #include <Windows.h>
@@ -413,7 +414,6 @@ bool editFolder(AccountGroup* pGroup)
         pGroup->setExpenseLimit(dlg.getLimit());
 
         updateGuiValues();
-        g_accountInfoDlg.updateReport();
 
         return true;
     }
@@ -465,6 +465,29 @@ bool doEnvelopeAdd(AccountGroup* pParent, HTREEITEM hParent)
     return ret;
 }
 
+bool doFundEnvelopes(AccountGroup* pGroup)
+{
+    FundEnvelopesDlg dlg(pGroup);
+    bool ret = dlg.ShowDialog();
+    if (ret) {
+        auto children = pGroup->getChildren();
+        for (int i = 0; i < children.size(); i++) {
+            AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(children[i]);
+            if (pEnvelope) {
+                if (dlg.getResetBalance()) {
+                    pEnvelope->addBalance(-pEnvelope->getBalance() + -pEnvelope->getBudgeted());
+                }
+                else {
+                    pEnvelope->addBalance(-pEnvelope->getBudgeted());
+                }
+            }
+        }
+        updateGuiValues();
+    }
+
+    return ret;
+}
+
 bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
 {
     std::wstring temp;
@@ -499,6 +522,11 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
     case IDM_EDIT_FOLDER:
     {
         didSomething = editFolder((AccountGroup*)pItem);
+        break;
+    }
+    case ID_ROOT_FUNDENVELOPES:
+    {
+        didSomething = doFundEnvelopes((AccountGroup*)pItem);
         break;
     }
     case ID_ROOT_ADDENVELOPE:

@@ -37,11 +37,13 @@
 #define IDD_PAYCC_DIALOG                160
 #define IDD_FOLDER_DIALOG               161
 #define IDD_FILL_ENVELOPES_DIALOG       163
+#define IDD_FUND_GROUP_DIALOG           165
 #define IDC_ONE_INPUT_TEXT              1000
 #define IDC_EDIT_Transaction_AMOUNT     1001
 #define IDC_RADIO1                      1002
 #define IDC_RADIO_INCOME                1002
 #define IDC_SET_ANY_RADIO               1002
+#define IDC_RADIO_ADD_TO_EXISTING_BALANCE 1002
 #define IDC_RADIO_EXPENSE               1003
 #define IDC_EDIT_Transaction_DESCRIPTION 1004
 #define IDC_EDIT_Transaction_PAYEE      1005
@@ -87,6 +89,8 @@
 #define IDC_EDIT_ADD_BUDGETED           1039
 #define IDC_EDIT_CUR_BALANCE            1040
 #define IDC_EDIT_NEW_BALANCE            1041
+#define IDC_RADIO_SET_BALANCE_TO_BUDGETED 1041
+#define IDC_STATIC_NOTES                1043
 #define ID_ROOT_ADD_GROUP               32771
 #define IDM_EDIT_FOLDER                 32772
 #define ID_ROOT_SETBALANCE              32773
@@ -124,6 +128,7 @@
 #define ID_ROOT_PAYCREDITCARD           33022
 #define ID_ROOT_TRANSFER                33023
 #define ID_ROOT_DEPOSIT                 33024
+#define ID_ROOT_FUNDENVELOPES           33025
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -131,9 +136,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        165
-#define _APS_NEXT_COMMAND_VALUE         33025
-#define _APS_NEXT_CONTROL_VALUE         1041
+#define _APS_NEXT_RESOURCE_VALUE        166
+#define _APS_NEXT_COMMAND_VALUE         33026
+#define _APS_NEXT_CONTROL_VALUE         1044
 #define _APS_NEXT_SYMED_VALUE           113
 #endif
 #endif
