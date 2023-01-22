@@ -8,8 +8,8 @@ class AccountGroup;
 class FolderDlg
 {
 public:
-	FolderDlg(AccountGroup* pAccount, const wchar_t* szName, int limit) :
-		_pAccount(pAccount), _name(szName), _limit(limit)
+	FolderDlg(const wchar_t* szName, int limit) :
+		_name(szName), _limit(limit)
 	{
 	};
 
@@ -19,7 +19,6 @@ public:
 
 	int getLimit() { return _limit; }
 	const wchar_t* getName() { return _name.c_str(); }
-	AccountGroup* getGroup() { return _pAccount; }
 
 
 protected:
@@ -27,7 +26,6 @@ protected:
 
 protected:
 	int _limit;
-	AccountGroup* _pAccount;
 	std::wstring _name;
 	static FolderDlg* PTHIS;
 

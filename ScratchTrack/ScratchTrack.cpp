@@ -407,7 +407,7 @@ bool getOneText(std::wstring& result)
 
 bool editFolder(AccountGroup* pGroup)
 {
-    FolderDlg dlg(pGroup, pGroup->getName(), pGroup->getExpenseLimit());
+    FolderDlg dlg(pGroup->getName(), pGroup->getExpenseLimit());
 
     if (dlg.ShowDialog())
     {
@@ -859,10 +859,11 @@ void doAddAccountDlg()
 
 void doAddCategory()
 {
-    std::wstring temp;
-    if (getOneText(temp)) {
+    FolderDlg dlg(L"", 0);
+    if (dlg.ShowDialog()) {
         AccountGroup* pGroup = new AccountGroup;
-        pGroup->setName(temp.c_str());
+        pGroup->setName(dlg.getName());
+        pGroup->setExpenseLimit(dlg.getLimit());
         addTreeItem(TVI_ROOT, pGroup);
         serializeState();
     }
