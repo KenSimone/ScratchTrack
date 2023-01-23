@@ -1298,6 +1298,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         }
 
                         if (added) {
+                            AppendMenu(hSubMenu, MF_MENUBREAK, 0, 0);
                             AppendMenu(hSubMenu, MF_POPUP, (UINT_PTR)groupMenu, L"Move to group...");
                         }
 
