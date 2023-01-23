@@ -472,7 +472,7 @@ bool doFundEnvelopes(AccountGroup* pGroup)
     bool ret = dlg.ShowDialog();
     if (ret) {
         auto children = pGroup->getChildren();
-        for (int i = 0; i < children.size(); i++) {
+        for (size_t i = 0; i < children.size(); i++) {
             AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(children[i]);
             if (pEnvelope) {
                 if (dlg.getResetBalance()) {
@@ -496,6 +496,22 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
     AccountGroup* pParentGroup = nullptr;
     if (pItem->getType() == AccountBase::GROUP){
         pParentGroup = (AccountGroup*)pItem;
+    }
+
+    if (dwCommand >= ID_ROOT_ENVELOPE_MOVE_TO_START && dwCommand < ID_ROOT_ENVELOPE_MOVE_TO_END) {
+        // This is a move
+        AccountGroup* pDestGroup = dynamic_cast<AccountGroup*>(AccountBase::lookupById(dwCommand - ID_ROOT_ENVELOPE_MOVE_TO_START));
+        AccountGroup* pOrigGroup = dynamic_cast<AccountGroup*>(pItem->getParent());
+        HTREEITEM hNewParent = treeItemFromAccount(pDestGroup);
+
+        if (pDestGroup && hNewParent && pOrigGroup->removeChild(pItem)) {
+            pDestGroup->addChild(pItem);
+            TreeView_DeleteItem(g_hwndTV, hItem);
+            addTreeItem(hNewParent, pItem);
+            updateGuiValues();
+            serializeState();
+        }
+        
     }
     switch (dwCommand)
     {
@@ -1240,23 +1256,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         hMenu = GetSubMenu(hMenu, 0);
                     }
                     else if (pItem->getType() == AccountBase::ENVELOPE) {
-                        hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_ENVELOPE_MENU));
-                        hMenu = GetSubMenu(hMenu, 0);
+                        if (!pItem->getReadOnly()) {
+                            hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_ENVELOPE_MENU));
+                            hMenu = GetSubMenu(hMenu, 0);
+                        }
 
                         // Add the "move to group" option
-                        //bool added = false;
-                        //std::vector<AccountBase*> groups = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
-                        //HMENU groupMenu = CreatePopupMenu();
-                        //for (size_t i = 0; i < groups.size(); i++) {
-                        //    if (pParentItem && groups[i]->getId() != pParentItem->getId()) {
-                        //        AppendMenu(groupMenu, MF_STRING, ID_ROOT_ENVELOPE_MOVE_TO_START + groups[i]->getId(), groups[i]->getName());
-                        //        added = true;
-                        //    }
-                        //}
+                        bool added = false;
+                        std::vector<AccountBase*> groups = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
+                        HMENU groupMenu = CreatePopupMenu();
+                        for (size_t i = 0; i < groups.size(); i++) {
+                            if (pParentItem && groups[i]->getId() != pParentItem->getId() && !groups[i]->getReadOnly()) {
+                                AppendMenu(groupMenu, MF_STRING, ID_ROOT_ENVELOPE_MOVE_TO_START + groups[i]->getId(), groups[i]->getName());
+                                added = true;
+                            }
+                        }
 
-                        //if (added) {
-                        //    AppendMenu(hMenu, MF_POPUP, (UINT_PTR)groupMenu, L"Move to group...");
-                        //}
+                        if (added) {
+                            AppendMenu(hMenu, MF_POPUP, (UINT_PTR)groupMenu, L"Move to group...");
+                        }
 
                         //// Add the "move to account" option
                         //groups = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
@@ -1272,10 +1290,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         //}
                     }
 
-                    DWORD dwCode = TrackPopupMenu(hMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hWnd, NULL);
-                    if (dwCode && processContextMenu(dwCode, hItem, pItem)) {
-                        updateGuiValues();
-                        serializeState();
+                    if (hMenu) {
+                        DWORD dwCode = TrackPopupMenu(hMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hWnd, NULL);
+                        if (dwCode && processContextMenu(dwCode, hItem, pItem)) {
+                            updateGuiValues();
+                            serializeState();
+                        }
                     }
                 }
             }
