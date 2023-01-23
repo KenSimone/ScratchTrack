@@ -1070,8 +1070,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     Account* pAccount = (Account*)item.lParam;
 
                     HMENU hMenu = LoadMenu(NULL, MAKEINTRESOURCE(pAccount->isCCAccount() ? IDR_MENU_ACCOUNT_CC : IDR_MENU_ACCOUNT));
-                    hMenu = GetSubMenu(hMenu, 0);
-                    DWORD dwCode = TrackPopupMenu(hMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hWnd, NULL);
+                    HMENU hSubMenu = GetSubMenu(hMenu, 0);
+                    DWORD dwCode = TrackPopupMenu(hSubMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hWnd, NULL);
+                    DestroyMenu(hMenu);
                     std::wstring temp;
 
                     switch (dwCode)
@@ -1250,15 +1251,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 // Show context menu
                 if (pItem)
                 {
-                    HMENU hMenu = nullptr;
+                    HMENU hMenu = nullptr, hSubMenu = nullptr;
                     if (pItem->getType() == AccountBase::GROUP) {
                         hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_GROUP_MENU));
-                        hMenu = GetSubMenu(hMenu, 0);
+                        hSubMenu = GetSubMenu(hMenu, 0);
                     }
                     else if (pItem->getType() == AccountBase::ENVELOPE) {
                         if (!pItem->getReadOnly()) {
                             hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_ENVELOPE_MENU));
-                            hMenu = GetSubMenu(hMenu, 0);
+                            hSubMenu = GetSubMenu(hMenu, 0);
                         }
 
                         // Add the "move to group" option
@@ -1273,7 +1274,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         }
 
                         if (added) {
-                            AppendMenu(hMenu, MF_POPUP, (UINT_PTR)groupMenu, L"Move to group...");
+                            AppendMenu(hSubMenu, MF_POPUP, (UINT_PTR)groupMenu, L"Move to group...");
                         }
 
                         //// Add the "move to account" option
@@ -1290,8 +1291,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         //}
                     }
 
-                    if (hMenu) {
-                        DWORD dwCode = TrackPopupMenu(hMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hWnd, NULL);
+                    if (hSubMenu) {
+                        DWORD dwCode = TrackPopupMenu(hSubMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hWnd, NULL);
+                        DestroyMenu(hMenu);
                         if (dwCode && processContextMenu(dwCode, hItem, pItem)) {
                             updateGuiValues();
                             serializeState();
@@ -1331,8 +1333,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     }
                     else if (pTransaction && pHeader->code == NM_RCLICK) {
                         HMENU hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_MENU_Transaction));
-                        hMenu = GetSubMenu(hMenu, 0);
-                        DWORD dwCode = TrackPopupMenu(hMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hWnd, NULL);
+                        HMENU hSubhMenu = GetSubMenu(hMenu, 0);
+                        DWORD dwCode = TrackPopupMenu(hSubhMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hWnd, NULL);
+                        DestroyMenu(hMenu);
                         if (dwCode == ID_ROOT_EDITTransaction) {
                             editTransaction(pTransaction, lvhi.iItem);
                         }

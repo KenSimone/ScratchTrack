@@ -78,6 +78,12 @@ void AccountInfoDlg::doUnhidePopup()
     POINT pt = { 0 };
     GetCursorPos(&pt);
     DWORD dwCode = TrackPopupMenu(hPopup, TPM_RETURNCMD, pt.x, pt.y, 0, _hThisDialg, NULL);
+    DestroyMenu(hPopup);
+    DestroyMenu(hAcctMenu);
+    DestroyMenu(hFolderMenu);
+    DestroyMenu(hEnvMenu);
+
+
     if (dwCode)
     {
         unsigned int acctId = dwCode - menuIdOffset;
