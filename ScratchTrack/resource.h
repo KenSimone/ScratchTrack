@@ -24,7 +24,7 @@
 #define IDR_GROUP_MENU                  142
 #define IDR_ENVELOPE_MENU               143
 #define IDD_TRANSACTION_DIALOG          144
-#define IDR_MENU_Transaction            145
+#define IDR_MENU_TRANSACTION            145
 #define IDI_ADD_MONEYICON               150
 #define IDI_SUBTRACT_MONEY_ICON         151
 #define IDR_MENU_ACCOUNT                152
@@ -129,6 +129,10 @@
 #define ID_ROOT_TRANSFER                33023
 #define ID_ROOT_DEPOSIT                 33024
 #define ID_ROOT_FUNDENVELOPES           33025
+#define ID_ROOT_HIDEENVELOPE            33026
+#define ID_ROOT_HIDECATEGORY            33027
+#define ID_ROOT_HIDEACCOUNT             33028
+#define ID_ROOT_HIDEACCOUNT33029        33029
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -137,7 +141,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        166
-#define _APS_NEXT_COMMAND_VALUE         33026
+#define _APS_NEXT_COMMAND_VALUE         33030
 #define _APS_NEXT_CONTROL_VALUE         1044
 #define _APS_NEXT_SYMED_VALUE           113
 #endif

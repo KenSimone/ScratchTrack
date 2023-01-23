@@ -510,11 +510,25 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
             addTreeItem(hNewParent, pItem);
             updateGuiValues();
             serializeState();
+            return true;
         }
-        
+        return false;
     }
+
     switch (dwCommand)
     {
+    case ID_ROOT_HIDEENVELOPE:
+    case ID_ROOT_HIDECATEGORY:
+    {
+        if (Utils::confirmHide(pItem)) {
+            pItem->setHidden(true);
+            TreeView_DeleteItem(g_hwndTV, hItem);
+            updateGuiValues();
+            serializeState();
+        }
+
+        break;
+    }
     case ID_ENVELOPE_RESERVE_FUNDS:
     {
         AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(pItem);
@@ -1077,6 +1091,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
                     switch (dwCode)
                     {
+                    case ID_ROOT_HIDEACCOUNT:
+                    {
+                        if (Utils::confirmHide(pAccount)) {
+                            pAccount->setHidden(true);
+                            ListView_DeleteItem(g_hwndAccountLV, lvhi.iItem);
+                            serializeState();
+                        }
+
+                        break;
+                    }
                     case ID_ROOT_DEPOSIT:
                         addDeposit(pAccount);
                         break;
@@ -1252,7 +1276,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 if (pItem)
                 {
                     HMENU hMenu = nullptr, hSubMenu = nullptr;
-                    if (pItem->getType() == AccountBase::GROUP) {
+                    if (pItem->getType() == AccountBase::GROUP && !pItem->getReadOnly()) {
                         hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_GROUP_MENU));
                         hSubMenu = GetSubMenu(hMenu, 0);
                     }
@@ -1332,7 +1356,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         editTransaction(pTransaction, lvhi.iItem);
                     }
                     else if (pTransaction && pHeader->code == NM_RCLICK) {
-                        HMENU hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_MENU_Transaction));
+                        HMENU hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_MENU_TRANSACTION));
                         HMENU hSubhMenu = GetSubMenu(hMenu, 0);
                         DWORD dwCode = TrackPopupMenu(hSubhMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hWnd, NULL);
                         DestroyMenu(hMenu);
