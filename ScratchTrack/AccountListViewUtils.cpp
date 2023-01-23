@@ -226,6 +226,7 @@ void calcActionRects(HDC hdc)
     g_actionRects[Account::ACTION_FLAG::EDIT] = rTemp;
     curLeft += sizeEdit.cx + sizeSpaces.cx;
 
+#ifdef ICON_HIDE_ITEM
     // All accounts have hide
     SIZE sizeHide = { 0 };
     GetTextExtentPoint(hdc, szHide, (int)wcslen(szHide), &sizeHide);
@@ -234,6 +235,7 @@ void calcActionRects(HDC hdc)
     rTemp.right = rTemp.left + sizeHide.cx;
     g_actionRects[Account::ACTION_FLAG::HIDE] = rTemp;
     curLeft += sizeHide.cx + sizeSpaces.cx;
+#endif
 
     // Credit card accounts
     SIZE sizePay = { 0 };
@@ -331,11 +333,13 @@ LRESULT accountListCustomDraw(LPNMLVCUSTOMDRAW  pCustomDraw)
             GetTextExtentPoint(pCustomDraw->nmcd.hdc, szIconSpacing, (int)wcslen(szIconSpacing), &sizeSpaces);
             iR.left += sizeEdit.cx + sizeSpaces.cx;
 
+#ifdef ICON_HIDE_ITEM
             // Everyone can show and hide
             SIZE sizeHide = { 0 };
             GetTextExtentPoint(pCustomDraw->nmcd.hdc, szHide, (int)wcslen(szHide), &sizeHide);
             TextOut(pCustomDraw->nmcd.hdc, iR.left, iR.top, szHide, (int)wcslen(szHide));
             iR.left += sizeSpaces.cx + sizeHide.cx;
+#endif
 
             if (pAccount->paidFromEnvelopeId() != INVALID_ACCOUNT_ID)
             {
