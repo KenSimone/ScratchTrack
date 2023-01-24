@@ -887,7 +887,7 @@ void doAddAccountDlg()
     }
 }
 
-void doAddCategory()
+void doAddFolder()
 {
     FolderDlg dlg(L"", 0);
     if (dlg.ShowDialog()) {
@@ -946,7 +946,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             break;
         }
         case ID_FILE_ADDENVELOPE:
-            doAddCategory();
+            doAddFolder();
             break;
         default:
             return DefWindowProc(hWnd, message, wParam, lParam);
@@ -975,7 +975,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             else if (pHeader->code == AccountInfoDlg::NM_ACCOUNT_DIALOG_ADD_FOLDER)
             {
-                doAddCategory();
+                doAddFolder();
             }
 
         }
@@ -1766,7 +1766,7 @@ void positionControls()
     int top = rClient.top;
 
     // Stuff on the left
-    static const float ACCOUNTLIST = 0.15F;
+    static const float ACCOUNTLIST = 0.30F;
     static const float BUDGETINFO = 0.33F;
 
     int totalHeigth = rClient.bottom - rClient.top;
