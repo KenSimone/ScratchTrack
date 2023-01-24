@@ -287,16 +287,16 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
        MessageBox(g_hTopWindow, L"Unable to load file", L"Error", MB_OK);
        exit(0);
    }
-   else {
-       Account* pAccount = new Account;
-       pAccount->setName(L"Checking");
-       addTreeItem(TVI_ROOT, pAccount);
+   //else {
+   //    Account* pAccount = new Account;
+   //    pAccount->setName(L"Checking");
+   //    addTreeItem(TVI_ROOT, pAccount);
 
-       AccountGroup* pGroup = new AccountGroup;
-       pGroup->setName(L"Monthly Expenses");
-       addTreeItem(TVI_ROOT, pGroup);
-       serializeState();
-   }
+   //    AccountGroup* pGroup = new AccountGroup;
+   //    pGroup->setName(L"Monthly Expenses");
+   //    addTreeItem(TVI_ROOT, pGroup);
+   //    serializeState();
+   //}
 
    // Fix up selection / paint
    HTREEITEM hRoot = TreeView_GetRoot(g_hwndTV);
