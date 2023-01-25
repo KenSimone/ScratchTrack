@@ -13,6 +13,7 @@ extern HWND g_hwndAccountLV ;
 
 // Forward defines
 void setGuiFont(HWND hCtrl);
+void positionControls();
 
 // Globals
 std::map<Account::ACTION_FLAG, RECT> g_actionRects;
@@ -425,6 +426,7 @@ void createAccountListControl()
     GetClientRect(g_hwndAccountLV, &g_toolTip.rect);
     SendMessage(g_hwndListToolTip, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO)&g_toolTip);
 
+    positionControls();
 
 }
 
@@ -453,6 +455,8 @@ void addAccount(Account* pAccount)
     // Actions - We'll draw icons here. Just set some aribtrary text for column width
     ListView_SetItemText(g_hwndAccountLV, iIndex, 2, const_cast<wchar_t*>(L"--------"));
     SendMessage(g_hwndAccountLV, WM_SETREDRAW, TRUE, 0);
+
+    positionControls();
 }
 
 void killAccountListToolTips()

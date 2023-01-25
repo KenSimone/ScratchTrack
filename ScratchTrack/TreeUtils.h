@@ -57,7 +57,11 @@ void budgetTreeHandleLButtonUp(LONG xCur, LONG yCur);
 bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur);
 LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem);
 void budgetTreeCreateTreeControl();
+
+// Note that the name is rendered in POSTPAINT. Setting the text here will force a redraw
+// but won't actually change the name.
 void budgetTreeSetItemText(HTREEITEM hItem, const wchar_t* szText);
+
 HTREEITEM hotLinkFromPoint(POINT pt);
 HTREEITEM treeViewHitTestLinks(LONG xCur, LONG yCur, BUDGET_TREE_LINK_ITEM_TYPE& itemType, AccountBase** pAccountItem = nullptr);
 void killTreeToolTips();

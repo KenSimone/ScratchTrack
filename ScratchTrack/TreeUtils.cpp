@@ -257,6 +257,9 @@ HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountBase* pAccount, HTREEITEM hI
 
     TVINSERTSTRUCT tvi = { 0 };
     tvi.itemex.mask = TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
+
+    // Note that setting the text here will invalidate the rectangle, but the name is rendered in POSTPAINT
+    // This text can be anything.
     tvi.itemex.pszText = const_cast<wchar_t*>(pAccount->getName());
     tvi.hParent = hParentItem;
     tvi.itemex.lParam = (LPARAM)pAccount;
@@ -601,8 +604,20 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             SetBkMode(pCustomDrawItem->nmcd.hdc, TRANSPARENT);
 
             // Name
+            const wchar_t* szFolderOpen = L"\U0001F5C1 ";
+            const wchar_t* szFolderClosed = L"\U0001F5C0 ";
+            const wchar_t* szEnvelope = L"\u2709 ";
+            std::wstring name;
+            if (TreeView_GetItemState(g_hwndTV, hItem, TVIF_STATE) & TVIS_EXPANDED)
+                name = szFolderOpen;
+            else if (pItem->getType() == AccountBase::ENVELOPE)
+                name = szEnvelope;
+            else
+                name = szFolderClosed;
+
+            name += pItem->getName();
             setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 1, selected, false);
-            TextOut(pCustomDrawItem->nmcd.hdc, nameSpot /*rcText.left*/, rcText.top, pItem->getName(), (int)wcslen(pItem->getName()));
+            TextOut(pCustomDrawItem->nmcd.hdc, nameSpot /*rcText.left*/, rcText.top, name.c_str(), (int)name.length());
 
             // Budgeted dollars
             setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iBudget, selected, false);
@@ -795,6 +810,8 @@ void budgetTreeCreateTreeControl()
 
 void budgetTreeSetItemText(HTREEITEM hItem, const wchar_t* szText)
 {
+    // Note that the name is rendered in POSTPAINT. Setting the text here will force a redraw
+    // but won't actually change the name.
     TVITEMEX tvi = { 0 };
     tvi.hItem = hItem;
     tvi.mask = TVIF_TEXT;
