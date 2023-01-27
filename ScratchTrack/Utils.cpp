@@ -3,9 +3,11 @@
 #include <windowsx.h>
 #include "Transaction.h"
 #include "AccountInfo.h"
+#include "AccountInfoDlg.h"
 #include "AutoCombo.h"
 
 extern HWND g_hTopWindow;
+extern AccountInfoDlg g_accountInfoDlg;
 
 bool Utils::searchText(const wchar_t* szString, const wchar_t* szSearchText)
 {
@@ -248,9 +250,20 @@ bool Utils::confirmHide(AccountBase* pAccount)
 {
 	wchar_t szBuff[1024] = { 0 };
 	swprintf(szBuff, 1024, L"Are you sure you want to hide '%ls'?", pAccount->getName());
+
+	g_accountInfoDlg.saveText();
+	g_accountInfoDlg.appendText(L"About hiding things\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
+
+	g_accountInfoDlg.appendText(L"In ScratchTrack there is no delete, at least not yet. If you want something gone from your view you "
+		L"can hide it. As of now, hidden items are simply not displayed. No money moves, nothing is assigned or unassigned. If you hide an "
+		L"envelope with money in it, those funds will be hidden as well. You can always unhide things with the unhide button.",
+		RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
+
 	if (IDYES == MessageBox(g_hTopWindow, szBuff, L"Confirm Hide", MB_YESNO)) {
 		return true;
 	}
+
+	g_accountInfoDlg.restoreText();
 
 	return false;
 }
