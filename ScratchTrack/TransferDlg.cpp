@@ -2,10 +2,12 @@
 #include "resource.h"
 #include "AccountInfo.h"
 #include "Utils.h"
+#include "AccountInfoDlg.h"
 #include <Windows.h>
 
 extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
+extern AccountInfoDlg g_accountInfoDlg;
 
 TransferDlg::TransferDlg(int accountToId, int accountFromId, int amount, const wchar_t* szDescription /*= nullptr*/) :
     _accountFromId(accountFromId), _accountToId(accountToId), _amount(amount)
@@ -24,8 +26,18 @@ TransferDlg::~TransferDlg()
 bool TransferDlg::ShowDialog()
 {
     PTHIS = this;
+
+    g_accountInfoDlg.saveText();
+    g_accountInfoDlg.appendText(L"About Transfers\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
+
+    g_accountInfoDlg.appendText(L"Money can be moved from one account to another via transfer. A transfer can be edited afer it's created through the transaction list.",
+        RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
+
+
     INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_TRANSFER_DIALOG), g_hTopWindow, TransferDlgProc);
     PTHIS = nullptr;
+
+    g_accountInfoDlg.restoreText();
 
     return result == IDOK;
 }

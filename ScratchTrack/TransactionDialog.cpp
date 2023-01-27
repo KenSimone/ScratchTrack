@@ -1,4 +1,5 @@
 #include "TransactionDialog.h"
+#include "AccountInfoDlg.h"
 #include "resource.h"
 #include "Utils.h"
 #include "AccountInfo.h"
@@ -8,6 +9,7 @@
 
 extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
+extern AccountInfoDlg g_accountInfoDlg;
 
 TransactionDialog::TransactionDialog() : _amount(0), _accountFromId(INVALID_ACCOUNT_ID), _envelopeId(INVALID_ACCOUNT_ID)
 {
@@ -20,8 +22,19 @@ TransactionDialog::~TransactionDialog()
 bool TransactionDialog::ShowDialog()
 {
     THIS_PTR = this;
+
+    g_accountInfoDlg.saveText();
+    g_accountInfoDlg.appendText(L"About Transactions\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
+
+    g_accountInfoDlg.appendText(L"A transaction is a record of an expense. Transactions are paid from accounts and tracked against envelopes. "
+        L"You can edit transactions by double clicking them or through their right click menu.",
+        RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
+
+
     INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_TRANSACTION_DIALOG), g_hTopWindow, TransactionDialogProc);
     THIS_PTR = nullptr;
+
+    g_accountInfoDlg.restoreText();
 
     return result == IDOK;
 }

@@ -2,17 +2,34 @@
 #include "resource.h"
 #include "Utils.h"
 #include "AccountInfo.h"
+#include "AccountInfoDlg.h"
 
 #include <Windows.h>
 
 extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
+extern AccountInfoDlg g_accountInfoDlg;
 
 bool FundEnvelopesDlg::ShowDialog()
 {
     PTHIS = this;
+
+    g_accountInfoDlg.saveText();
+    g_accountInfoDlg.appendText(L"About Envelope Funding\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
+
+    g_accountInfoDlg.appendText(L"ScratchTrack follows the 'Envelope Budgeting' philosophy. The idea is that money is assigned to separate envelopes for different spending categories. Expenses are paid from the envelopes. "
+        L"When an envelope is empty, spending in that category stops until more funds are added.\n\n",
+        RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
+
+    g_accountInfoDlg.appendText(L"This dialog box allows you to assign money to all envelopes in a folder. It's important to note that money stays in its account when assigned to envelopes. "
+        L"When money is assigned, you'll have less budgetable dollars available to place in other envelopes, but no money actually moves. Think of envelopes as a way to organize "
+        L"the money in your account(s).",
+        RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
+
     INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_FUND_GROUP_DIALOG), g_hTopWindow, FundEnvelopesDlgProc);
     PTHIS = nullptr;
+
+    g_accountInfoDlg.restoreText();
 
     return result == IDOK;
 }

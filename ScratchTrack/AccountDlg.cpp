@@ -1,11 +1,13 @@
 #include "AccountDlg.h"
 #include "resource.h"
 #include "Utils.h"
+#include "AccountInfoDlg.h"
 #include <windows.h>
 #include <windowsx.h>
 
 extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
+extern AccountInfoDlg g_accountInfoDlg;
 
 AccountDlg::AccountDlg() : _budgeted(true), _amount(0), _creditCard(false)
 {
@@ -20,8 +22,21 @@ AccountDlg::~AccountDlg()
 bool AccountDlg::ShowDialog()
 {
     PTHIS = this;
+    g_accountInfoDlg.saveText();
+    g_accountInfoDlg.appendText(L"About Accounts\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
+    g_accountInfoDlg.appendText(L"An account is named sum of money. The sum can be positive, zero, or negative (credit card).\n\n", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
+    g_accountInfoDlg.appendText(L"If an account contributes to the monthly budget, the funds in that account "
+    L"will be available to add to envelopes.\n\n", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
+    g_accountInfoDlg.appendText(L"When you create a credit card account, a matching 'credit card payment' envelope "
+    L"will be created. When you pay expenses with the credit card, "
+    L"funds move from the original expense envelope to the credit card expense envelope.\n\n", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
+    g_accountInfoDlg.appendText(L"When you pay a credit card, funds are withdrawn from the credit card envelope.\n\n", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
+    g_accountInfoDlg.appendText(L"Deposits, transfers, and credit card payments are entered through action icons in the account list.\n\n", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
+
+
     INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_ACCOUNT_DIALOG), g_hTopWindow, AccountDlgProc);
     PTHIS = nullptr;
+    g_accountInfoDlg.restoreText();
 
     return result == IDOK;
 

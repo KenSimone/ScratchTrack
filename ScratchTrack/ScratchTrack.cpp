@@ -310,7 +310,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    updateGuiValues();
 
    g_accountInfoDlg.updateReport();
-   ShowWindow(g_hTopWindow, nCmdShow);
+   ShowWindow(g_hTopWindow, SW_MAXIMIZE);
    UpdateWindow(g_hTopWindow);
 
    return TRUE;
@@ -913,6 +913,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
+    case WM_CREATE:
+        break;
     case WM_MOUSEMOVE:
         if (g_btDragDetails._dragging) {
             POINT pt = { 0 };

@@ -3,6 +3,7 @@
 #include "AccountInfo.h"
 #include "Utils.h"
 #include "TreeUtils.h"
+#include "Transaction.h"
 #include <richedit.h>
 
 
@@ -26,6 +27,9 @@ HWND AccountInfoDlg::create(HWND hParent)
     _hParent = hParent;
     _hThisDialg = CreateDialog(g_hInst, MAKEINTRESOURCE(IDD_BUDGET_INFO_DIALOG), _hParent, AccountInfoDlgProc);
     SetWindowLongPtr(_hThisDialg, GWLP_USERDATA, (LONG_PTR)this);
+
+    HWND hRichText = GetDlgItem(_hThisDialg, IDC_RICHEDIT_SUMMARY);
+    SendMessage(hRichText, EM_SETBKGNDCOLOR, 0, RGB(255, 255, 255));
 
     updateReport();
     return _hThisDialg;
@@ -180,14 +184,21 @@ INT_PTR CALLBACK AccountInfoDlg::AccountInfoDlgProc(HWND hwnd, UINT Message, WPA
 
 }
 
-void AccountInfoDlg::appendText(const wchar_t* szText, COLORREF cr, bool bold, bool underline, int sizeInPoints)
+void AccountInfoDlg::appendText(const wchar_t* szText, COLORREF cr, bool bold, bool underline, int sizeInPoints, bool deleteExisting /*= false*/)
 {
     HWND hRichText = GetDlgItem(_hThisDialg, IDC_RICHEDIT_SUMMARY);
+    if (deleteExisting) {
+        SetWindowText(hRichText, L"");
+    }
 
     // EM_SETCHARFORMAT
     CHARFORMAT cf = { 0 };
     cf.cbSize = sizeof(cf);
-    cf.dwMask = CFM_COLOR | CFM_BOLD | CFM_SIZE | CFM_UNDERLINE;
+    //SendMessageW(hRichText, EM_GETCHARFORMAT, SCF_DEFAULT, (LPARAM)&cf);
+    //cf.dwMask = CFM_COLOR | CFM_BOLD | CFM_SIZE | CFM_UNDERLINE | CFM_FACE;
+    cf.dwMask = CFM_COLOR | CFM_BOLD | CFM_SIZE | CFM_UNDERLINE | CFM_COLOR | CFM_FACE;
+    wcscpy_s(cf.szFaceName, L"consolas");
+
     if (bold) {
         cf.dwEffects = CFE_BOLD;
     }
@@ -216,114 +227,171 @@ void AccountInfoDlg::getMasterSummary(std::wstring& summary, bool& isError)
 {
     // Calc new window caption;
     int iReservedDollars = 0, iBalance = 0;
+    isError = false;
     std::vector<AccountBase*> accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
+    std::vector<AccountBase*> folders = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
     std::vector<AccountBase*> envelopes = AccountBase::getAllAccountsOfType(AccountBase::ENVELOPE);
 
-    for (size_t i = 0; i < accounts.size(); i++) {
-        Account* pAccount = (Account*)accounts[i];
-        if (pAccount->getContributesToBudget()) {
-            iBalance += accounts[i]->getBalance();
+    wchar_t szCaption[1024] = { 0 };
+
+    if (accounts.empty()) {
+        swprintf(szCaption, 1024, L"It looks like you don't have any accounts. Accounts represent money (or debt).\n"
+        L"Examples of common account types are checking, savings, and credit card.\n\n"
+        L"Click 'Add Account...' to add an account.");
+    }
+    else if (folders.empty()) {
+        swprintf(szCaption, 1024, L"It looks like you don't have any folders. Folders help you organize expenses.\n"
+            L"A common strategy is to create a folder for each pay peried. For example, if you're paid on the 15th and 31st\n"
+            L"you might have folders titled '15th' and '31st'.\n\n"
+            L"Click 'Add Folder...' to get started.");
+    }
+    else if (envelopes.empty()) {
+        swprintf(szCaption, 1024, L"It looks like you don't have any expense envelopes. Envelopes are used to reserve money\n"
+            L"for specifc expenses. An envelope will have an expense name such as 'eating out' and a monthly budget.\n"
+            L"You'll add money to your envelopes and then pay expenses from those envelopes as needed. If your\n"
+            L"envelope runs out of money you'll need to replenish that envelope.\n\n"
+            L"Click the envelope icon next to a folder name to create an envelope.");
+    }
+    else {
+
+        // Get the balance of all accounts that contribute to the budget
+        for (size_t i = 0; i < accounts.size(); i++) {
+            Account* pAccount = (Account*)accounts[i];
+            if (pAccount->getContributesToBudget()) {
+                iBalance += accounts[i]->getBalance();
+            }
+        }
+
+        // Get all reserved dollars
+        for (size_t i = 0; i < envelopes.size(); i++) {
+            // This is a confusing operation. If a virtual account has a negative balance
+            // we conceptually treat it as if it had a bigger balance since the whole thing is
+            // a "how much do I deduct from what's available" operation. Hence the abs() here.
+            iReservedDollars += abs(envelopes[i]->getBalance());
+        }
+
+        int iAvailable = iBalance - iReservedDollars;
+
+        std::wstring totalDollars = Utils::penniesToDollarsString(iBalance);
+        std::wstring reservedDollars = Utils::penniesToDollarsString(iReservedDollars);
+        std::wstring difference = Utils::penniesToDollarsString(abs(iBalance - iReservedDollars));
+
+        isError = (iBalance - iReservedDollars) < 0;
+
+        if (isError) {
+            swprintf(szCaption, 1024, L"You have %ls reserved in envelopes but only %ls in on-budget accounts.\n"
+                L"If possible, deposit at least %ls or remove %ls from envelopes.\n",
+                reservedDollars.c_str(), totalDollars.c_str(), difference.c_str(), difference.c_str());
+        }
+        else
+        {
+            swprintf(szCaption, 1024, L"You have %s of %s available for budgeting\n", difference.c_str(), totalDollars.c_str());
         }
     }
 
-    for (size_t i = 0; i < envelopes.size(); i++) {
-        // This is a confusing operation. If a virtual account has a negative balance
-        // we conceptually treat it as if it had a bigger balance since the whole thing is
-        // a "how much do I deduct from what's available" operation. Hence the abs() here.
-        iReservedDollars += abs(envelopes[i]->getBalance());
-    }
-
-    int iAvailable = iBalance - iReservedDollars;
-
-    std::wstring totalDollars = Utils::penniesToDollarsString(iBalance);
-    std::wstring availableDollars = Utils::penniesToDollarsString(iBalance - iReservedDollars);
-
-    wchar_t szCaption[1024] = { 0 };
-    swprintf(szCaption, 1024, L"%s: %s of %s available for budget\n", iAvailable >= 0 ? L"\u2713" : L"\u26A0", availableDollars.c_str(), totalDollars.c_str());
 
     summary = szCaption;
-    isError = (iBalance - iReservedDollars) < 0;
 }
 
 
 void AccountInfoDlg::updateReport()
 {
-    static const int HEADER_SIZE = 14;
-    static const int TEXT_SIZE = 11;
     HWND hRichText = GetDlgItem(_hThisDialg, IDC_RICHEDIT_SUMMARY);
     //SendMessageW(hRichText, WM_SETREDRAW, false, 0);
     SendMessageW(hRichText, WM_SETTEXT, 0, (LPARAM)L"");
 
-    appendText(L"State of the budget\n", RGB(0, 0, 0), false, true, HEADER_SIZE);
+    appendText(L"State of the Budget\n", TEXT_COLOR_NORMAL, false, true, HEADER_SIZE);
 
     std::wstring summary;
     bool isErrorState = false;
     getMasterSummary(summary, isErrorState);
-    appendText(summary.c_str(), isErrorState ? RGB(255, 0, 0) : RGB(0,127,0), false, false, TEXT_SIZE);
+    appendText(summary.c_str(), isErrorState ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL, false, false, TEXT_SIZE);
 
-    auto groups = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
-    for (size_t i = 0; i < groups.size(); i++) {
-        AccountGroup* group = dynamic_cast<AccountGroup* >(groups[i]);
-        int limit = group->getExpenseLimit();
-        if (!limit) {
+    appendText(L"\nFolder Status\n", TEXT_COLOR_NORMAL, false, true, HEADER_SIZE);
+    auto folders = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
+    for (size_t i = 0; i < folders.size(); i++) {
+        AccountGroup* folder = dynamic_cast<AccountGroup* >(folders[i]);
+        if (folder->getReadOnly()){
             continue;
         }
-        int budgeted = -1*group->budgetedToSubAccounts();
 
-        bool errorState = limit < budgeted;
-        COLORREF cr = errorState ? RGB(255, 0, 0) : RGB(0, 0, 255);
-        appendText(L"Folder '", cr, false, false, TEXT_SIZE);
-        appendText(group->getName(), cr, false, false, TEXT_SIZE);
-        appendText(L"'\n\tExpense limit: ", cr, false, false, TEXT_SIZE);
-        std::wstring amt = Utils::penniesToDollarsString(limit);
-        appendText(amt.c_str(), cr, false, false, TEXT_SIZE);
-        appendText(L"\n\tBudgeted expenses: ", cr, false, false, TEXT_SIZE);
-        amt = Utils::penniesToDollarsString(budgeted);
-        appendText(amt.c_str(), cr, false, false, TEXT_SIZE);
-
-        int delta = limit - budgeted;
-        amt = Utils::penniesToDollarsString(delta);
-        if (errorState) {
-            appendText(L"\n\tOVERBUDGETED BY ", cr, false, false, TEXT_SIZE);
+        std::wstring transTotal = Utils::penniesToDollarsString(abs(folder->getCurrentMonthTransacationTotal()));
+        std::wstring budgeted = Utils::penniesToDollarsString(abs(folder->budgetedToSubAccounts()));
+        std::wstring limit = Utils::penniesToDollarsString(abs(folder->getExpenseLimit()));
+        wchar_t szBuff[1024] = { 0 };
+        if (!folder->getExpenseLimit()) {
+            swprintf(szBuff, 1024, L"Folder '%s' has %s budgeted and has monthly expenses totalling %s\n", folder->getName(), budgeted.c_str(), transTotal.c_str());
         }
         else {
-            appendText(L"\n\tUnder budget by ", cr, false, false, TEXT_SIZE);
+            swprintf(szBuff, 1024, L"Folder '%s' has %s of %s budgeted and has monthly expenses totalling %s\n", folder->getName(), budgeted.c_str(), limit.c_str(), transTotal.c_str());
         }
-        appendText(amt.c_str(), cr, false, false, TEXT_SIZE);
-        appendText(L"\n", cr, false, false, TEXT_SIZE);
-    }
-    auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
-    for (size_t i = 0; i < accounts.size(); i++)
-    {
-        auto account = accounts[i];
-        if (account->getBalance() < 0)
-        {
-            std::wstring balance = Utils::penniesToDollarsString(account->getBalance());
-            appendText(L"\u26A0 : ", RGB(255, 0, 0), false, false, 13);
-            appendText(L"Account '", RGB(255, 0, 0), false, false, TEXT_SIZE);
-            appendText(account->getName(), RGB(255, 0, 0), false, false, TEXT_SIZE);
-            appendText(L"' negative balance ", RGB(255, 0, 0), false, false, TEXT_SIZE);
-            appendText(balance.c_str(), RGB(255, 0, 0), false, false, TEXT_SIZE);
-            appendText(L"\n", RGB(255, 0, 0), false, false, TEXT_SIZE);
-        }
+        bool errorState = limit < budgeted;
+        COLORREF cr = errorState ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL;
+        appendText(szBuff, cr, false, false, TEXT_SIZE);
     }
 
-    auto categories = AccountBase::getAllAccountsOfType(AccountBase::ENVELOPE);
-    for (size_t i = 0; i < categories.size(); i++)
+    appendText(L"\nEnvelope Status\n", TEXT_COLOR_NORMAL, false, true, HEADER_SIZE);
+    auto envelopes = AccountBase::getAllAccountsOfType(AccountBase::ENVELOPE);
+    bool overBudget = false;
+    for (size_t i = 0; i < envelopes.size(); i++)
     {
-        auto envelope = categories[i];
-        if (envelope->getBalance() < 0)
-        {
-            std::wstring balance = Utils::penniesToDollarsString(envelope->getBalance());
-            appendText(L"\u26A0 : ", RGB(255, 0, 0), false, false, 13);
-            appendText(L"Envelope '", RGB(255, 0, 0), false, false, TEXT_SIZE);
-            appendText(envelope->getName(), RGB(255, 0, 0), false, false, TEXT_SIZE);
-            appendText(L"' negative balance ", RGB(255, 0, 0), false, false, TEXT_SIZE);
-            appendText(balance.c_str(), RGB(255, 0, 0), false, false, TEXT_SIZE);
-            appendText(L"\n", RGB(255, 0, 0), false, false, TEXT_SIZE);
+        AccountEnvelope* envelope = dynamic_cast<AccountEnvelope *>(envelopes[i]);
+        std::wstring budgeted = Utils::penniesToDollarsString(abs(envelope->getBudgeted()));
+        std::wstring actual = Utils::penniesToDollarsString(abs(envelope->getCurrentMonthTransacationTotal()));
+        Transaction::getTransactionsForItem(envelope);
+        if (envelope->getBudgeted() > envelope->getCurrentMonthTransacationTotal()) {
+            wchar_t szBuff[1024] = { 0 };
+            swprintf(szBuff, 1024, L"Envelope '%s' has a budget of [%s] and monthly expenses of [%s]\n", envelope->getName(), budgeted.c_str(), actual.c_str());
+            appendText(szBuff, TEXT_COLOR_NEGATIVE, false, false, TEXT_SIZE);
         }
-        
     }
     //SendMessageW(hRichText, WM_SETREDRAW, true, 0);
-
 }
+
+DWORD CALLBACK AccountInfoDlg::EditStreamCallbackOut(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG cb, LONG* pcb)
+{
+    AccountInfoDlg* pThis = (AccountInfoDlg*)dwCookie;
+
+    pThis->_textBuff.insert(pThis->_textBuff.end(), pbBuff, pbBuff + cb);
+    *pcb = cb;
+
+    return 0;
+}
+
+DWORD CALLBACK AccountInfoDlg::EditStreamCallbackIn(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG cb, LONG* pcb)
+{
+    AccountInfoDlg* pThis = (AccountInfoDlg*)dwCookie;
+
+    size_t toCopy = min(pThis->_textBuff.size(), (size_t)cb);
+
+    if (pThis->_textBuff.size()) {
+        unsigned char* pBuff = &pThis->_textBuff[0];
+        memcpy(pbBuff, pBuff, toCopy);
+        *pcb = (LONG)toCopy;
+    }
+
+    pThis->_textBuff.erase(pThis->_textBuff.begin(), pThis->_textBuff.begin() + toCopy);
+
+    return 0;
+}
+
+void AccountInfoDlg::saveText()
+{
+    HWND hRichText = GetDlgItem(_hThisDialg, IDC_RICHEDIT_SUMMARY);
+    EDITSTREAM es = { 0 };
+    es.dwCookie = (DWORD_PTR)this;
+    es.pfnCallback = AccountInfoDlg::EditStreamCallbackOut;
+
+    SendMessage(hRichText, EM_STREAMOUT, SF_RTF, (LPARAM) & es);
+}
+
+void AccountInfoDlg::restoreText()
+{
+    HWND hRichText = GetDlgItem(_hThisDialg, IDC_RICHEDIT_SUMMARY);
+    EDITSTREAM es = { 0 };
+    es.dwCookie = (DWORD_PTR)this;
+    es.pfnCallback = AccountInfoDlg::EditStreamCallbackIn;
+
+    SendMessage(hRichText, EM_STREAMIN, SF_RTF, (LPARAM)&es);
+}
+

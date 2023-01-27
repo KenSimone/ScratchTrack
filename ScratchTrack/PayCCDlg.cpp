@@ -2,11 +2,13 @@
 #include "resource.h"
 #include "Utils.h"
 #include "AccountInfo.h"
+#include "AccountInfoDlg.h"
 
 #include <Windows.h>
 
 extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
+extern AccountInfoDlg g_accountInfoDlg;
 
 PayCCDlg::~PayCCDlg()
 {
@@ -16,8 +18,19 @@ PayCCDlg::~PayCCDlg()
 bool PayCCDlg::ShowDialog()
 {
     PTHIS = this;
+
+    g_accountInfoDlg.saveText();
+    g_accountInfoDlg.appendText(L"About Credit Card Payments\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
+
+    g_accountInfoDlg.appendText(L"Credit cards are paid from another account and are tracked through the matching payment envelope that was "
+        L"automatically created when the account was created. The credit card workflow is a bit involved and is a work in progress. "
+        L"When an expense is recorded against a credit card account, money is unassigned from the original expense envelope, and assigned to "
+        L"the corresponding credit card payment envelope. When the credit card is paid, money is unassigned from the matching CC payment envelope.",
+        RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
+
     INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_PAYCC_DIALOG), g_hTopWindow, PayCCDlgProc);
     PTHIS = nullptr;
+    g_accountInfoDlg.restoreText();
 
     return result == IDOK;
 }
