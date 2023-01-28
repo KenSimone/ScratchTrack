@@ -20,6 +20,7 @@ public:
 
 protected:
 	static INT_PTR CALLBACK TransferDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
+	void validateSelections(HWND hDlg);
 
 protected:
 	static TransferDlg* PTHIS;

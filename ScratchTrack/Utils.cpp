@@ -127,15 +127,26 @@ int Utils::dollarsStringToPennies(const wchar_t* szCurrency)
 }
 
 // Returns true if default account ID was found
-bool Utils::populateAccountCombo(HWND hParent, int resourceId, int defaultAcctId /*= INVALID_ACCOUNT_ID*/)
+bool Utils::populateAccountCombo(HWND hParent, int resourceId, int defaultAcctId /*= INVALID_ACCOUNT_ID*/, bool noCCAccount /* = false */, int avoidAccount /*= INVALID_ACCOUNT_ID*/)
 {
 	HWND hCombo = GetDlgItem(hParent, resourceId);
 	bool selSet = false;
+	int selBackupChoice = -1;
 	if (hCombo) {
 		auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
 
 		for (auto itr = accounts.begin(); itr != accounts.end(); itr++) {
-			AccountBase* pAccount = *itr;
+			Account* pAccount = dynamic_cast<Account*>(*itr);
+
+			// Skip hidden and read only accounts
+			if (pAccount->getReadOnly() || pAccount->getHidden()) {
+				continue;
+			}
+
+			// Skip credit card accounts
+			if (!pAccount || (noCCAccount && pAccount->isCCAccount())) {
+				continue;
+			}
 
 			int pos = (int)SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)pAccount->getName());
 			SendMessage(hCombo, CB_SETITEMDATA, pos, (LPARAM)pAccount);
@@ -143,10 +154,15 @@ bool Utils::populateAccountCombo(HWND hParent, int resourceId, int defaultAcctId
 				selSet = true;
 				ComboBox_SetCurSel(hCombo, pos);
 			}
+			if (!selSet && pAccount->getId() != avoidAccount) {
+				selBackupChoice = pos;
+			}
 		}
 
-		if (!selSet) {
-			ComboBox_SetCurSel(hCombo, 0);
+		if ( !selSet )
+		{
+			selBackupChoice = selBackupChoice >= 0 ? selBackupChoice : 0;
+			ComboBox_SetCurSel(hCombo, selBackupChoice);
 		}
 	}
 

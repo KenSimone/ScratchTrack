@@ -148,13 +148,13 @@ bool accountListHandleMouseMove(LONG xCur, LONG yCur)
         switch (af)
         {
         case Account::DEPOSIT:
-            swprintf(szBuffer, 1024, L"Record a deposit into %ls", pAccount->getName());
+            swprintf(szBuffer, 1024, L"Deposit money into %ls", pAccount->getName());
             break;
         case Account::TRANSFER:
-            swprintf(szBuffer, 1024, L"Transfer money into %ls", pAccount->getName());
+            swprintf(szBuffer, 1024, L"Transfer money from %ls to another account", pAccount->getName());
             break;
         case Account::PAY:
-            swprintf(szBuffer, 1024, L"Record payment to credit card account %ls", pAccount->getName());
+            swprintf(szBuffer, 1024, L"Pay credit card account %ls", pAccount->getName());
             break;
         case Account::EDIT:
             swprintf(szBuffer, 1024, L"Edit account %ls", pAccount->getName());

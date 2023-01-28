@@ -21,7 +21,10 @@ std::vector<Transaction*> Transaction::getTransactionsForItem(AccountBase* pItem
 {
 	std::vector<Transaction*> ret;
 	std::set<unsigned int> ids;
-	pItem->getIdsForSelfAndChildren(ids);
+
+	if (pItem) {
+		pItem->getIdsForSelfAndChildren(ids);
+	}
 
 	for (size_t i = 0; i < _Transactions.size(); i++)
 	{

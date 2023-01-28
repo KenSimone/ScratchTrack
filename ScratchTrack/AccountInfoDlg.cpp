@@ -208,8 +208,12 @@ void AccountInfoDlg::appendText(const wchar_t* szText, COLORREF cr, bool bold, b
     }
     
 
+    int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+    
     static const LONG FONT_POINT_SCALE = 20;
-    LONG size = FONT_POINT_SCALE * sizeInPoints;
+    static const LONG FONT_POINT_SCALE_LOW_RES = 18;
+
+    LONG size = (screenWidth < 1920) ? FONT_POINT_SCALE_LOW_RES * sizeInPoints : FONT_POINT_SCALE * sizeInPoints;
     cf.yHeight = size;
 
     cf.crTextColor = cr;
@@ -279,8 +283,8 @@ void AccountInfoDlg::getMasterSummary(std::wstring& summary, bool& isError)
         isError = (iBalance - iReservedDollars) < 0;
 
         if (isError) {
-            swprintf(szCaption, 1024, L"You have %ls reserved in envelopes but only %ls in on-budget accounts.\n"
-                L"If possible, deposit at least %ls or remove %ls from envelopes.\n",
+            swprintf(szCaption, 1024, L"You have %ls reserved in envelopes but only %ls in on-budget accounts. "
+                L"Deposit at least %ls or remove %ls from envelopes to correct.\n",
                 reservedDollars.c_str(), totalDollars.c_str(), difference.c_str(), difference.c_str());
         }
         else

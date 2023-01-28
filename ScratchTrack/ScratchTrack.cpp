@@ -720,7 +720,7 @@ void editTransfer(Transaction* pTransaction, int listviewItemIndex)
     Account* pAcctTo = (Account*)AccountBase::lookupById(pTransaction->getAccountToId());
     Account* pAcctFrom = (Account*)AccountBase::lookupById(pTransaction->getAccountFromId());
     if (pAcctTo && pAcctFrom) {
-        TransferDlg dlg(pAcctTo->getId(), pAcctFrom->getId(), pTransaction->getAmount(), pTransaction->getDescription());
+        TransferDlg dlg(pAcctFrom->getId(), pAcctTo->getId(), pTransaction->getAmount(), pTransaction->getDescription());
         if (dlg.ShowDialog()) {
 
             // Put money back in the "from account"
@@ -731,6 +731,8 @@ void editTransfer(Transaction* pTransaction, int listviewItemIndex)
             pAcctTo->addBalance(-origAmount);
 
             // Apply new balance to the envelope
+            pAcctTo = (Account*)AccountBase::lookupById(dlg.getAccountToId());
+            pAcctFrom = (Account*)AccountBase::lookupById(dlg.getAccountFromId());
             pAcctFrom->addBalance(-dlg.getAmount());
             pAcctTo->addBalance(dlg.getAmount());
             pTransaction->setDetails(dlg.getAmount(), pTransaction->getPayee(), dlg.getDescription(), pTransaction->getEnvelopeId(), dlg.getAccountFromId(), dlg.getAccountToId());
@@ -1494,14 +1496,7 @@ void populateTransactions()
 
 
     HTREEITEM hItem = (HTREEITEM)TreeView_GetSelection(g_hwndTV);
-    if (!hItem) {
-        return;
-    }
-
     AccountBase* pItem = accountFromTreeItem(hItem);
-    if (!pItem){
-        return;
-    }
 
     // Get Transactions for item
     std::vector<Transaction*> Transactions = g_transactionFilterDlg.filterToEnvelopeSelection() ? Transaction::getTransactionsForItem(pItem) : Transaction::getAllTransactions();
@@ -1768,8 +1763,8 @@ void positionControls()
     int top = rClient.top;
 
     // Stuff on the left
-    static const float ACCOUNTLIST = 0.30F;
-    static const float BUDGETINFO = 0.33F;
+    static const float ACCOUNTLIST = 0.25F;
+    static const float BUDGETINFO = 0.4F;
 
     int totalHeigth = rClient.bottom - rClient.top;
 

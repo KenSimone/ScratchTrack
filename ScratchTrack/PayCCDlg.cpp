@@ -42,7 +42,7 @@ INT_PTR CALLBACK PayCCDlg::PayCCDlgProc(HWND hDlg, UINT message, WPARAM wParam, 
     case WM_INITDIALOG:
         if (PayCCDlg::PTHIS) {
 
-            Utils::populateAccountCombo(hDlg, IDC_COMBO_ACCOUNT_FROM, PTHIS->_payFromAcctId);
+            Utils::populateAccountCombo(hDlg, IDC_COMBO_ACCOUNT_FROM, PTHIS->_payFromAcctId, true);
 
             HWND hWnd = GetDlgItem(hDlg, IDC_EDIT_AMOUNT);
             std::wstring amt = Utils::penniesToDollarsString(abs(PayCCDlg::PTHIS->_amount));

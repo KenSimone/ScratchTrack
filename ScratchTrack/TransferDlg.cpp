@@ -9,7 +9,7 @@ extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 extern AccountInfoDlg g_accountInfoDlg;
 
-TransferDlg::TransferDlg(int accountToId, int accountFromId, int amount, const wchar_t* szDescription /*= nullptr*/) :
+TransferDlg::TransferDlg(int accountFromId, int accountToId, int amount, const wchar_t* szDescription /*= nullptr*/) :
     _accountFromId(accountFromId), _accountToId(accountToId), _amount(amount)
 {
     if (szDescription) {
@@ -42,22 +42,36 @@ bool TransferDlg::ShowDialog()
     return result == IDOK;
 }
 
+void TransferDlg::validateSelections(HWND hDlg)
+{
+    // Ensure the two accounts are not the same. If they are, disable OK.
+    int fromId = Utils::getAccountIdFromAccountCombo(hDlg, IDC_COMBO_ACCOUNT);
+    int toId = Utils::getAccountIdFromAccountCombo(hDlg, IDC_COMBO_ACCOUNT_TO);
+
+    EnableWindow(GetDlgItem(hDlg, IDOK), fromId != toId);
+    ShowWindow(GetDlgItem(hDlg, IDC_STATIC_WARN), fromId != toId ? SW_HIDE : SW_SHOW);
+
+}
+
 INT_PTR CALLBACK TransferDlg::TransferDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    TransferDlg* pThis = (TransferDlg*)GetWindowLongPtr(hDlg, GWLP_USERDATA);
-
     UNREFERENCED_PARAMETER(lParam);
     switch (message)
     {
     case WM_INITDIALOG:
         Utils::setDlgItemDollarText(hDlg, IDC_EDIT_AMOUNT, PTHIS->_amount);
-        Utils::populateAccountCombo(hDlg, IDC_COMBO_ACCOUNT, PTHIS->getAccountFromId());
-        Utils::populateAccountCombo(hDlg, IDC_COMBO_ACCOUNT_TO, PTHIS->getAccountToId());
+        Utils::populateAccountCombo(hDlg, IDC_COMBO_ACCOUNT, PTHIS->getAccountFromId(), true);
+        Utils::populateAccountCombo(hDlg, IDC_COMBO_ACCOUNT_TO, INVALID_ACCOUNT_ID, true, PTHIS->getAccountFromId());
         SetDlgItemText(hDlg, IDC_EDIT_DESCRIPTION, PTHIS->getDescription());
+        PTHIS->validateSelections(hDlg);
 
         return (INT_PTR)TRUE;
     case WM_COMMAND:
-        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
+        if (HIWORD(wParam) == CBN_SELCHANGE)
+        {
+            PTHIS->validateSelections(hDlg);
+        }
+        else if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
         {
             if (LOWORD(wParam) == IDOK)
             {
