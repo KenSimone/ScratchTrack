@@ -52,6 +52,18 @@ bool EnvelopeDialog::ShowDialog()
 
 }
 
+void EnvelopeDialog::enableDisableUi(HWND hDlg)
+{
+
+    bool enableOk = true;
+    if (Utils::isDlgItemTextEmpty(hDlg, IDC_EDIT_CAT_NAME)) {
+        enableOk = false;
+    }
+
+    EnableWindow(GetDlgItem(hDlg, IDOK), enableOk);
+}
+
+
 INT_PTR CALLBACK EnvelopeDialog::EnvelopeDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     UNREFERENCED_PARAMETER(lParam);
@@ -101,9 +113,15 @@ INT_PTR CALLBACK EnvelopeDialog::EnvelopeDialogProc(HWND hDlg, UINT message, WPA
             SetWindowText(hAmount, Utils::penniesToDollarsString(iAmount).c_str());
         }
 
+        PTHIS->enableDisableUi(hDlg);
         return (INT_PTR)TRUE;
 
     case WM_COMMAND:
+        if (HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == EN_CHANGE)
+        {
+            PTHIS->enableDisableUi(hDlg);
+        }
+
         if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
         {
             if (LOWORD(wParam) == IDOK)

@@ -23,6 +23,7 @@ public:
 
 protected:
 	static INT_PTR CALLBACK FolderDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
+	void enableDisableUi(HWND hDlg);
 
 protected:
 	int _limit;

@@ -10,6 +10,16 @@ extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 extern AccountInfoDlg g_accountInfoDlg;
 
+void FolderDlg::enableDisableUi(HWND hDlg)
+{
+    bool enableOk = true;
+    if (Utils::isDlgItemTextEmpty(hDlg, IDC_EDIT_FOLDER_NAME)) {
+        enableOk = false;
+    }
+
+    EnableWindow(GetDlgItem(hDlg, IDOK), enableOk);
+}
+
 bool FolderDlg::ShowDialog()
 {
     PTHIS = this;
@@ -45,8 +55,14 @@ INT_PTR CALLBACK FolderDlg::FolderDlgProc(HWND hDlg, UINT message, WPARAM wParam
             SetDlgItemText(hDlg, IDC_EDIT_FOLDER_NAME, PTHIS->_name.c_str());
         }
 
+        PTHIS->enableDisableUi(hDlg);
         return (INT_PTR)TRUE;
     case WM_COMMAND:
+        if (HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == EN_CHANGE)
+        {
+            PTHIS->enableDisableUi(hDlg);
+        }
+
         if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
         {
             if (LOWORD(wParam) == IDOK)

@@ -38,6 +38,7 @@ protected:
 	int _budget;
 
 	static INT_PTR CALLBACK EnvelopeDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
+	void enableDisableUi(HWND hDlg);
 
 	static EnvelopeDialog* PTHIS;
 };

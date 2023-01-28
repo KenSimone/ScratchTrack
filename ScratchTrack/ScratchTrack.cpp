@@ -113,6 +113,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     Utils::monitorDataFileForChanges(true);
 
+    CoUninitialize();
+
     return (int) msg.wParam;
 }
 

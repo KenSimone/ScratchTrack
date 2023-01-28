@@ -71,7 +71,7 @@ public:
 			i++;
 		}
 
-		*pceltFetched = i;
+		*pceltFetched = (ULONG)i;
 
 		return i == celt ? S_OK : S_FALSE;
 	}
