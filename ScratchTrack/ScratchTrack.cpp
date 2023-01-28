@@ -649,6 +649,22 @@ void applyModifiedTransaction(Transaction* pTransaction, int listviewItemIndex)
 
 void doPayCC(Account* pAccount)
 {
+    // Ensure we have enough accounts
+    auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
+    size_t accts = 0;
+    for (size_t i = 0; i < accounts.size() && !accts; i++) {
+        Account* pAccount = dynamic_cast<Account*>(accounts[i]);
+        if (!pAccount || pAccount->isCCAccount()) {
+            continue;
+        }
+        accts++;
+    }
+
+    if (!accts) {
+        MessageBox(g_hTopWindow, L"You must have at least one non-credit card account to make this payment", L"Cedit Card Payment", MB_OK);
+        return;
+    }
+
     PayCCDlg dlg(pAccount, 0, 0);
     if (dlg.ShowDialog()) {
         Transaction::addTransaction(Transaction::CCPAYMENT, dlg.getAmount(), dlg.getPaidFromId(), pAccount->getId(), pAccount->paidFromEnvelopeId(), pAccount->getName(), dlg.getDescription());
@@ -666,6 +682,22 @@ void doPayCC(Account* pAccount)
 
 void doTransfer(Account* pAccount)
 {
+    // Ensure we have enough accounts
+    auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
+    size_t transferAccts = 0;
+    for (size_t i = 0; i < accounts.size() && transferAccts < 2; i++) {
+        Account* pAccount = dynamic_cast<Account*>(accounts[i]);
+        if (!pAccount || pAccount->isCCAccount()) {
+            continue;
+        }
+        transferAccts++;
+    }
+
+    if (transferAccts < 2) {
+        MessageBox(g_hTopWindow, L"You must have two or more accounts to perform a transfer", L"Transfer", MB_OK);
+        return;
+    }
+
     TransferDlg dlg(pAccount->getId(), INVALID_ACCOUNT_ID, 0, L"Transfer");
     if (dlg.ShowDialog()) {
         Account* pAccountFrom = (Account*)AccountBase::lookupById(dlg.getAccountFromId());
