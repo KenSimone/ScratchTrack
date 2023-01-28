@@ -421,30 +421,33 @@ void Utils::doBackups()
 	// rename 1->2
 	// copy current -> 1 (save op will overwrite)
 
-	const char* szPersistFile = getPersistFile();
-	std::string temp(szPersistFile);
+	static const size_t BACKUP_DEPTH = 10;
+	for (size_t i = BACKUP_DEPTH; i > 0; i--)
+	{
+		const char* szPersistFile = getPersistFile();
+		char curIndex[4] = { 0 }, prevIndex[4] = { 0 };
+		_itoa_s((int)i, curIndex, 10);
+		_itoa_s((int)(i - 1), prevIndex, 10);
 
-	// Delete 4
-	temp += ".bak.4";
-	DeleteFileA(temp.c_str());
+		std::string cur(szPersistFile);
+		cur += ".bak.";
+		cur += curIndex;
 
-	// rename 3->4 (temp2 is .3, and temp is .4)
-	std::string temp2(szPersistFile);
-	temp2 += ".bak.3";
-	MoveFileA(temp2.c_str(), temp.c_str());
+		std::string prev(szPersistFile);
+		prev += ".bak.";
+		prev += prevIndex;
 
-	// Rename 2->3 (temp is .2 and temp2 is still  .3)
-	temp = szPersistFile;
-	temp += ".bak.2";
-	MoveFileA(temp.c_str(), temp2.c_str());
+		// Delete the cur file
+		DeleteFileA(cur.c_str());
 
-	// Rename 1->2 (temp2 is .1 and temp is still  .2)
-	temp2 = szPersistFile;
-	temp2 += ".bak.1";
-	MoveFileA(temp2.c_str(), temp.c_str());
-
-	// Copy live->1 (temp2 is still .1, and temp is live)
-	temp = szPersistFile;
-	CopyFileA(temp.c_str(), temp2.c_str(), false);
+		// Move prev to cur
+		if (i == 1) {
+			CopyFileA(szPersistFile, cur.c_str(), false);
+		}
+		else
+		{
+			MoveFileA(prev.c_str(), cur.c_str());
+		}
+	}
 
 }
