@@ -421,19 +421,35 @@ void Utils::doBackups()
 	// rename 1->2
 	// copy current -> 1 (save op will overwrite)
 
+	const char* szPersistFile = getPersistFile();
+	char szPersistPath[MAX_PATH] = { 0 };
+	strcpy_s(szPersistPath, szPersistFile);
+	char* pSlashSpot = strrchr(szPersistPath, '\\');
+	char* pFilename = pSlashSpot + 1;
+	*pSlashSpot = 0;
+
+	std::string backupPath(szPersistPath);
+	backupPath += "\\ScratchTrackBackup";
+
+	if (!CreateDirectoryA(backupPath.c_str(), nullptr) && GetLastError() != ERROR_ALREADY_EXISTS){
+		backupPath = szPersistPath;
+	}
+	backupPath += "\\";
+
 	static const size_t BACKUP_DEPTH = 10;
 	for (size_t i = BACKUP_DEPTH; i > 0; i--)
 	{
-		const char* szPersistFile = getPersistFile();
 		char curIndex[4] = { 0 }, prevIndex[4] = { 0 };
 		_itoa_s((int)i, curIndex, 10);
 		_itoa_s((int)(i - 1), prevIndex, 10);
 
-		std::string cur(szPersistFile);
+		std::string cur(backupPath.c_str());
+		cur += pFilename;
 		cur += ".bak.";
 		cur += curIndex;
 
-		std::string prev(szPersistFile);
+		std::string prev(backupPath.c_str());
+		prev += pFilename;
 		prev += ".bak.";
 		prev += prevIndex;
 
