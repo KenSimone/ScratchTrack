@@ -28,6 +28,7 @@
 #include <commctrl.h>
 #include <Windows.h>
 #include <windowsx.h>
+#include <objbase.h>
 #include <vector>
 
 #pragma comment(lib, "Comctl32")
@@ -74,6 +75,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 {
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
+
+    CoInitialize(nullptr);
 
     // Is an instance already running?
     if (!Utils::isSingleInstance()) {

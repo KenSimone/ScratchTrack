@@ -2,13 +2,104 @@
 #include <Windows.h>
 #include <windowsx.h>
 #include <process.h>
+#include <shldisp.h>
 #include "Transaction.h"
 #include "AccountInfo.h"
 #include "AccountInfoDlg.h"
-#include "AutoCombo.h"
+#include <objidl.h>
+#include <shlobj.h>
 
 extern HWND g_hTopWindow;
 extern AccountInfoDlg g_accountInfoDlg;
+
+class EnumString : public IEnumString
+{
+public:
+	EnumString(std::vector<std::wstring> strings) : _refCount(1), _pos(0), _strings(strings) { };
+	~EnumString() {};
+
+	virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppvObject)
+	{
+		HRESULT hr = S_OK;
+		wchar_t szBuff[1024];
+		StringFromGUID2(riid, szBuff, 1024);
+		if (memcmp(&IID_IUnknown, &riid, sizeof(riid)) == 0)
+		{
+			AddRef();
+			*ppvObject = (IUnknown*)this;
+		}
+		else if (memcmp(&IID_IEnumString, &riid, sizeof(riid)) == 0)
+		{
+			AddRef();
+			*ppvObject = (IEnumString*)this;
+		}
+		else
+		{
+			hr = E_NOINTERFACE;
+		}
+		return hr;
+	}
+
+	virtual ULONG STDMETHODCALLTYPE AddRef(void)
+	{
+		return InterlockedIncrement(&_refCount);
+	}
+
+	virtual ULONG STDMETHODCALLTYPE Release(void)
+	{
+		ULONG ref = InterlockedDecrement(&_refCount);
+		if (!ref) {
+			delete this;
+		}
+		return ref;
+	}
+
+
+	virtual HRESULT STDMETHODCALLTYPE Next(ULONG celt, LPOLESTR* rgelt, ULONG* pceltFetched)
+	{
+		if (!celt) {
+			celt = 1;
+		}
+
+		size_t end = min(_strings.size(), celt + _pos);
+
+		size_t i = 0;
+		for (_pos; _pos < end; _pos++) {
+			size_t toAlloc = (_strings[_pos].length() + 1) * sizeof(wchar_t);
+			rgelt[i] = (LPOLESTR)CoTaskMemAlloc(toAlloc);
+			wcscpy_s(rgelt[i], _strings[_pos].length() + 1, _strings[_pos].c_str());
+			i++;
+		}
+
+		*pceltFetched = i;
+
+		return i == celt ? S_OK : S_FALSE;
+	}
+
+	virtual HRESULT STDMETHODCALLTYPE Skip(ULONG celt)
+	{
+		_pos += celt;
+		return S_OK;
+	}
+
+	virtual HRESULT STDMETHODCALLTYPE Reset(void)
+	{
+		_pos = 0;
+		return S_OK;
+	}
+
+	virtual HRESULT STDMETHODCALLTYPE Clone(IEnumString** ppenum)
+	{
+		*ppenum = new EnumString(_strings);
+		return S_OK;
+	}
+
+protected:
+	ULONG _refCount;
+	std::vector<std::wstring> _strings;
+	size_t _pos;
+};
+
 
 bool Utils::searchText(const wchar_t* szString, const wchar_t* szSearchText)
 {
@@ -205,6 +296,11 @@ std::wstring Utils::getDlgItemText(HWND hDlg, int resourceId)
 	return ret;
 }
 
+bool Utils::isDlgItemTextEmpty(HWND hDlg, int resourceId)
+{
+	return getDlgItemText(hDlg, resourceId).empty();
+}
+
 void Utils::setDlgItemDollarText(HWND hDlg, int resourceId, int amount)
 {
 	std::wstring theText =  Utils::penniesToDollarsString(amount);
@@ -226,11 +322,12 @@ bool Utils::populatePayeeCombo(HWND hParent, int resourceId, const wchar_t* szDe
 	}
 
 	HWND hCombo = GetDlgItem(hParent, resourceId);
-	MakeAutocompleteCombo(hCombo);
 
+	std::vector<std::wstring> enumStrings;
 	bool selSet = false;
 	for (auto itr = uniquePayees.begin(); itr != uniquePayees.end(); itr++) {
 		if (!itr->empty()) {
+			enumStrings.push_back(*itr);
 			int pos = (int)SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)itr->c_str());
 			if (szDefaultPayee && _wcsicmp(itr->c_str(), szDefaultPayee) == 0)
 			{
@@ -239,6 +336,17 @@ bool Utils::populatePayeeCombo(HWND hParent, int resourceId, const wchar_t* szDe
 			}
 		}
 	}
+
+	IAutoComplete* pAutoComplete = nullptr;
+	HRESULT hr = CoCreateInstance(CLSID_AutoComplete, nullptr, CLSCTX_INPROC_SERVER, IID_IAutoComplete, (void**)&pAutoComplete);
+	if (SUCCEEDED(hr) && pAutoComplete)
+	{
+		EnumString* pEnumString = new EnumString(enumStrings);
+
+		HWND hEdit = FindWindowEx(hCombo, NULL, WC_EDIT, NULL);
+		pAutoComplete->Init(hEdit, (IUnknown*)pEnumString, nullptr, nullptr);
+	}
+
 
 	return selSet;
 }
@@ -467,3 +575,5 @@ void Utils::doBackups()
 	}
 
 }
+
+

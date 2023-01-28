@@ -84,9 +84,6 @@
     <ClInclude Include="Utils.h">
       <Filter>Header Files\Utility</Filter>
     </ClInclude>
-    <ClInclude Include="AutoCombo.h">
-      <Filter>Header Files\Utility</Filter>
-    </ClInclude>
     <ClInclude Include="Resource.h">
       <Filter>Header Files\MainGui</Filter>
     </ClInclude>
@@ -147,9 +144,6 @@
       <Filter>Source Files\Utility</Filter>
     </ClCompile>
     <ClCompile Include="Utils.cpp">
-      <Filter>Source Files\Utility</Filter>
-    </ClCompile>
-    <ClCompile Include="AutoCombo.cpp">
       <Filter>Source Files\Utility</Filter>
     </ClCompile>
     <ClCompile Include="FundEnvelopeDlg.cpp">

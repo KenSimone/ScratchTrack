@@ -143,7 +143,6 @@
     <ClInclude Include="AccountInfo.h" />
     <ClInclude Include="AccountInfoDlg.h" />
     <ClInclude Include="AccountListViewUtils.h" />
-    <ClInclude Include="AutoCombo.h" />
     <ClInclude Include="DepositDlg.h" />
     <ClInclude Include="EnvelopeDlg.h" />
     <ClInclude Include="FolderDlg.h" />
@@ -167,7 +166,6 @@
     <ClCompile Include="AccountInfo.cpp" />
     <ClCompile Include="AccountInfoDlg.cpp" />
     <ClCompile Include="AccountListViewUtils.cpp" />
-    <ClCompile Include="AutoCombo.cpp" />
     <ClCompile Include="DepositDlg.cpp" />
     <ClCompile Include="EnvelopeDlg.cpp" />
     <ClCompile Include="FolderDlg.cpp" />

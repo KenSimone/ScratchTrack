@@ -21,6 +21,7 @@ public:
 
 protected:
 	static INT_PTR CALLBACK DepositDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
+	void enableDisableUi(HWND hDlg);
 
 protected:
 	Account* _pAccount;

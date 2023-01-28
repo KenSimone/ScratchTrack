@@ -42,13 +42,20 @@ bool AccountDlg::ShowDialog()
 
 }
 
-void enableDisableUi(HWND hDlg)
+void AccountDlg::enableDisableUi(HWND hDlg)
 {
     bool isCC = SendDlgItemMessage(hDlg, IDC_CHECK_CREDIT_CARD, BM_GETCHECK, 0, 0);
     if (isCC) {
         SendDlgItemMessage(hDlg, IDC_CHECK_BUDGETED, BM_SETCHECK, BST_UNCHECKED, 0);
     }
     EnableWindow(GetDlgItem(hDlg, IDC_CHECK_BUDGETED), !isCC);
+
+    bool enableOk = true;
+    if (Utils::isDlgItemTextEmpty(hDlg, IDC_EDIT_ACCOUNT_NAME)) {
+        enableOk = false;
+    }
+
+    EnableWindow(GetDlgItem(hDlg, IDOK), enableOk);
 }
 
 INT_PTR CALLBACK AccountDlg::AccountDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -76,16 +83,19 @@ INT_PTR CALLBACK AccountDlg::AccountDlgProc(HWND hDlg, UINT message, WPARAM wPar
             hWndCtrl = GetDlgItem(hDlg, IDC_CHECK_CREDIT_CARD);
             Button_SetCheck(hWndCtrl, PTHIS->getCreditCard() ? BST_CHECKED : BST_UNCHECKED);
 
-            enableDisableUi(hDlg);
+            PTHIS->enableDisableUi(hDlg);
 
         }
 
         return (INT_PTR)TRUE;
     case WM_COMMAND:
-        if (HIWORD(wParam) == BN_CLICKED)
-        {
+        if (HIWORD(wParam) == EN_CHANGE) {
+            PTHIS->enableDisableUi(hDlg);
+        }
+
+        if (HIWORD(wParam) == BN_CLICKED){
             // Income or expense
-            enableDisableUi(hDlg);
+            PTHIS->enableDisableUi(hDlg);
         }
 
         if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)

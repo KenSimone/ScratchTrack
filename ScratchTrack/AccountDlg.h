@@ -33,6 +33,7 @@ protected:
 	unsigned int _creditCard;
 
 	static INT_PTR CALLBACK AccountDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
+	void enableDisableUi(HWND hDlg);
 
 	static AccountDlg* PTHIS;
 

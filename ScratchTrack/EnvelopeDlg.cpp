@@ -90,19 +90,7 @@ INT_PTR CALLBACK EnvelopeDialog::EnvelopeDialogProc(HWND hDlg, UINT message, WPA
 
             // Payees
             HWND hPayeeCombo = GetDlgItem(hDlg, IDC_COMBO_CAT_PAYEE);
-            MakeAutocompleteCombo(hPayeeCombo);
-            std::vector<Transaction*> transactions = Transaction::getAllTransactions();
-            std::set<std::wstring> uniquePayees;
-            for (auto itr = transactions.begin(); itr != transactions.end(); itr++) {
-                uniquePayees.insert((*itr)->getPayee());
-            }
-
-            for (auto itr = uniquePayees.begin(); itr != uniquePayees.end(); itr++) {
-                if (!itr->empty()) {
-                    int pos = (int)SendMessage(hPayeeCombo, CB_ADDSTRING, 0, (LPARAM)itr->c_str());
-                }
-            }
-
+            Utils::populatePayeeCombo(hDlg, IDC_COMBO_CAT_PAYEE);
             ComboBox_SetText(hPayeeCombo, PTHIS->getDefaultTransactionPayee());
 
 

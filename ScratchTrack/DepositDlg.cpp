@@ -27,6 +27,17 @@ DepositDlg::~DepositDlg()
 
 }
 
+void DepositDlg::enableDisableUi(HWND hDlg)
+{
+
+    bool enableOk = true;
+    if (Utils::isDlgItemTextEmpty(hDlg, IDC_COMBO_PAYEE)) {
+        enableOk = false;
+    }
+
+    EnableWindow(GetDlgItem(hDlg, IDOK), enableOk);
+}
+
 bool DepositDlg::ShowDialog()
 {
     PTHIS = this;
@@ -57,10 +68,14 @@ INT_PTR CALLBACK DepositDlg::DepositDlgProc(HWND hDlg, UINT message, WPARAM wPar
         SetDlgItemText(hDlg, IDC_EDIT_DESCRIPTION, PTHIS->_description.c_str());
         Utils::setDlgItemDollarText(hDlg, IDC_EDIT_DEPOSIT_AMOUNT, PTHIS->_amount);
         Utils::populatePayeeCombo(hDlg, IDC_COMBO_PAYEE, PTHIS->_payee.c_str());
-
+        PTHIS->enableDisableUi(hDlg);
 
         return (INT_PTR)TRUE;
     case WM_COMMAND:
+        if (HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == CBN_EDITCHANGE)
+        {
+            PTHIS->enableDisableUi(hDlg);
+        }
         if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
         {
             if (LOWORD(wParam) == IDOK)
