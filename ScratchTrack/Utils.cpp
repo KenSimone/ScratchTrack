@@ -308,20 +308,38 @@ bool Utils::isSingleInstance()
 
 unsigned __stdcall Utils::monitorFileChangeThreadFunc(void* parg)
 {
-	HANDLE* pHandles = (HANDLE*)parg;
+	static const int WAIT_FILE_CHANGE = 0;
+	static const int WAIT_ABORT = 1;
+
 	const char* szPersistFile = getPersistFile();
-	FILETIME lastModifiedBefore = { 0 }, lastModifieAfter = { 0 };
-	HANDLE hFile = CreateFileA(szPersistFile, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-	if (hFile != INVALID_HANDLE_VALUE ) {
-		GetFileTime(hFile, nullptr, nullptr, &lastModifiedBefore);
-		CloseHandle(hFile);
+
+	char szPersistPath[MAX_PATH] = { 0 };
+	strcpy_s(szPersistPath, szPersistFile);
+	char* szSlashSpot = strrchr(szPersistPath, '\\');
+	if (!szSlashSpot) {
+		return 0;
 	}
 
-	DWORD dwWaitResult = WaitForMultipleObjects(2, pHandles, false, INFINITE);
+	*szSlashSpot = 0;
 
 	bool shuttingDown = false;
 	do
 	{
+		FILETIME lastModifiedBefore = { 0 }, lastModifieAfter = { 0 };
+		HANDLE hFile = CreateFileA(szPersistFile, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+		if (hFile != INVALID_HANDLE_VALUE) {
+			GetFileTime(hFile, nullptr, nullptr, &lastModifiedBefore);
+			CloseHandle(hFile);
+		}
+
+		HANDLE waitHandles[2] = { 0 };
+		waitHandles[WAIT_FILE_CHANGE] = FindFirstChangeNotificationA(szPersistPath, false, FILE_NOTIFY_CHANGE_LAST_WRITE);
+		waitHandles[WAIT_ABORT] = (HANDLE)parg;
+
+		DWORD dwWaitResult = WaitForMultipleObjects(2, waitHandles, false, INFINITE);
+		FindCloseChangeNotification(waitHandles[WAIT_FILE_CHANGE]);
+		waitHandles[WAIT_FILE_CHANGE] = nullptr;
+
 		switch (dwWaitResult)
 		{
 		case WAIT_OBJECT_0 + WAIT_FILE_CHANGE:
@@ -336,13 +354,9 @@ unsigned __stdcall Utils::monitorFileChangeThreadFunc(void* parg)
 				MessageBox(g_hTopWindow, L"The budget file has been modified outside of this instance of ScratchTrack. This instance of ScratchTrack will exit.", L"External file modification", MB_OK);
 				exit(0);
 			}
-			FindNextChangeNotification(pHandles[WAIT_FILE_CHANGE]);
 
 			break;
 		case WAIT_OBJECT_0 + WAIT_ABORT:
-			CloseHandle(pHandles[WAIT_ABORT]);
-			FindCloseChangeNotification(pHandles[WAIT_FILE_CHANGE]);
-			memset(pHandles, 0, sizeof(HANDLE) * 2);
 			shuttingDown = true;
 			break;
 		};
@@ -353,13 +367,13 @@ unsigned __stdcall Utils::monitorFileChangeThreadFunc(void* parg)
 
 void Utils::monitorDataFileForChanges(bool stop)
 {
-	static HANDLE waitHandles[2] = { 0 };
 	static HANDLE hThread = nullptr;
+	static HANDLE hAbortEvent = nullptr;
 
 	if (stop)
 	{
-		if (waitHandles[WAIT_ABORT]) {
-			SetEvent(waitHandles[WAIT_ABORT]);
+		if (hAbortEvent) {
+			SetEvent(hAbortEvent);
 		}
 
 		if (hThread) {
@@ -370,24 +384,11 @@ void Utils::monitorDataFileForChanges(bool stop)
 		return;
 	}
 
-	if (!waitHandles[WAIT_ABORT]) {
-		waitHandles[WAIT_ABORT] = CreateEvent(nullptr, true, false, nullptr);
+	if (!hAbortEvent) {
+		hAbortEvent = CreateEvent(nullptr, true, false, nullptr);
 	}
-
-	const char* szPersistFile = getPersistFile();
-	char szPersistPath[MAX_PATH] = { 0 };
-	strcpy_s(szPersistPath, szPersistFile);
-	char* szSlashSpot = strrchr(szPersistPath, '\\');
-	if (!szSlashSpot) {
-		return;
-	}
-
-	*szSlashSpot = 0;
-
-	waitHandles[WAIT_FILE_CHANGE] = FindFirstChangeNotificationA(szPersistPath, false, FILE_NOTIFY_CHANGE_LAST_WRITE);
-
 	unsigned int threadId = 0;
-	hThread = (HANDLE)_beginthreadex(NULL, 0, &monitorFileChangeThreadFunc, waitHandles, 0, &threadId);
+	hThread = (HANDLE)_beginthreadex(NULL, 0, &monitorFileChangeThreadFunc, hAbortEvent, 0, &threadId);
 
 }
 
@@ -396,10 +397,54 @@ const char* Utils::getPersistFile()
 	static char szBuff[1024] = { 0 };
 	GetModuleFileNameA(NULL, szBuff, 1024);
 
-	char* slashSpot = strrchr(szBuff, '\\');
+	char* slashSpot = strrchr(szBuff, '.');
 	*slashSpot = 0;
 
-	strcat_s(szBuff, 1024, "\\ScratchTrack.xml");
+	strcat_s(szBuff, 1024, ".xml");
 
 	return szBuff;
+}
+
+void Utils::doBackups()
+{
+	// Backup strategy
+	// ScratchTrack.xml <-- Current version
+	// ScratchTrack.xml.bak.1 <-- Current version -1
+	// ScratchTrack.xml.bak.2 <-- Current version -2
+	// ScratchTrack.xml.bak.3 <-- Current version -3
+	// ScratchTrack.xml.bak.4 <-- Current version -4
+
+	// Right before save:
+	// delete 4
+	// rename 3->4
+	// rename 2->3
+	// rename 1->2
+	// copy current -> 1 (save op will overwrite)
+
+	const char* szPersistFile = getPersistFile();
+	std::string temp(szPersistFile);
+
+	// Delete 4
+	temp += ".bak.4";
+	DeleteFileA(temp.c_str());
+
+	// rename 3->4 (temp2 is .3, and temp is .4)
+	std::string temp2(szPersistFile);
+	temp2 += ".bak.3";
+	MoveFileA(temp2.c_str(), temp.c_str());
+
+	// Rename 2->3 (temp is .2 and temp2 is still  .3)
+	temp = szPersistFile;
+	temp += ".bak.2";
+	MoveFileA(temp.c_str(), temp2.c_str());
+
+	// Rename 1->2 (temp2 is .1 and temp is still  .2)
+	temp2 = szPersistFile;
+	temp2 += ".bak.1";
+	MoveFileA(temp2.c_str(), temp.c_str());
+
+	// Copy live->1 (temp2 is still .1, and temp is live)
+	temp = szPersistFile;
+	CopyFileA(temp.c_str(), temp2.c_str(), false);
+
 }

@@ -37,11 +37,10 @@ public:
 
 	static const char* getPersistFile();
 
+	static void doBackups();
+
 protected:
 
 	static unsigned __stdcall monitorFileChangeThreadFunc(void* parg);
-
-	static const int WAIT_FILE_CHANGE = 0;
-	static const int WAIT_ABORT = 1;
 
 };

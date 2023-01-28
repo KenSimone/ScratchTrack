@@ -91,6 +91,7 @@ int serialize(std::vector<AccountBase*>& topLevelItems, const char* szFilename)
 		Transactions[i]->serialize(pTransactions);
 	}
 
+	Utils::doBackups();
 	Utils::monitorDataFileForChanges(true);
 	pDoc->SaveFile(szFilename);
 	Utils::monitorDataFileForChanges(false);
