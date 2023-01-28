@@ -75,7 +75,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
-    // TODO: Place code here.
+    // Is an instance already running?
+    if (!Utils::isSingleInstance()) {
+        MessageBox(nullptr, L"An instance of ScratchTrack is already running", L"Already running", MB_OK);
+        return 0;
+    }
 
     // Initialize global strings
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);

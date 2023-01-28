@@ -30,4 +30,6 @@ public:
 	static LRESULT customDrawListViewAlternatingColors(NMLVCUSTOMDRAW* pCustomDrawItem);
 
 	static bool confirmHide(AccountBase* pAccount);
+
+	static bool isSingleInstance();
 };

@@ -283,3 +283,25 @@ bool Utils::confirmHide(AccountBase* pAccount)
 
 	return false;
 }
+
+bool Utils::isSingleInstance()
+{
+	bool ret = true;
+	wchar_t szFilename[MAX_PATH] = { 0 };
+	GetModuleFileName(nullptr, szFilename, MAX_PATH);
+	for (size_t i = 0; i < wcslen(szFilename); i++)
+	{
+		if (szFilename[i] == L'\\' || szFilename[i] == L':') {
+			szFilename[i] = L'_';
+		}
+	}
+
+	HANDLE hMutex = CreateMutex(nullptr, false, szFilename);
+	if (hMutex && GetLastError() == ERROR_ALREADY_EXISTS) {
+		return false;
+	}
+
+	return true;
+
+}
+
