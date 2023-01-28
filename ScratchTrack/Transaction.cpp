@@ -56,9 +56,9 @@ int Transaction::serialize(tinyxml2::XMLElement* pParent)
 	WideCharToMultiByte(CP_UTF8, 0, _description.c_str(), -1, szBuff, 1024, nullptr, nullptr);
 	pElement->SetAttribute("description", szBuff);
 
-	uint64_t ft = 0;
-	SystemTimeToFileTime(&_timestamp, (FILETIME*)&ft);
-	pElement->SetAttribute("timestamp", ft);
+	char szTimestamp[1024] = { 0 };
+	snprintf(szTimestamp, 1024, "%02d-%02d-%04d %02d:%02d:%02d", _timestamp.wMonth, _timestamp.wDay, _timestamp.wYear, _timestamp.wHour, _timestamp.wMinute, _timestamp.wSecond);
+	pElement->SetAttribute("transactionTime", szTimestamp);
 
 	pElement->SetAttribute("amount", _amount);
 	pElement->SetAttribute("type", (int)_type);
@@ -93,8 +93,45 @@ int Transaction::deserialize(tinyxml2::XMLElement* pRoot)
 
 			uint64_t timestamp = 0;
 			SYSTEMTIME st = { 0 };
+			GetSystemTime(&st);
+
 			pTransaction->QueryUnsigned64Attribute("timestamp", &timestamp);
-			FileTimeToSystemTime((FILETIME*)&timestamp, &st);
+			if (timestamp) {
+				FileTimeToSystemTime((FILETIME*)&timestamp, &st);
+			}
+			else
+			{
+				const char* szTimestamp = nullptr;
+				pTransaction->QueryStringAttribute("transactionTime", &szTimestamp);
+				if (szTimestamp) {
+					st.wMonth = atoi(szTimestamp);
+
+					szTimestamp = strchr(szTimestamp, '-');
+					if (szTimestamp) {
+						st.wDay = atoi(++szTimestamp);
+					}
+
+					szTimestamp = szTimestamp ? strchr(szTimestamp, '-') : nullptr;
+					if (szTimestamp) {
+						st.wYear = atoi(++szTimestamp);
+					}
+
+					szTimestamp = szTimestamp ? strchr(szTimestamp, ' ') : nullptr;
+					if (szTimestamp) {
+						st.wHour = atoi(++szTimestamp);
+					}
+
+					szTimestamp = szTimestamp ? strchr(szTimestamp, ':') : nullptr;
+					if (szTimestamp) {
+						st.wMinute = atoi(++szTimestamp);
+					}
+
+					szTimestamp = szTimestamp ? strchr(szTimestamp, ':') : nullptr;
+					if (szTimestamp) {
+						st.wSecond = atoi(++szTimestamp);
+					}
+				}
+			}
 
 			int amount = 0;
 			pTransaction->QueryIntAttribute("amount", &amount);
