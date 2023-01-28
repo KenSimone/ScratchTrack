@@ -118,52 +118,47 @@ const char* getPersistFile()
     return szBuff;
 }
 
-void setupPaymentEnvelopeForAccount(Account* pAccount)
+int setupPaymentEnvelopeForAccount(Account* pAccount)
 {
-    if (pAccount->paidFromEnvelopeId() == INVALID_ACCOUNT_ID) {
-        std::wstring catName = L"Pay ";
-        catName += pAccount->getName();
+    std::wstring envelopeName = L"Pay ";
+    envelopeName += pAccount->getName();
 
-        // See if already have a envelope 
-        auto categories = AccountBase::getAllAccountsOfType(AccountBase::ENVELOPE);
-        auto groups = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
+    AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(AccountBase::lookupById(pAccount->paidFromEnvelopeId()));
 
-        for (size_t i = 0; i < categories.size(); i++)
+    if (!pEnvelope) {
+
+        auto folders = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
+
+        // Ensure we have a folder for CC payment
+        AccountGroup* pFolder = nullptr;
+        HTREEITEM hItemFolder = nullptr;
+        std::wstring folderName = L"Credit cards";
+
+        for (size_t i = 0; i < folders.size(); i++)
         {
-            if (_wcsicmp(catName.c_str(), categories[i]->getName()) == 0) {
-                // This seems to be the right envelope
-                pAccount->setPaidFromEnvelopeId(categories[i]->getId());
-                pAccount->setReadOnly(true);
-                return;
+            if (_wcsicmp(folderName.c_str(), folders[i]->getName()) == 0) {
+                pFolder = (AccountGroup * )folders[i];
+                pFolder->setReadOnly(true);
+                hItemFolder = treeItemFromAccount(pFolder);
             }
         }
 
-        // We need to create a new envelope. First find a group to own it.
-        AccountGroup* pGroup = nullptr;
-        HTREEITEM hItemGroup = nullptr;
-        std::wstring groupName = L"Credit cards";
-
-        for (size_t i = 0; i < groups.size(); i++)
+        if (!pFolder)
         {
-            if (_wcsicmp(groupName.c_str(), groups[i]->getName()) == 0) {
-                pGroup = (AccountGroup * )groups[i];
-                pGroup->setReadOnly(true);
-                hItemGroup = treeItemFromAccount(pGroup);
-            }
+            pFolder = new AccountGroup;
+            pFolder->setName(folderName.c_str());
+            pFolder->setReadOnly(true);
+            hItemFolder = addTreeItem(TVI_ROOT, pFolder);
         }
-
-        if (!pGroup)
-        {
-            pGroup = new AccountGroup;
-            pGroup->setName(groupName.c_str());
-            pGroup->setReadOnly(true);
-            hItemGroup = addTreeItem(TVI_ROOT, pGroup);
+        else if (pFolder->getHidden()) {
+            pFolder->setHidden(false);
+            addTreeItem(TVI_ROOT, pFolder);
         }
 
 
         // No existing envelope. Make one.
-        AccountEnvelope* pEnvelope = new AccountEnvelope;
-        pEnvelope->setName(catName.c_str());
+        pEnvelope = new AccountEnvelope;
+        pEnvelope->setName(envelopeName.c_str());
         pEnvelope->setDefaultTransactionPayToAccount(pAccount);
         pEnvelope->setIsExpense(true);
         pEnvelope->setIsVirtualAccount(true);
@@ -171,9 +166,16 @@ void setupPaymentEnvelopeForAccount(Account* pAccount)
 
         pAccount->setPaidFromEnvelopeId(pEnvelope->getId());
 
-        pGroup->addChild(pEnvelope);
-        addTreeItem(hItemGroup, pEnvelope);
+        pFolder->addChild(pEnvelope);
+        addTreeItem(hItemFolder, pEnvelope);
     }
+    else
+    {
+        // We do have an envelope, update it's name as appropriate
+        pEnvelope->setName(envelopeName.c_str());
+    }
+
+    return pEnvelope->getId();
 }
 
 void createTransactionListControl()
@@ -892,6 +894,8 @@ void editAccount(Account* pAccount)
     dlg.setCreditCard(pAccount->paidFromEnvelopeId() != INVALID_ACCOUNT_ID);
     if (dlg.ShowDialog())
     {
+        // Did this change "types" (cc to non CC
+
         pAccount->addBalance(-pAccount->getBalance());
         pAccount->addBalance(dlg.getBalance());
         pAccount->setName(dlg.getName());
@@ -899,6 +903,41 @@ void editAccount(Account* pAccount)
         if (dlg.getCreditCard()) {
             setupPaymentEnvelopeForAccount(pAccount);
         }
+        else if (pAccount->isCCAccount())
+        {
+            // This was a CC account, but isn't any more. Hide the envelope, and return any balance
+            AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope * >(AccountBase::lookupById(pAccount->paidFromEnvelopeId()));
+            pEnvelope->addBalance(-pEnvelope->getBalance());
+            pEnvelope->setHidden(true);
+            pAccount->setPaidFromEnvelopeId(INVALID_ACCOUNT_ID);
+            HTREEITEM hEnvelope = treeItemFromAccount(pEnvelope);
+            HTREEITEM hParent = TreeView_GetParent(g_hwndTV, hEnvelope);
+
+            if (hEnvelope) {
+                TreeView_DeleteItem(g_hwndTV, hEnvelope);
+            }
+
+            if (!TreeView_GetChild(g_hwndTV, hParent)) {
+                AccountGroup* pFolder = dynamic_cast<AccountGroup * >(accountFromTreeItem(hParent));
+                if (pFolder) {
+
+                    bool allhidden = true;
+                    auto children = pFolder->getChildren();
+                    for (size_t i = 0; i < children.size() && allhidden; i++)
+                    {
+                        if (!children[i]->getHidden()) {
+                            allhidden = false;
+                        }
+                    }
+
+                    if (allhidden) {
+                        pFolder->setHidden(true);
+                        TreeView_DeleteItem(g_hwndTV, hParent);
+                    }
+                }
+            }
+        }
+        InvalidateRect(g_hwndAccountLV, nullptr, true);
         updateGuiValues();
         serializeState();
     }
