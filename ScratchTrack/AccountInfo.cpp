@@ -1,5 +1,6 @@
 #include "AccountInfo.h"
 #include "Transaction.h"
+#include "Utils.h"
 #include <map>
 #include <limits.h>
 
@@ -90,7 +91,9 @@ int serialize(std::vector<AccountBase*>& topLevelItems, const char* szFilename)
 		Transactions[i]->serialize(pTransactions);
 	}
 
+	Utils::monitorDataFileForChanges(true);
 	pDoc->SaveFile(szFilename);
+	Utils::monitorDataFileForChanges(false);
 
 	return ERROR_SUCCESS;
 }

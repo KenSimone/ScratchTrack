@@ -32,4 +32,16 @@ public:
 	static bool confirmHide(AccountBase* pAccount);
 
 	static bool isSingleInstance();
+
+	static void monitorDataFileForChanges(bool stop);
+
+	static const char* getPersistFile();
+
+protected:
+
+	static unsigned __stdcall monitorFileChangeThreadFunc(void* parg);
+
+	static const int WAIT_FILE_CHANGE = 0;
+	static const int WAIT_ABORT = 1;
+
 };

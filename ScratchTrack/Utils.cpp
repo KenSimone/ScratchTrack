@@ -1,6 +1,7 @@
 #include "Utils.h"
 #include <Windows.h>
 #include <windowsx.h>
+#include <process.h>
 #include "Transaction.h"
 #include "AccountInfo.h"
 #include "AccountInfoDlg.h"
@@ -305,3 +306,100 @@ bool Utils::isSingleInstance()
 
 }
 
+unsigned __stdcall Utils::monitorFileChangeThreadFunc(void* parg)
+{
+	HANDLE* pHandles = (HANDLE*)parg;
+	const char* szPersistFile = getPersistFile();
+	FILETIME lastModifiedBefore = { 0 }, lastModifieAfter = { 0 };
+	HANDLE hFile = CreateFileA(szPersistFile, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+	if (hFile != INVALID_HANDLE_VALUE ) {
+		GetFileTime(hFile, nullptr, nullptr, &lastModifiedBefore);
+		CloseHandle(hFile);
+	}
+
+	DWORD dwWaitResult = WaitForMultipleObjects(2, pHandles, false, INFINITE);
+
+	bool shuttingDown = false;
+	do
+	{
+		switch (dwWaitResult)
+		{
+		case WAIT_OBJECT_0 + WAIT_FILE_CHANGE:
+			hFile = CreateFileA(szPersistFile, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+			if (hFile != INVALID_HANDLE_VALUE) {
+				GetFileTime(hFile, nullptr, nullptr, &lastModifieAfter);
+				CloseHandle(hFile);
+			}
+
+			if (memcmp(&lastModifieAfter, &lastModifiedBefore, sizeof(FILETIME)) != 0) {
+				// The file changed
+				MessageBox(g_hTopWindow, L"The budget file has been modified outside of this instance of ScratchTrack. This instance of ScratchTrack will exit.", L"External file modification", MB_OK);
+				exit(0);
+			}
+			FindNextChangeNotification(pHandles[WAIT_FILE_CHANGE]);
+
+			break;
+		case WAIT_OBJECT_0 + WAIT_ABORT:
+			CloseHandle(pHandles[WAIT_ABORT]);
+			FindCloseChangeNotification(pHandles[WAIT_FILE_CHANGE]);
+			memset(pHandles, 0, sizeof(HANDLE) * 2);
+			shuttingDown = true;
+			break;
+		};
+	} while (!shuttingDown);
+
+	return 0;
+}
+
+void Utils::monitorDataFileForChanges(bool stop)
+{
+	static HANDLE waitHandles[2] = { 0 };
+	static HANDLE hThread = nullptr;
+
+	if (stop)
+	{
+		if (waitHandles[WAIT_ABORT]) {
+			SetEvent(waitHandles[WAIT_ABORT]);
+		}
+
+		if (hThread) {
+			WaitForSingleObject(hThread, 5000);
+			CloseHandle(hThread);
+			hThread = nullptr;
+		}
+		return;
+	}
+
+	if (!waitHandles[WAIT_ABORT]) {
+		waitHandles[WAIT_ABORT] = CreateEvent(nullptr, true, false, nullptr);
+	}
+
+	const char* szPersistFile = getPersistFile();
+	char szPersistPath[MAX_PATH] = { 0 };
+	strcpy_s(szPersistPath, szPersistFile);
+	char* szSlashSpot = strrchr(szPersistPath, '\\');
+	if (!szSlashSpot) {
+		return;
+	}
+
+	*szSlashSpot = 0;
+
+	waitHandles[WAIT_FILE_CHANGE] = FindFirstChangeNotificationA(szPersistPath, false, FILE_NOTIFY_CHANGE_LAST_WRITE);
+
+	unsigned int threadId = 0;
+	hThread = (HANDLE)_beginthreadex(NULL, 0, &monitorFileChangeThreadFunc, waitHandles, 0, &threadId);
+
+}
+
+const char* Utils::getPersistFile()
+{
+	static char szBuff[1024] = { 0 };
+	GetModuleFileNameA(NULL, szBuff, 1024);
+
+	char* slashSpot = strrchr(szBuff, '\\');
+	*slashSpot = 0;
+
+	strcat_s(szBuff, 1024, "\\ScratchTrack.xml");
+
+	return szBuff;
+}

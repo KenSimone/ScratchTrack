@@ -81,6 +81,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return 0;
     }
 
+    Utils::monitorDataFileForChanges(false);
+
     // Initialize global strings
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
     LoadStringW(hInstance, IDC_SIMPLEBUDGET, szWindowClass, MAX_LOADSTRING);
@@ -106,20 +108,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         }
     }
 
+    Utils::monitorDataFileForChanges(true);
+
     return (int) msg.wParam;
-}
-
-const char* getPersistFile()
-{
-    static char szBuff[1024] = { 0 };
-    GetModuleFileNameA(NULL, szBuff, 1024);
-
-    char* slashSpot = strrchr(szBuff, '\\');
-    *slashSpot = 0;
-
-    strcat_s(szBuff, 1024, "\\ScratchTrack.xml");
-
-    return szBuff;
 }
 
 int setupPaymentEnvelopeForAccount(Account* pAccount)
@@ -280,10 +271,10 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 
    // Populate data (load or create new)
-   DWORD dwAttribs = ::GetFileAttributesA(getPersistFile());
+   DWORD dwAttribs = ::GetFileAttributesA(Utils::getPersistFile());
    if (dwAttribs != INVALID_FILE_ATTRIBUTES) {
        std::vector<AccountBase*> topLevelItems;
-       deserialize(getPersistFile(), topLevelItems);
+       deserialize(Utils::getPersistFile(), topLevelItems);
        for (size_t i = 0; i < topLevelItems.size(); i++)
        {
            addTreeItem(TVI_ROOT, topLevelItems[i]);
@@ -1712,7 +1703,7 @@ int serializeState()
     }
 
 
-    serialize(topItems, getPersistFile());
+    serialize(topItems, Utils::getPersistFile());
 
     g_accountInfoDlg.updateReport();
 
