@@ -239,22 +239,22 @@ void AccountInfoDlg::getMasterSummary(std::wstring& summary, bool& isError)
     wchar_t szCaption[1024] = { 0 };
 
     if (accounts.empty()) {
-        swprintf(szCaption, 1024, L"It looks like you don't have any accounts. Accounts represent money (or debt).\n"
+        swprintf(szCaption, 1024, L"It looks like you don't have any accounts. Accounts represent money (or debt).\n\n"
         L"Examples of common account types are checking, savings, and credit card.\n\n"
-        L"Click 'Add Account...' to add an account to ScratchTrack.\n");
+        L"Click 'Add Account...' to add an account to ScratchTrack.\n\n");
     }
     else if (folders.empty()) {
-        swprintf(szCaption, 1024, L"It looks like you don't have any folders. Folders help you organize expenses.\n"
-            L"A common strategy is to create a folder for each pay peried. For example, if you're paid on the 15th and 31st\n"
+        swprintf(szCaption, 1024, L"It looks like you don't have any folders. Folders help you organize expenses.\n\n"
+            L"A common strategy is to create a folder for each pay peried. For example, if you're paid on the 15th and 31st\n\n"
             L"you might have folders titled '15th' and '31st'.\n\n"
-            L"Click 'Add Folder...' to add a folder to ScratchTrack.\n");
+            L"Click 'Add Folder...' to add a folder to ScratchTrack.\n\n");
     }
     else if (envelopes.empty()) {
-        swprintf(szCaption, 1024, L"It looks like you don't have any expense envelopes. Envelopes are used to reserve money\n"
-            L"for upcoming expenses. An envelope will have an expense name such as 'eating out' and a monthly budget.\n"
-            L"You'll add money to your envelopes and then pay expenses from those envelopes as needed. If your\n"
+        swprintf(szCaption, 1024, L"It looks like you don't have any expense envelopes. Envelopes are used to reserve money"
+            L"for upcoming expenses. An envelope will have an expense name such as 'eating out' and a monthly budget.\n\n"
+            L"You'll add money to your envelopes and then pay expenses from those envelopes as needed. If your\n\n"
             L"envelope runs out of money you'll need to replenish that envelope.\n\n"
-            L"Click the envelope icon next to a folder name to create an envelope.\n");
+            L"Click the envelope icon next to a folder name to create an envelope.\n\n");
     }
     else {
 
@@ -329,7 +329,7 @@ void AccountInfoDlg::updateReport()
         else {
             swprintf(szBuff, 1024, L"Folder '%s' has %s of %s budgeted and has monthly expenses totalling %s\n", folder->getName(), budgeted.c_str(), limit.c_str(), transTotal.c_str());
         }
-        bool errorState = limit < budgeted;
+        bool errorState = abs(folder->getExpenseLimit()) < abs(folder->budgetedToSubAccounts());
         COLORREF cr = errorState ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL;
         appendText(szBuff, cr, false, false, TEXT_SIZE);
     }
