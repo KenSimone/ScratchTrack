@@ -9,12 +9,6 @@
 #include <set>
 #include "TinyXml2.h"
 
-// Forward defines
-class AccountBase;
-
-int serialize(std::vector<AccountBase*>& topLevelItems, const char* szFilename);
-int deserialize(const char* szFilename, std::vector<AccountBase*>& topLevelItems);
-
 
 // Base class for items in the account tree
 class AccountBase
@@ -349,3 +343,5 @@ protected:
 	bool _isVirtualAccount;
 }; // class Bucket
 
+int serialize(std::vector<AccountBase*>& topLevelItems, const char* szFilename);
+int deserialize(const char* szFilename, std::vector<AccountBase*>& topLevelItems);
