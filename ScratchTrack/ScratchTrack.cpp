@@ -485,7 +485,6 @@ bool doFundBuckets(AccountGroup* pGroup)
                 }
             }
         }
-        updateGuiValues();
     }
 
     return ret;
@@ -510,11 +509,8 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
             pDestGroup->addChild(pItem);
             TreeView_DeleteItem(g_hwndTV, hItem);
             addTreeItem(hNewParent, pItem);
-            updateGuiValues();
-            serializeState();
-            return true;
+            didSomething = true;
         }
-        return false;
     }
 
     switch (dwCommand)
@@ -525,8 +521,7 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
         if (Utils::confirmHide(pItem)) {
             pItem->setHidden(true);
             TreeView_DeleteItem(g_hwndTV, hItem);
-            updateGuiValues();
-            serializeState();
+            didSomething = true;
         }
 
         break;
@@ -537,7 +532,6 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
         FundBucketDlg dlg(pBucket);
         if (pBucket && dlg.ShowDialog()) {
             pBucket->addBalance(-pBucket->getBalance() + dlg.getNewBalance());
-            updateGuiValues();
             didSomething = true;
         }
         break;
@@ -548,7 +542,6 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
     case ID_ROOT_SETBUDGETEDAMOUNT:
         if (pItem && getOneText(temp)) {
             pItem->setBudgeted(Utils::dollarsStringToPennies(temp.c_str()));
-            updateGuiValues();
             didSomething = true;
         }
         break;
@@ -572,6 +565,11 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
         didSomething = addTransaction(hItem);
         break;
     }
+    }
+
+    if (didSomething) {
+        updateGuiValues();
+        serializeState();
     }
 
     return didSomething;
@@ -1245,59 +1243,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 HTREEITEM hItem = treeViewHitTestLinks(pt.x, pt.y, type);
                 if (hItem && type == ENV_TRANS_ADD)
                 {
-                    // We've hit a hotlink
-                    if (addTransaction(hItem)) {
-                        serializeState();
-                    }
-                    return true;
+                    processContextMenu(ID_ROOT_ADDTransaction, hItem, accountFromTreeItem(hItem));
                 }
                 else if (hItem && type == ENV_MONEY_ADD)
                 {
-                    AccountBucket* pBucket = dynamic_cast<AccountBucket*>(accountFromTreeItem(hItem));
-                    std::wstring temp;
-                    FundBucketDlg dlg(pBucket);
-                    if (pBucket && dlg.ShowDialog()) {
-                        // Add funds to this item
-                        int newBalance = dlg.getNewBalance();
-                        pBucket->addBalance(-pBucket->getBalance() + newBalance);
-
-                        updateGuiValues();
-                        serializeState();
-                    }
-
+                    processContextMenu(ID_BUCKET_RESERVE_FUNDS, hItem, accountFromTreeItem(hItem));
                 }
                 else if (hItem && type == GRP_BUCKET_ADD)
                 {
-                    AccountGroup* pGroup = dynamic_cast<AccountGroup*>(accountFromTreeItem(hItem));
-                    if (doBucketAdd(pGroup, hItem)) {
-                        serializeState();
-                    }
+                    processContextMenu(ID_ROOT_ADDBUCKET, hItem, accountFromTreeItem(hItem));
                 }
                 else if (hItem && type == ENV_BUCKET_EDIT)
                 {
-                    AccountBucket* pBucket = dynamic_cast<AccountBucket*>(accountFromTreeItem(hItem));
-                    if (editBucket(pBucket)) {
-                        serializeState();
-                    }
-                    
+                    processContextMenu(ID_ROOT_EDITBUCKET, hItem, accountFromTreeItem(hItem));
                 }
                 else if (hItem && type == GRP_FOLDER_EDIT) {
-                    AccountGroup* pGroup = dynamic_cast<AccountGroup*>(accountFromTreeItem(hItem));
-                    if (editFolder(pGroup)) {
-                        serializeState();
-                    }
-                }
-                else if (hItem && (type == GRP_FOLDER_HIDE || type == ENV_HIDE)) {
-                    AccountBase* pAcct = accountFromTreeItem(hItem);
-                    if (Utils::confirmHide(pAcct)) {
-                        TreeView_DeleteItem(g_hwndTV, hItem);
-                        pAcct->setHidden(true);
-                        serializeState();
-                    }
+                    processContextMenu(IDM_EDIT_FOLDER, hItem, accountFromTreeItem(hItem));
                 }
                 else if (hItem && (type == GRP_FUND_CHILDREN)) {
-                    AccountBase* pAcct = accountFromTreeItem(hItem);
-                    doFundBuckets((AccountGroup*)pAcct);
+                    processContextMenu(ID_ROOT_FUNDBUCKETS, hItem, accountFromTreeItem(hItem));
                 }
                 else
                 {
@@ -1394,9 +1358,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     if (hSubMenu) {
                         DWORD dwCode = TrackPopupMenu(hSubMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hWnd, NULL);
                         DestroyMenu(hMenu);
-                        if (dwCode && processContextMenu(dwCode, hItem, pItem)) {
-                            updateGuiValues();
-                            serializeState();
+                        if (dwCode) {
+                            processContextMenu(dwCode, hItem, pItem);
                         }
                     }
                 }

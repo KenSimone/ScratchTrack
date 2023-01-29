@@ -412,9 +412,6 @@ bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
             wcscpy_s(szBuffer, 1024, L"No hint. File a bug.");
             switch (type) 
             {
-            case ENV_HIDE:
-                swprintf(szBuffer, 1024, L"Hide the '%ls' bucket", pHitItem->getName());
-                break;
             case ENV_BUCKET_EDIT:
                 swprintf(szBuffer, 1024, L"Edit the '%ls' bucket", pHitItem->getName());
                 break;
@@ -429,9 +426,6 @@ bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
                 break;
             case GRP_FOLDER_EDIT:
                 swprintf(szBuffer, 1024, L"Edit the '%ls' folder", pHitItem->getName());
-                break;
-            case GRP_FOLDER_HIDE:
-                swprintf(szBuffer, 1024, L"Hide the '%ls' folder", pHitItem->getName());
                 break;
             case GRP_FUND_CHILDREN:
                 swprintf(szBuffer, 1024, L"Assign money to the buckets in the '%ls' folder", pHitItem->getName());

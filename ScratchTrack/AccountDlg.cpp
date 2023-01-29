@@ -25,8 +25,7 @@ bool AccountDlg::ShowDialog()
     g_accountInfoDlg.saveText();
     g_accountInfoDlg.appendText(L"About Accounts\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
     g_accountInfoDlg.appendText(L"An account in ScratchTrack has a name and a balance. The balance can be positive, zero, or negative.\n\n", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
-    g_accountInfoDlg.appendText(L"If an account contributes to the monthly budget, the funds in that account "
-    L"can be assigned to buckets.\n\n", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
+    g_accountInfoDlg.appendText(L"If an account is in-budget, the funds in that account can be assigned to buckets.\n\n", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
     g_accountInfoDlg.appendText(L"When you create a credit card account, a matching 'credit card payment' bucket "
     L"will be created. When you pay expenses with the credit card, "
     L"funds move from the original expense bucket to the credit card expense bucket.\n\n", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
