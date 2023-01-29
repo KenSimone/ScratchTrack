@@ -504,7 +504,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
     
     static const wchar_t* szEditBucket= L"\u270E";  // pencil
     //static const wchar_t* szAddBucket = L"\u271A"; // plus sign
-    static const wchar_t* szAddBucket = L"\u2709"; // Bucket
+    static const wchar_t* szAddBucket = L"\U0001F95B"; // Bucket
     static const wchar_t* szAddMoney = L"\U0001F4B2";
     //static const wchar_t* szHide = L"\U0001F576"; // sunglasses
     static const wchar_t* szHide = L"\U0001F441"; // eye
@@ -606,7 +606,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             // Name
             const wchar_t* szFolderOpen = L"\U0001F5C1 ";
             const wchar_t* szFolderClosed = L"\U0001F5C0 ";
-            const wchar_t* szBucket = L"\u2709 ";
+            const wchar_t* szBucket = L"\U0001F95B ";
             std::wstring name;
             if (TreeView_GetItemState(g_hwndTV, hItem, TVIF_STATE) & TVIS_EXPANDED)
                 name = szFolderOpen;
