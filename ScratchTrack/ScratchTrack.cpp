@@ -19,11 +19,11 @@
 #include "DepositDlg.h"
 #include "TransferDlg.h"
 #include "PayCCDlg.h"
-#include "EnvelopeDlg.h"
+#include "BucketDlg.h"
 #include "AccountDlg.h"
 #include "FolderDlg.h"
-#include "FundEnvelopeDlg.h"
-#include "FundEnvelopesDlg.h"
+#include "FundBucketDlg.h"
+#include "FundBucketsDlg.h"
 
 #include <commctrl.h>
 #include <Windows.h>
@@ -66,7 +66,7 @@ void positionControls();
 void calcColumnSpots();
 void addAccount(Account* pAccount);
 void setGuiFont(HWND hCtrl);
-bool doFundEnvelopes(AccountGroup* pGroup);
+bool doFundBuckets(AccountGroup* pGroup);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -118,14 +118,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     return (int) msg.wParam;
 }
 
-int setupPaymentEnvelopeForAccount(Account* pAccount)
+int setupPaymentBucketForAccount(Account* pAccount)
 {
-    std::wstring envelopeName = L"Pay ";
-    envelopeName += pAccount->getName();
+    std::wstring bucketName = L"Pay ";
+    bucketName += pAccount->getName();
 
-    AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(AccountBase::lookupById(pAccount->paidFromEnvelopeId()));
+    AccountBucket* pBucket = dynamic_cast<AccountBucket*>(AccountBase::lookupById(pAccount->paidFromBucketId()));
 
-    if (!pEnvelope) {
+    if (!pBucket) {
 
         auto folders = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
 
@@ -156,26 +156,26 @@ int setupPaymentEnvelopeForAccount(Account* pAccount)
         }
 
 
-        // No existing envelope. Make one.
-        pEnvelope = new AccountEnvelope;
-        pEnvelope->setName(envelopeName.c_str());
-        pEnvelope->setDefaultTransactionPayToAccount(pAccount);
-        pEnvelope->setIsExpense(true);
-        pEnvelope->setIsVirtualAccount(true);
-        pEnvelope->setReadOnly(true);
+        // No existing bucket. Make one.
+        pBucket = new AccountBucket;
+        pBucket->setName(bucketName.c_str());
+        pBucket->setDefaultTransactionPayToAccount(pAccount);
+        pBucket->setIsExpense(true);
+        pBucket->setIsVirtualAccount(true);
+        pBucket->setReadOnly(true);
 
-        pAccount->setPaidFromEnvelopeId(pEnvelope->getId());
+        pAccount->setPaidFromBucketId(pBucket->getId());
 
-        pFolder->addChild(pEnvelope);
-        addTreeItem(hItemFolder, pEnvelope);
+        pFolder->addChild(pBucket);
+        addTreeItem(hItemFolder, pBucket);
     }
     else
     {
-        // We do have an envelope, update it's name as appropriate
-        pEnvelope->setName(envelopeName.c_str());
+        // We do have an bucket, update it's name as appropriate
+        pBucket->setName(bucketName.c_str());
     }
 
-    return pEnvelope->getId();
+    return pBucket->getId();
 }
 
 void createTransactionListControl()
@@ -204,7 +204,7 @@ void createTransactionListControl()
     column.pszText = const_cast<wchar_t*>(L"Payee");
     ListView_InsertColumn(g_hwndTransactionLV, 1, &column);
 
-    column.pszText = const_cast<wchar_t*>(L"Envelope");
+    column.pszText = const_cast<wchar_t*>(L"Bucket");
     ListView_InsertColumn(g_hwndTransactionLV, 2, &column);
 
     column.pszText = const_cast<wchar_t*>(L"Description");
@@ -348,31 +348,31 @@ bool addTransaction(HTREEITEM hItem)
     bool didSimonthing = false;
     AccountBase* pItem = accountFromTreeItem(hItem);
     TransactionDialog transactionDlg;
-    transactionDlg.setEnvelopeId(pItem->getId());
-    AccountEnvelope* pEnvelope = nullptr;
-    if (pItem->getType() == AccountBase::ENVELOPE) {
-        pEnvelope = (AccountEnvelope*)pItem;
-        transactionDlg.setPayee(pEnvelope->getDefaultTransactionPayee());
-        transactionDlg.setAmount(pEnvelope->getDefaultTransactionAmount());
+    transactionDlg.setBucketId(pItem->getId());
+    AccountBucket* pBucket = nullptr;
+    if (pItem->getType() == AccountBase::BUCKET) {
+        pBucket = (AccountBucket*)pItem;
+        transactionDlg.setPayee(pBucket->getDefaultTransactionPayee());
+        transactionDlg.setAmount(pBucket->getDefaultTransactionAmount());
 
-        if (pEnvelope->getDefaultTransactionPayFromAccount()) {
-            transactionDlg.setAccountFromId(pEnvelope->getDefaultTransactionPayFromAccount()->getId());
+        if (pBucket->getDefaultTransactionPayFromAccount()) {
+            transactionDlg.setAccountFromId(pBucket->getDefaultTransactionPayFromAccount()->getId());
         }
         else {
             transactionDlg.setAccountFromId(INVALID_ACCOUNT_ID);
         }
 
-        if (pEnvelope->getDefaultTransactionPayFromAccount()) {
-            transactionDlg.setAccountFromId(pEnvelope->getDefaultTransactionPayFromAccount()->getId());
+        if (pBucket->getDefaultTransactionPayFromAccount()) {
+            transactionDlg.setAccountFromId(pBucket->getDefaultTransactionPayFromAccount()->getId());
         }
     }
 
     if (transactionDlg.ShowDialog())
     {
-        Transaction::addTransaction(Transaction::EXPENSE, transactionDlg.getAmount(), transactionDlg.getAccountFromId(), INVALID_ACCOUNT_ID, transactionDlg.getEnvelopeId(), transactionDlg.getPayee(), transactionDlg.getDescription());
+        Transaction::addTransaction(Transaction::EXPENSE, transactionDlg.getAmount(), transactionDlg.getAccountFromId(), INVALID_ACCOUNT_ID, transactionDlg.getBucketId(), transactionDlg.getPayee(), transactionDlg.getDescription());
 
-        // Apply the amount to the transaction envelope 
-        pEnvelope->addBalance(transactionDlg.getAmount());
+        // Apply the amount to the transaction bucket 
+        pBucket->addBalance(transactionDlg.getAmount());
 
         // Apply the amount to the account
         Account* pFromAccount = dynamic_cast<Account*>(AccountBase::lookupById(transactionDlg.getAccountFromId()));
@@ -382,13 +382,13 @@ bool addTransaction(HTREEITEM hItem)
             pFromAccount->addBalance(transactionDlg.getAmount());
 
             // See if this is a payment from a CC account
-            AccountEnvelope* pToEnvelope = dynamic_cast<AccountEnvelope*>(AccountBase::lookupById(pFromAccount->paidFromEnvelopeId()));
-            if (pToEnvelope)
+            AccountBucket* pToBucket = dynamic_cast<AccountBucket*>(AccountBase::lookupById(pFromAccount->paidFromBucketId()));
+            if (pToBucket)
             {
-                pToEnvelope->addBalance(-transactionDlg.getAmount());
-                if (pEnvelope->getBalance() < 0)
+                pToBucket->addBalance(-transactionDlg.getAmount());
+                if (pBucket->getBalance() < 0)
                 {
-                    pEnvelope->addBalance(-pEnvelope->getBalance());
+                    pBucket->addBalance(-pBucket->getBalance());
                 }
             }
         } // if pFromAccount
@@ -423,21 +423,21 @@ bool editFolder(AccountGroup* pGroup)
     return false;
 }
 
-bool editEnvelope(AccountEnvelope* pEnvelope)
+bool editBucket(AccountBucket* pBucket)
 {
-    EnvelopeDialog dlg;
-    dlg.setBudget(pEnvelope->getBudgeted());
-    dlg.setEnvelopeName(pEnvelope->getName());
-    dlg.setDefaultTransactionPayFromAccount(pEnvelope->getDefaultTransactionPayFromAccount());
-    dlg.setDefaultTransactionAmount(pEnvelope->getDefaultTransactionAmount());
-    dlg.setDefaultTransactionPayee(pEnvelope->getDefaultTransactionPayee());
+    BucketDialog dlg;
+    dlg.setBudget(pBucket->getBudgeted());
+    dlg.setBucketName(pBucket->getName());
+    dlg.setDefaultTransactionPayFromAccount(pBucket->getDefaultTransactionPayFromAccount());
+    dlg.setDefaultTransactionAmount(pBucket->getDefaultTransactionAmount());
+    dlg.setDefaultTransactionPayee(pBucket->getDefaultTransactionPayee());
     if (dlg.ShowDialog())
     {
-        pEnvelope->setBudgeted(dlg.getBudget());
-        pEnvelope->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
-        pEnvelope->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
-        pEnvelope->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
-        pEnvelope->setName(dlg.getEnvelopeName());
+        pBucket->setBudgeted(dlg.getBudget());
+        pBucket->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
+        pBucket->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
+        pBucket->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
+        pBucket->setName(dlg.getBucketName());
         
         updateGuiValues();
 
@@ -446,42 +446,42 @@ bool editEnvelope(AccountEnvelope* pEnvelope)
     return false;
 }
 
-bool doEnvelopeAdd(AccountGroup* pParent, HTREEITEM hParent)
+bool doBucketAdd(AccountGroup* pParent, HTREEITEM hParent)
 {
     bool ret = false;
-    EnvelopeDialog dlg;
+    BucketDialog dlg;
     if (pParent && dlg.ShowDialog()) {
-        AccountEnvelope* pEnvelope = new AccountEnvelope;
-        pEnvelope->setName(dlg.getEnvelopeName());
-        pEnvelope->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
-        pEnvelope->setDefaultTransactionPayToAccount(nullptr);
-        pEnvelope->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
-        pEnvelope->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
-        pEnvelope->setIsExpense(true);
-        pEnvelope->setIsVirtualAccount(true);
-        pEnvelope->setBudgeted(dlg.getBudget());
+        AccountBucket* pBucket = new AccountBucket;
+        pBucket->setName(dlg.getBucketName());
+        pBucket->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
+        pBucket->setDefaultTransactionPayToAccount(nullptr);
+        pBucket->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
+        pBucket->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
+        pBucket->setIsExpense(true);
+        pBucket->setIsVirtualAccount(true);
+        pBucket->setBudgeted(dlg.getBudget());
 
-        pParent->addChild(pEnvelope);
-        addTreeItem(hParent, pEnvelope);
+        pParent->addChild(pBucket);
+        addTreeItem(hParent, pBucket);
         ret = true;
     }
     return ret;
 }
 
-bool doFundEnvelopes(AccountGroup* pGroup)
+bool doFundBuckets(AccountGroup* pGroup)
 {
-    FundEnvelopesDlg dlg(pGroup);
+    FundBucketsDlg dlg(pGroup);
     bool ret = dlg.ShowDialog();
     if (ret) {
         auto children = pGroup->getChildren();
         for (size_t i = 0; i < children.size(); i++) {
-            AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(children[i]);
-            if (pEnvelope) {
+            AccountBucket* pBucket = dynamic_cast<AccountBucket*>(children[i]);
+            if (pBucket) {
                 if (dlg.getResetBalance()) {
-                    pEnvelope->addBalance(-pEnvelope->getBalance() + -pEnvelope->getBudgeted());
+                    pBucket->addBalance(-pBucket->getBalance() + -pBucket->getBudgeted());
                 }
                 else {
-                    pEnvelope->addBalance(-pEnvelope->getBudgeted());
+                    pBucket->addBalance(-pBucket->getBudgeted());
                 }
             }
         }
@@ -500,9 +500,9 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
         pParentGroup = (AccountGroup*)pItem;
     }
 
-    if (dwCommand >= ID_ROOT_ENVELOPE_MOVE_TO_START && dwCommand < ID_ROOT_ENVELOPE_MOVE_TO_END) {
+    if (dwCommand >= ID_ROOT_BUCKET_MOVE_TO_START && dwCommand < ID_ROOT_BUCKET_MOVE_TO_END) {
         // This is a move
-        AccountGroup* pDestGroup = dynamic_cast<AccountGroup*>(AccountBase::lookupById(dwCommand - ID_ROOT_ENVELOPE_MOVE_TO_START));
+        AccountGroup* pDestGroup = dynamic_cast<AccountGroup*>(AccountBase::lookupById(dwCommand - ID_ROOT_BUCKET_MOVE_TO_START));
         AccountGroup* pOrigGroup = dynamic_cast<AccountGroup*>(pItem->getParent());
         HTREEITEM hNewParent = treeItemFromAccount(pDestGroup);
 
@@ -519,7 +519,7 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
 
     switch (dwCommand)
     {
-    case ID_ROOT_HIDEENVELOPE:
+    case ID_ROOT_HIDEBUCKET:
     case ID_ROOT_HIDECATEGORY:
     {
         if (Utils::confirmHide(pItem)) {
@@ -531,19 +531,19 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
 
         break;
     }
-    case ID_ENVELOPE_RESERVE_FUNDS:
+    case ID_BUCKET_RESERVE_FUNDS:
     {
-        AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(pItem);
-        FundEnvelopeDlg dlg(pEnvelope);
-        if (pEnvelope && dlg.ShowDialog()) {
-            pEnvelope->addBalance(-pEnvelope->getBalance() + dlg.getNewBalance());
+        AccountBucket* pBucket = dynamic_cast<AccountBucket*>(pItem);
+        FundBucketDlg dlg(pBucket);
+        if (pBucket && dlg.ShowDialog()) {
+            pBucket->addBalance(-pBucket->getBalance() + dlg.getNewBalance());
             updateGuiValues();
             didSomething = true;
         }
         break;
     }
-    case ID_ROOT_EDITENVELOPE:
-        didSomething = editEnvelope((AccountEnvelope*)pItem);
+    case ID_ROOT_EDITBUCKET:
+        didSomething = editBucket((AccountBucket*)pItem);
         break;
     case ID_ROOT_SETBUDGETEDAMOUNT:
         if (pItem && getOneText(temp)) {
@@ -557,14 +557,14 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
         didSomething = editFolder((AccountGroup*)pItem);
         break;
     }
-    case ID_ROOT_FUNDENVELOPES:
+    case ID_ROOT_FUNDBUCKETS:
     {
-        didSomething = doFundEnvelopes((AccountGroup*)pItem);
+        didSomething = doFundBuckets((AccountGroup*)pItem);
         break;
     }
-    case ID_ROOT_ADDENVELOPE:
+    case ID_ROOT_ADDBUCKET:
     {
-        didSomething = doEnvelopeAdd(pParentGroup, hItem);
+        didSomething = doBucketAdd(pParentGroup, hItem);
         break;
     }
     case ID_ROOT_ADDTransaction:
@@ -596,8 +596,8 @@ void updateTransactionUiAndSave(Transaction* pTransaction, int listviewItemIndex
     }
     ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 1, const_cast<wchar_t*>(payee.c_str()));
 
-    // Envelope
-    AccountBase* ati = AccountBase::lookupById(pTransaction->getEnvelopeId());
+    // Bucket
+    AccountBase* ati = AccountBase::lookupById(pTransaction->getBucketId());
     if (ati) {
         ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 2, const_cast<wchar_t*>(ati->getName()));
     }
@@ -617,18 +617,18 @@ void updateTransactionUiAndSave(Transaction* pTransaction, int listviewItemIndex
 
 void applyModifiedTransaction(Transaction* pTransaction, int listviewItemIndex)
 {
-    AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(AccountBase::lookupById(pTransaction->getEnvelopeId()));
+    AccountBucket* pBucket = dynamic_cast<AccountBucket*>(AccountBase::lookupById(pTransaction->getBucketId()));
     Account* pAccountFrom = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountFromId()));
     Account* pAccountTo = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountToId()));
 
-    AccountEnvelope* pEnvelopeTo = nullptr;
+    AccountBucket* pBucketTo = nullptr;
     if (pAccountFrom) {
-        pEnvelopeTo = dynamic_cast<AccountEnvelope*>(AccountBase::lookupById(pAccountFrom->paidFromEnvelopeId()));
+        pBucketTo = dynamic_cast<AccountBucket*>(AccountBase::lookupById(pAccountFrom->paidFromBucketId()));
     }
 
-    // Record the expense in the envelope
-    if (pEnvelope) {
-        pEnvelope->addBalance(pTransaction->getAmount());
+    // Record the expense in the bucket
+    if (pBucket) {
+        pBucket->addBalance(pTransaction->getAmount());
     }
 
     // Record the expense in the account
@@ -636,14 +636,14 @@ void applyModifiedTransaction(Transaction* pTransaction, int listviewItemIndex)
         pAccountFrom->addBalance(pTransaction->getAmount());
     }
 
-    // If this is a transfer to a envelope, record the reverse of the expense in the target account 
+    // If this is a transfer to a bucket, record the reverse of the expense in the target account 
     if (pAccountTo) {
         pAccountTo->addBalance(-pTransaction->getAmount());
     }
 
-    // If this is a transfer to a envelope, record the reverse of the expense in the target envelope
-    if (pEnvelopeTo) {
-        pEnvelopeTo->addBalance(-pTransaction->getAmount());
+    // If this is a transfer to a bucket, record the reverse of the expense in the target bucket
+    if (pBucketTo) {
+        pBucketTo->addBalance(-pTransaction->getAmount());
     }
 
     updateTransactionUiAndSave(pTransaction, listviewItemIndex);
@@ -669,10 +669,10 @@ void doPayCC(Account* pAccount)
 
     PayCCDlg dlg(pAccount, 0, 0);
     if (dlg.ShowDialog()) {
-        Transaction::addTransaction(Transaction::CCPAYMENT, dlg.getAmount(), dlg.getPaidFromId(), pAccount->getId(), pAccount->paidFromEnvelopeId(), pAccount->getName(), dlg.getDescription());
+        Transaction::addTransaction(Transaction::CCPAYMENT, dlg.getAmount(), dlg.getPaidFromId(), pAccount->getId(), pAccount->paidFromBucketId(), pAccount->getName(), dlg.getDescription());
         pAccount->addBalance(-dlg.getAmount());
-        AccountEnvelope* pEnvelope = (AccountEnvelope*)Account::lookupById(pAccount->paidFromEnvelopeId());
-        pEnvelope->addBalance(dlg.getAmount());
+        AccountBucket* pBucket = (AccountBucket*)Account::lookupById(pAccount->paidFromBucketId());
+        pBucket->addBalance(dlg.getAmount());
         Account* pFrom = (Account*)Account::lookupById(dlg.getPaidFromId());
         pFrom->addBalance(dlg.getAmount());
         serializeState();
@@ -742,8 +742,8 @@ void editDeposit(Transaction* pTransaction, int listviewItemIndex)
             Account* pNewAcct = dlg.getAccount();
             pNewAcct->addBalance(dlg.getAmount());
 
-            // Apply new balance to the envelope
-            pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), pTransaction->getEnvelopeId(), pTransaction->getAccountFromId(), dlg.getAccount()->getId());
+            // Apply new balance to the bucket
+            pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), pTransaction->getBucketId(), pTransaction->getAccountFromId(), dlg.getAccount()->getId());
             updateTransactionUiAndSave(pTransaction, listviewItemIndex);
         }
     }
@@ -764,12 +764,12 @@ void editTransfer(Transaction* pTransaction, int listviewItemIndex)
             // Take money away from the 'to' account
             pAcctTo->addBalance(-origAmount);
 
-            // Apply new balance to the envelope
+            // Apply new balance to the bucket
             pAcctTo = (Account*)AccountBase::lookupById(dlg.getAccountToId());
             pAcctFrom = (Account*)AccountBase::lookupById(dlg.getAccountFromId());
             pAcctFrom->addBalance(-dlg.getAmount());
             pAcctTo->addBalance(dlg.getAmount());
-            pTransaction->setDetails(dlg.getAmount(), pTransaction->getPayee(), dlg.getDescription(), pTransaction->getEnvelopeId(), dlg.getAccountFromId(), dlg.getAccountToId());
+            pTransaction->setDetails(dlg.getAmount(), pTransaction->getPayee(), dlg.getDescription(), pTransaction->getBucketId(), dlg.getAccountFromId(), dlg.getAccountToId());
             updateTransactionUiAndSave(pTransaction, listviewItemIndex);
         }
     }
@@ -781,20 +781,20 @@ void editPayCC(Transaction* pTransaction, int listviewItemIndex)
     if (pAcct) {
         PayCCDlg dlg(pAcct, pTransaction->getAmount(), pTransaction->getAccountFromId(), pTransaction->getDescription());
         if (dlg.ShowDialog()) {
-            AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(AccountBase::lookupById(pTransaction->getEnvelopeId()));
+            AccountBucket* pBucket = dynamic_cast<AccountBucket*>(AccountBase::lookupById(pTransaction->getBucketId()));
             Account* pAccountTo = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountToId()));
             Account* pAccountFrom = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountFromId()));
 
-            // Put money back in the envelope and "from account"
+            // Put money back in the bucket and "from account"
             int origAmount = pTransaction->getAmount();
-            pEnvelope->addBalance(-origAmount);
+            pBucket->addBalance(-origAmount);
             pAccountFrom->addBalance(-origAmount);
 
             // Take money away from the CC account
             pAccountTo->addBalance(origAmount);
 
-            // Apply new balance to the envelope
-            pTransaction->setDetails(dlg.getAmount(), pTransaction->getPayee(), dlg.getDescription(), pTransaction->getEnvelopeId(), pTransaction->getAccountFromId(), pTransaction->getAccountToId());
+            // Apply new balance to the bucket
+            pTransaction->setDetails(dlg.getAmount(), pTransaction->getPayee(), dlg.getDescription(), pTransaction->getBucketId(), pTransaction->getAccountFromId(), pTransaction->getAccountToId());
             applyModifiedTransaction(pTransaction, listviewItemIndex);
 
         }
@@ -808,22 +808,22 @@ void editExpense(Transaction* pTransaction, int listviewItemIndex)
     dlg.setPayee(pTransaction->getPayee());
     dlg.setDescription(pTransaction->getDescription());
     dlg.setAccountFromId(pTransaction->getAccountFromId());
-    dlg.setEnvelopeId(pTransaction->getEnvelopeId());
+    dlg.setBucketId(pTransaction->getBucketId());
 
     if (dlg.ShowDialog())
     {
         // This is actually kind of complicated. 
         // We need to undo the original transacation first.
-        AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(AccountBase::lookupById(pTransaction->getEnvelopeId()));
+        AccountBucket* pBucket = dynamic_cast<AccountBucket*>(AccountBase::lookupById(pTransaction->getBucketId()));
         Account* pAccountFrom = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountFromId()));
         Account* pAccountTo = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountToId()));
-        AccountEnvelope* pEnvelopeTo = nullptr;
+        AccountBucket* pBucketTo = nullptr;
 
-        pEnvelopeTo = dynamic_cast<AccountEnvelope*>(AccountBase::lookupById(pAccountFrom->paidFromEnvelopeId()));
+        pBucketTo = dynamic_cast<AccountBucket*>(AccountBase::lookupById(pAccountFrom->paidFromBucketId()));
 
         int origAmount = pTransaction->getAmount();
-        if (pEnvelope) {
-            pEnvelope->addBalance(-origAmount);
+        if (pBucket) {
+            pBucket->addBalance(-origAmount);
         }
 
         // Put the money back in the original account
@@ -834,13 +834,13 @@ void editExpense(Transaction* pTransaction, int listviewItemIndex)
             pAccountTo->addBalance(origAmount);
         }
 
-        // Take it out of the target envelope (if any)
-        if (pEnvelopeTo) {
-            pEnvelopeTo->addBalance(origAmount);
+        // Take it out of the target bucket (if any)
+        if (pBucketTo) {
+            pBucketTo->addBalance(origAmount);
         }
 
         // Now this is basically the same as add
-        pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), dlg.getEnvelopeId(), dlg.getAccountFromId(), INVALID_ACCOUNT_ID);
+        pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), dlg.getBucketId(), dlg.getAccountFromId(), INVALID_ACCOUNT_ID);
         applyModifiedTransaction(pTransaction, listviewItemIndex);
 
     }
@@ -891,7 +891,7 @@ void editAccount(Account* pAccount)
     dlg.setBalance(pAccount->getBalance());
     dlg.setBudgeted(pAccount->getContributesToBudget());
     dlg.setName(pAccount->getName());
-    dlg.setCreditCard(pAccount->paidFromEnvelopeId() != INVALID_ACCOUNT_ID);
+    dlg.setCreditCard(pAccount->paidFromBucketId() != INVALID_ACCOUNT_ID);
     if (dlg.ShowDialog())
     {
         // Did this change "types" (cc to non CC
@@ -901,20 +901,20 @@ void editAccount(Account* pAccount)
         pAccount->setName(dlg.getName());
         pAccount->setContributesToBudget(dlg.getBudgeted());
         if (dlg.getCreditCard()) {
-            setupPaymentEnvelopeForAccount(pAccount);
+            setupPaymentBucketForAccount(pAccount);
         }
         else if (pAccount->isCCAccount())
         {
-            // This was a CC account, but isn't any more. Hide the envelope, and return any balance
-            AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope * >(AccountBase::lookupById(pAccount->paidFromEnvelopeId()));
-            pEnvelope->addBalance(-pEnvelope->getBalance());
-            pEnvelope->setHidden(true);
-            pAccount->setPaidFromEnvelopeId(INVALID_ACCOUNT_ID);
-            HTREEITEM hEnvelope = treeItemFromAccount(pEnvelope);
-            HTREEITEM hParent = TreeView_GetParent(g_hwndTV, hEnvelope);
+            // This was a CC account, but isn't any more. Hide the bucket, and return any balance
+            AccountBucket* pBucket = dynamic_cast<AccountBucket * >(AccountBase::lookupById(pAccount->paidFromBucketId()));
+            pBucket->addBalance(-pBucket->getBalance());
+            pBucket->setHidden(true);
+            pAccount->setPaidFromBucketId(INVALID_ACCOUNT_ID);
+            HTREEITEM hBucket = treeItemFromAccount(pBucket);
+            HTREEITEM hParent = TreeView_GetParent(g_hwndTV, hBucket);
 
-            if (hEnvelope) {
-                TreeView_DeleteItem(g_hwndTV, hEnvelope);
+            if (hBucket) {
+                TreeView_DeleteItem(g_hwndTV, hBucket);
             }
 
             if (!TreeView_GetChild(g_hwndTV, hParent)) {
@@ -953,7 +953,7 @@ void doAddAccountDlg()
         pAccount->addBalance(dlg.getBalance());
         pAccount->setContributesToBudget(dlg.getBudgeted());
         if (dlg.getCreditCard()) {
-            setupPaymentEnvelopeForAccount(pAccount);
+            setupPaymentBucketForAccount(pAccount);
         }
         addTreeItem(TVI_ROOT, pAccount);
         serializeState();
@@ -1020,7 +1020,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             doAddAccountDlg();
             break;
         }
-        case ID_FILE_ADDENVELOPE:
+        case ID_FILE_ADDBUCKET:
             doAddFolder();
             break;
         default:
@@ -1219,7 +1219,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             if (pHeader->code == TVN_SELCHANGED)
             {
-                if (g_transactionFilterDlg.filterToEnvelopeSelection()) {
+                if (g_transactionFilterDlg.filterToBucketSelection()) {
                     populateTransactions();
                 }
             }
@@ -1253,30 +1253,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 }
                 else if (hItem && type == ENV_MONEY_ADD)
                 {
-                    AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(accountFromTreeItem(hItem));
+                    AccountBucket* pBucket = dynamic_cast<AccountBucket*>(accountFromTreeItem(hItem));
                     std::wstring temp;
-                    FundEnvelopeDlg dlg(pEnvelope);
-                    if (pEnvelope && dlg.ShowDialog()) {
+                    FundBucketDlg dlg(pBucket);
+                    if (pBucket && dlg.ShowDialog()) {
                         // Add funds to this item
                         int newBalance = dlg.getNewBalance();
-                        pEnvelope->addBalance(-pEnvelope->getBalance() + newBalance);
+                        pBucket->addBalance(-pBucket->getBalance() + newBalance);
 
                         updateGuiValues();
                         serializeState();
                     }
 
                 }
-                else if (hItem && type == GRP_ENVELOPE_ADD)
+                else if (hItem && type == GRP_BUCKET_ADD)
                 {
                     AccountGroup* pGroup = dynamic_cast<AccountGroup*>(accountFromTreeItem(hItem));
-                    if (doEnvelopeAdd(pGroup, hItem)) {
+                    if (doBucketAdd(pGroup, hItem)) {
                         serializeState();
                     }
                 }
-                else if (hItem && type == ENV_ENVELOPE_EDIT)
+                else if (hItem && type == ENV_BUCKET_EDIT)
                 {
-                    AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(accountFromTreeItem(hItem));
-                    if (editEnvelope(pEnvelope)) {
+                    AccountBucket* pBucket = dynamic_cast<AccountBucket*>(accountFromTreeItem(hItem));
+                    if (editBucket(pBucket)) {
                         serializeState();
                     }
                     
@@ -1297,7 +1297,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 }
                 else if (hItem && (type == GRP_FUND_CHILDREN)) {
                     AccountBase* pAcct = accountFromTreeItem(hItem);
-                    doFundEnvelopes((AccountGroup*)pAcct);
+                    doFundBuckets((AccountGroup*)pAcct);
                 }
                 else
                 {
@@ -1321,8 +1321,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 auto acctBase = accountFromTreeItem(hItem);
                 if (acctBase && !acctBase->getReadOnly())
                 {
-                    AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(acctBase);
-                    if (pEnvelope && editEnvelope(pEnvelope) ){
+                    AccountBucket* pBucket = dynamic_cast<AccountBucket*>(acctBase);
+                    if (pBucket && editBucket(pBucket) ){
                         serializeState();
                     }
                     return true;
@@ -1355,9 +1355,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_GROUP_MENU));
                         hSubMenu = GetSubMenu(hMenu, 0);
                     }
-                    else if (pItem->getType() == AccountBase::ENVELOPE) {
+                    else if (pItem->getType() == AccountBase::BUCKET) {
                         if (!pItem->getReadOnly()) {
-                            hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_ENVELOPE_MENU));
+                            hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_BUCKET_MENU));
                             hSubMenu = GetSubMenu(hMenu, 0);
                         }
 
@@ -1367,7 +1367,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         HMENU groupMenu = CreatePopupMenu();
                         for (size_t i = 0; i < groups.size(); i++) {
                             if (pParentItem && groups[i]->getId() != pParentItem->getId() && !groups[i]->getReadOnly()) {
-                                AppendMenu(groupMenu, MF_STRING, ID_ROOT_ENVELOPE_MOVE_TO_START + groups[i]->getId(), groups[i]->getName());
+                                AppendMenu(groupMenu, MF_STRING, ID_ROOT_BUCKET_MOVE_TO_START + groups[i]->getId(), groups[i]->getName());
                                 added = true;
                             }
                         }
@@ -1383,7 +1383,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         //for (size_t i = 0; i < groups.size(); i++) {
                         //    if (pParentItem && groups[i]->getId() != pParentItem->getId()) {
                         //        added = true;
-                        //        AppendMenu(accountMenu, MF_STRING, ID_ROOT_ENVELOPE_MOVE_TO_START + groups[i]->getId(), groups[i]->getName());
+                        //        AppendMenu(accountMenu, MF_STRING, ID_ROOT_BUCKET_MOVE_TO_START + groups[i]->getId(), groups[i]->getName());
                         //    }
                         //}
                         //if (added) {
@@ -1570,7 +1570,7 @@ void populateTransactions()
     AccountBase* pItem = accountFromTreeItem(hItem);
 
     // Get Transactions for item
-    std::vector<Transaction*> Transactions = g_transactionFilterDlg.filterToEnvelopeSelection() ? Transaction::getTransactionsForItem(pItem) : Transaction::getAllTransactions();
+    std::vector<Transaction*> Transactions = g_transactionFilterDlg.filterToBucketSelection() ? Transaction::getTransactionsForItem(pItem) : Transaction::getAllTransactions();
 
     // Filter to account, if requested
     if (g_transactionFilterDlg.filterToAccount()) {
@@ -1619,7 +1619,7 @@ void populateTransactions()
             matched = matched || Utils::searchText(pCurTransaction->getPayee(), filterText.c_str());
             matched = matched || Utils::searchText(amount.c_str(), filterText.c_str());
 
-            AccountBase* pCat = AccountBase::lookupById(pCurTransaction->getEnvelopeId());
+            AccountBase* pCat = AccountBase::lookupById(pCurTransaction->getBucketId());
             if (pCat) {
                 matched = matched || Utils::searchText(pCat->getName(), filterText.c_str());
             }
@@ -1652,8 +1652,8 @@ void populateTransactions()
 
         ListView_SetItemText(g_hwndTransactionLV, 0, 1, const_cast<wchar_t*>(payee.c_str()));
 
-        // Envelope
-        AccountBase* ati = AccountBase::lookupById((*itr)->getEnvelopeId());
+        // Bucket
+        AccountBase* ati = AccountBase::lookupById((*itr)->getBucketId());
         if (ati) {
             ListView_SetItemText(g_hwndTransactionLV, 0, 2, const_cast<wchar_t*>(ati->getName()));
         }
@@ -1785,12 +1785,12 @@ void newPositionControls()
     SendMessage(g_hwndTreeHeader, HDM_LAYOUT, 0, (LPARAM)&treeHeaderLayout);
 
 
-    // Envelope tree header
+    // Bucket tree header
     SetWindowPos(g_hwndTreeHeader, wpTreeHeaderSize.hwndInsertAfter, middleEdge, top, rSideWidth, wpTreeHeaderSize.cy, wpTreeHeaderSize.flags | SWP_SHOWWINDOW);
 
-    // Envelope tree control
-    int envelopeTreeHeigth = rClient.bottom - rClient.top - wpTreeHeaderSize.cy;
-    SetWindowPos(g_hwndTV, nullptr, middleEdge, rTree.top, rSideWidth, envelopeTreeHeigth, SWP_NOZORDER);
+    // Bucket tree control
+    int bucketTreeHeigth = rClient.bottom - rClient.top - wpTreeHeaderSize.cy;
+    SetWindowPos(g_hwndTV, nullptr, middleEdge, rTree.top, rSideWidth, bucketTreeHeigth, SWP_NOZORDER);
 
 
     for (size_t i = 0; i < 3; i++) {
@@ -1881,18 +1881,18 @@ void positionControls()
     treeHeaderLayout.pwpos = &wpTreeHeaderSize; // This is the suggested size of the header. We care about the height.
     SendMessage(g_hwndTreeHeader, HDM_LAYOUT, 0, (LPARAM)&treeHeaderLayout);
 
-    // Envelope tree header
+    // Bucket tree header
     SetWindowPos(g_hwndTreeHeader, wpTreeHeaderSize.hwndInsertAfter, middleEdge, top, rSideWidth, wpTreeHeaderSize.cy, wpTreeHeaderSize.flags | SWP_SHOWWINDOW);
 
-    // Envelope tree control
-    int envelopeTreeHeigth = 0;
+    // Bucket tree control
+    int bucketTreeHeigth = 0;
     if (showTransactionList) {
-        envelopeTreeHeigth = transactionFilterTop - rClient.top - wpTreeHeaderSize.cy;
+        bucketTreeHeigth = transactionFilterTop - rClient.top - wpTreeHeaderSize.cy;
     } else{ 
-        envelopeTreeHeigth = rClient.bottom - rClient.top - wpTreeHeaderSize.cy - transactionFilterHeight;
+        bucketTreeHeigth = rClient.bottom - rClient.top - wpTreeHeaderSize.cy - transactionFilterHeight;
     }
 
-    SetWindowPos(g_hwndTV, nullptr, middleEdge, rTree.top, rSideWidth, envelopeTreeHeigth, SWP_NOZORDER);
+    SetWindowPos(g_hwndTV, nullptr, middleEdge, rTree.top, rSideWidth, bucketTreeHeigth, SWP_NOZORDER);
 
 
     for (size_t i = 0; i < 3; i++) {

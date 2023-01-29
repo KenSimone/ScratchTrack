@@ -282,7 +282,7 @@ std::wstring Utils::accountGuiName(Account* pAccount)
 {
 	static const wchar_t* szCreditCard = (wchar_t*)(u"\U0001F4B3 ");
 	static const wchar_t* szBank = (wchar_t*)u"\U0001F3E6 ";
-	std::wstring name = (pAccount->paidFromEnvelopeId() == INVALID_ACCOUNT_ID) ? szBank : szCreditCard;
+	std::wstring name = (pAccount->paidFromBucketId() == INVALID_ACCOUNT_ID) ? szBank : szCreditCard;
 	name += pAccount->getName();
 
 	return name;
@@ -381,7 +381,7 @@ bool Utils::confirmHide(AccountBase* pAccount)
 
 	g_accountInfoDlg.appendText(L"In ScratchTrack there is no delete, at least not yet. If you want something gone from your view you "
 		L"can hide it. As of now, hidden items are simply not displayed. No money moves, nothing is assigned or unassigned. If you hide an "
-		L"envelope with money in it, those funds will be hidden as well. You can always unhide things with the unhide button.",
+		L"bucket with money in it, those funds will be hidden as well. You can always unhide things with the unhide button.",
 		RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
 	if (IDYES == MessageBox(g_hTopWindow, szBuff, L"Confirm Hide", MB_YESNO)) {

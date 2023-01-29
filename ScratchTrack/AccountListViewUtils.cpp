@@ -83,9 +83,9 @@ Account::ACTION_FLAG hitTestAccountList(POINT pt, Account** ppAccount /*= nullpt
             {
                 ret = Account::ACTION_FLAG::HIDE;
             }
-            else if (pAccount->paidFromEnvelopeId() != INVALID_ACCOUNT_ID)
+            else if (pAccount->paidFromBucketId() != INVALID_ACCOUNT_ID)
             {
-                if (pAccount->getActionFlags() & Account::ACTION_FLAG::PAY && PtInRect(&rPay, hitInfo.pt) && pAccount->paidFromEnvelopeId() != INVALID_ACCOUNT_ID)
+                if (pAccount->getActionFlags() & Account::ACTION_FLAG::PAY && PtInRect(&rPay, hitInfo.pt) && pAccount->paidFromBucketId() != INVALID_ACCOUNT_ID)
                 {
                     ret = Account::ACTION_FLAG::PAY;
                 }
@@ -342,7 +342,7 @@ LRESULT accountListCustomDraw(LPNMLVCUSTOMDRAW  pCustomDraw)
             iR.left += sizeSpaces.cx + sizeHide.cx;
 #endif
 
-            if (pAccount->paidFromEnvelopeId() != INVALID_ACCOUNT_ID)
+            if (pAccount->paidFromBucketId() != INVALID_ACCOUNT_ID)
             {
                 // This is a credit card
                 SIZE sizePay = { 0 };

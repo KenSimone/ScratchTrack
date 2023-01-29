@@ -11,7 +11,7 @@ extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 extern AccountInfoDlg g_accountInfoDlg;
 
-TransactionDialog::TransactionDialog() : _amount(0), _accountFromId(INVALID_ACCOUNT_ID), _envelopeId(INVALID_ACCOUNT_ID)
+TransactionDialog::TransactionDialog() : _amount(0), _accountFromId(INVALID_ACCOUNT_ID), _bucketId(INVALID_ACCOUNT_ID)
 {
 }
 
@@ -26,7 +26,7 @@ bool TransactionDialog::ShowDialog()
     g_accountInfoDlg.saveText();
     g_accountInfoDlg.appendText(L"About Transactions\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
 
-    g_accountInfoDlg.appendText(L"A transaction is a record of an expense. Transactions are paid from accounts and tracked against envelopes. "
+    g_accountInfoDlg.appendText(L"A transaction is a record of an expense. Transactions are paid from accounts and tracked against buckets. "
         L"You can edit transactions by double clicking them or through their right click menu.",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
@@ -57,13 +57,13 @@ INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT messag
             Utils::populateAccountCombo(hDlg, IDC_COMBO_ACCOUNT, THIS_PTR->getAccountFromId());
 
             // Categories
-            HWND hCategories = GetDlgItem(hDlg, IDC_COMBO_ENVELOPE);
-            auto categories = AccountBase::getAllAccountsOfType(AccountBase::ENVELOPE);
+            HWND hCategories = GetDlgItem(hDlg, IDC_COMBO_BUCKET);
+            auto categories = AccountBase::getAllAccountsOfType(AccountBase::BUCKET);
             for (auto itr = categories.begin(); itr != categories.end(); itr++) {
                 int pos = (int)SendMessage(hCategories, CB_ADDSTRING, 0, (LPARAM)(*itr)->getName());
                 SendMessage(hCategories, CB_SETITEMDATA, pos, (LPARAM)*itr);
                 AccountBase* pAccount = *itr;
-                if (pAccount->getId() == THIS_PTR->getEnvelopeId()) {
+                if (pAccount->getId() == THIS_PTR->getBucketId()) {
                     ComboBox_SetCurSel(hCategories, pos);
                 }
             }
@@ -94,7 +94,7 @@ INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT messag
                 if (THIS_PTR) {
 
                     HWND hAccountsFrom = GetDlgItem(hDlg, IDC_COMBO_ACCOUNT);
-                    HWND hCategories = GetDlgItem(hDlg, IDC_COMBO_ENVELOPE);
+                    HWND hCategories = GetDlgItem(hDlg, IDC_COMBO_BUCKET);
 
                     // Set amount
                     wchar_t szBuff[1024] = { 0 };
@@ -108,8 +108,8 @@ INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT messag
                     // Set category
                     int iSel = ComboBox_GetCurSel(hCategories);
                     if (iSel >= 0) {
-                        AccountEnvelope* pEnvelope = (AccountEnvelope*)ComboBox_GetItemData(hCategories, iSel);
-                        THIS_PTR->setEnvelopeId(pEnvelope->getId());
+                        AccountBucket* pBucket = (AccountBucket*)ComboBox_GetItemData(hCategories, iSel);
+                        THIS_PTR->setBucketId(pBucket->getId());
                     }
 
                     // Set description

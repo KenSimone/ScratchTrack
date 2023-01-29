@@ -142,8 +142,8 @@ AccountBase* AccountItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	case AccountBase::GROUP:
 		pItem = new AccountGroup;
 		break;
-	case AccountBase::ENVELOPE:
-		pItem = new AccountEnvelope;
+	case AccountBase::BUCKET:
+		pItem = new AccountBucket;
 		break;
 	}
 
@@ -251,7 +251,7 @@ int AccountBase::getCurrentMonthTransacationTotal()
 		if ((transactionTime.wYear == currentTime.wYear) &&
 			(transactionTime.wMonth == currentTime.wMonth))
 		{
-			if (accountIds.find((*itr)->getEnvelopeId()) != accountIds.end())
+			if (accountIds.find((*itr)->getBucketId()) != accountIds.end())
 			{
 				ret += (*itr)->getAmount();
 			}
@@ -302,7 +302,7 @@ int AccountGroup::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	return ERROR_SUCCESS;
 }
 
-int AccountEnvelope::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
+int AccountBucket::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 {
 	AccountBase::initItemFromXmlElement(pAccount);
 
@@ -334,7 +334,7 @@ int AccountEnvelope::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	return ERROR_SUCCESS;
 }
 
-int AccountEnvelope::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement)
+int AccountBucket::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement)
 {
 	tinyxml2::XMLElement* pNewElement = nullptr;
 	if (!ppSerializedElement) {
@@ -367,7 +367,7 @@ int Account::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 {
 	AccountBase::initItemFromXmlElement(pAccount);
 	pAccount->QueryBoolAttribute("getContributesToBudget", &_isBudgeted);
-	pAccount->QueryUnsignedAttribute("paidFromEnvelopeId", &_paidFromEnvelopeId);
+	pAccount->QueryUnsignedAttribute("paidFromBucketId", &_paidFromBucketId);
 	return ERROR_SUCCESS;
 }
 
@@ -383,7 +383,7 @@ int Account::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppS
 
 	// Add our own attributes
 	pNewElement->SetAttribute("getContributesToBudget", _isBudgeted);
-	pNewElement->SetAttribute("paidFromEnvelopeId", _paidFromEnvelopeId);
+	pNewElement->SetAttribute("paidFromBucketId", _paidFromBucketId);
 	return ERROR_SUCCESS;
 
 }

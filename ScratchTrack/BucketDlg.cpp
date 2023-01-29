@@ -1,4 +1,4 @@
-#include "EnvelopeDlg.h"
+#include "BucketDlg.h"
 #include "resource.h"
 #include "AccountInfo.h"
 #include "Transaction.h"
@@ -12,38 +12,38 @@ extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 extern AccountInfoDlg g_accountInfoDlg;
 
-EnvelopeDialog::EnvelopeDialog() : _amount(0), _pDefaultTransactionPayFromAccount(nullptr), _budget(0)
+BucketDialog::BucketDialog() : _amount(0), _pDefaultTransactionPayFromAccount(nullptr), _budget(0)
 {
 
 }
 
-EnvelopeDialog::~EnvelopeDialog()
+BucketDialog::~BucketDialog()
 {
 
 }
 
-bool EnvelopeDialog::ShowDialog()
+bool BucketDialog::ShowDialog()
 {
     PTHIS = this;
 
     g_accountInfoDlg.saveText();
-    g_accountInfoDlg.appendText(L"About Envelopes\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
+    g_accountInfoDlg.appendText(L"About Buckets\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
 
-    g_accountInfoDlg.appendText(L"ScratchTrack follows the 'Envelope Budgeting' philosophy. The idea is that money is assigned to separate envelopes for different spending categories. Expenses are paid from the envelopes. "
-        L"When an envelope is empty, spending in that category stops until more funds are added.\n\n",
+    g_accountInfoDlg.appendText(L"ScratchTrack follows the 'Bucket Budgeting' philosophy. The idea is that money is assigned to separate buckets for different spending categories. Expenses are paid from the buckets. "
+        L"When an bucket is empty, spending in that category stops until more funds are added.\n\n",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
-    g_accountInfoDlg.appendText(L"Examples of typical envelopes include 'Dining out', 'Utilities', and 'Car payment'. "
-        L"Envelopes have a budget. This is a best guess of how much you'll spend in a month. Don't worry if you're not sure. You can adjust this value as needed at a later time.\n\n",
+    g_accountInfoDlg.appendText(L"Examples of typical buckets include 'Dining out', 'Utilities', and 'Car payment'. "
+        L"Buckets have a budget. This is a best guess of how much you'll spend in a month. Don't worry if you're not sure. You can adjust this value as needed at a later time.\n\n",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
-    g_accountInfoDlg.appendText(L"Expenses are paid from envelopes through the envelope's action icon or right click menu. If an envelope "
+    g_accountInfoDlg.appendText(L"Expenses are paid from buckets through the bucket's action icon or right click menu. If an bucket "
         L"is paid from the same account, to the same payee, or is the same amount each time, you can set those values here. When you "
-        L"create a transaction in this envelope, those settings will be filled in for you.",
+        L"create a transaction in this bucket, those settings will be filled in for you.",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
 
-    INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_ENVELOPE_DIALOG), g_hTopWindow, EnvelopeDialogProc);
+    INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_BUCKET_DIALOG), g_hTopWindow, BucketDialogProc);
     PTHIS = nullptr;
 
     g_accountInfoDlg.restoreText();
@@ -52,7 +52,7 @@ bool EnvelopeDialog::ShowDialog()
 
 }
 
-void EnvelopeDialog::enableDisableUi(HWND hDlg)
+void BucketDialog::enableDisableUi(HWND hDlg)
 {
 
     bool enableOk = true;
@@ -64,7 +64,7 @@ void EnvelopeDialog::enableDisableUi(HWND hDlg)
 }
 
 
-INT_PTR CALLBACK EnvelopeDialog::EnvelopeDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK BucketDialog::BucketDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     UNREFERENCED_PARAMETER(lParam);
     switch (message)
@@ -73,7 +73,7 @@ INT_PTR CALLBACK EnvelopeDialog::EnvelopeDialogProc(HWND hDlg, UINT message, WPA
         if (PTHIS) {
 
             HWND hCatNameEdit = GetDlgItem(hDlg, IDC_EDIT_CAT_NAME);
-            SetWindowText(hCatNameEdit, const_cast<wchar_t*>(PTHIS->getEnvelopeName()));
+            SetWindowText(hCatNameEdit, const_cast<wchar_t*>(PTHIS->getBucketName()));
 
             HWND hAccountCombo = GetDlgItem(hDlg, IDC_COMBO_CAT_ACCOUNT);
             auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
@@ -132,7 +132,7 @@ INT_PTR CALLBACK EnvelopeDialog::EnvelopeDialogProc(HWND hDlg, UINT message, WPA
                     // Name
                     wchar_t szBuff[1024] = { 0 };
                     GetDlgItemText(hDlg, IDC_EDIT_CAT_NAME, szBuff, 1024);
-                    PTHIS->setEnvelopeName(szBuff);
+                    PTHIS->setBucketName(szBuff);
 
                     // Account from
                     HWND hAccountCombo = GetDlgItem(hDlg, IDC_COMBO_CAT_ACCOUNT);
@@ -178,4 +178,4 @@ INT_PTR CALLBACK EnvelopeDialog::EnvelopeDialogProc(HWND hDlg, UINT message, WPA
     return (INT_PTR)FALSE;
 }
 
-EnvelopeDialog* EnvelopeDialog::PTHIS = nullptr;
+BucketDialog* BucketDialog::PTHIS = nullptr;

@@ -42,9 +42,9 @@ INT_PTR CALLBACK TransactionFilterDlg::TransactionFilterDlgProc(HWND hwnd, UINT 
     return false;
 }
 
-bool TransactionFilterDlg::filterToEnvelopeSelection()
+bool TransactionFilterDlg::filterToBucketSelection()
 {
-    return SendDlgItemMessage(_hThisDialg, IDC_CHECK_FILTER_TO_ENVELOPE, BM_GETCHECK, 0, 0);
+    return SendDlgItemMessage(_hThisDialg, IDC_CHECK_FILTER_TO_BUCKET, BM_GETCHECK, 0, 0);
 }
 
 std::wstring TransactionFilterDlg::filterText()

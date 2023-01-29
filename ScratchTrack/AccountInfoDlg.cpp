@@ -39,7 +39,7 @@ void AccountInfoDlg::doUnhidePopup()
 {
     // Get all items
     auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
-    auto envelopes = AccountBase::getAllAccountsOfType(AccountBase::ENVELOPE);
+    auto buckets = AccountBase::getAllAccountsOfType(AccountBase::BUCKET);
     auto folders = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
 
     HMENU hPopup = CreatePopupMenu();
@@ -49,7 +49,7 @@ void AccountInfoDlg::doUnhidePopup()
 
     AppendMenu(hPopup, MF_STRING | MF_POPUP, (UINT_PTR)hAcctMenu, L"Accounts");
     AppendMenu(hPopup, MF_STRING | MF_POPUP, (UINT_PTR)hFolderMenu, L"Folders");
-    AppendMenu(hPopup, MF_STRING | MF_POPUP, (UINT_PTR)hEnvMenu, L"Envelopes");
+    AppendMenu(hPopup, MF_STRING | MF_POPUP, (UINT_PTR)hEnvMenu, L"Buckets");
 
     // A return code of zero from trackpopup means nothing was selected, so we can't
     // use accounts IDs, which are zero based.
@@ -71,9 +71,9 @@ void AccountInfoDlg::doUnhidePopup()
         }
     }
 
-    // Add hidden envelopes
-    for (size_t i = 0; i < envelopes.size(); i++) {
-        AccountBase* pAcct = envelopes[i];
+    // Add hidden buckets
+    for (size_t i = 0; i < buckets.size(); i++) {
+        AccountBase* pAcct = buckets[i];
         if (pAcct->getHidden()) {
             AppendMenu(hEnvMenu, MF_STRING | MF_POPUP, (UINT_PTR)pAcct->getId() + menuIdOffset, pAcct->getName());
         }
@@ -97,8 +97,8 @@ void AccountInfoDlg::doUnhidePopup()
             // Unhide the item
             pAcct->setHidden(false);
 
-            // Envelope special work
-            if (pAcct->getType() == AccountBase::ENVELOPE) {
+            // Bucket special work
+            if (pAcct->getType() == AccountBase::BUCKET) {
                 AccountBase* pParent = pAcct->getParent();
 
                 // If its parent is hidden, warn.
@@ -234,7 +234,7 @@ void AccountInfoDlg::getMasterSummary(std::wstring& summary, bool& isError)
     isError = false;
     std::vector<AccountBase*> accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
     std::vector<AccountBase*> folders = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
-    std::vector<AccountBase*> envelopes = AccountBase::getAllAccountsOfType(AccountBase::ENVELOPE);
+    std::vector<AccountBase*> buckets = AccountBase::getAllAccountsOfType(AccountBase::BUCKET);
 
     wchar_t szCaption[1024] = { 0 };
 
@@ -249,12 +249,12 @@ void AccountInfoDlg::getMasterSummary(std::wstring& summary, bool& isError)
             L"you might have folders titled '15th' and '31st'.\n\n"
             L"Click 'Add Folder...' to add a folder to ScratchTrack.\n\n");
     }
-    else if (envelopes.empty()) {
-        swprintf(szCaption, 1024, L"It looks like you don't have any expense envelopes. Envelopes are used to reserve money"
-            L"for upcoming expenses. An envelope will have an expense name such as 'eating out' and a monthly budget.\n\n"
-            L"You'll add money to your envelopes and then pay expenses from those envelopes as needed. If your\n\n"
-            L"envelope runs out of money you'll need to replenish that envelope.\n\n"
-            L"Click the envelope icon next to a folder name to create an envelope.\n\n");
+    else if (buckets.empty()) {
+        swprintf(szCaption, 1024, L"It looks like you don't have any expense buckets. Buckets are used to reserve money"
+            L"for upcoming expenses. An bucket will have an expense name such as 'eating out' and a monthly budget.\n\n"
+            L"You'll add money to your buckets and then pay expenses from those buckets as needed. If your\n\n"
+            L"bucket runs out of money you'll need to replenish that bucket.\n\n"
+            L"Click the bucket icon next to a folder name to create an bucket.\n\n");
     }
     else {
 
@@ -267,11 +267,11 @@ void AccountInfoDlg::getMasterSummary(std::wstring& summary, bool& isError)
         }
 
         // Get all reserved dollars
-        for (size_t i = 0; i < envelopes.size(); i++) {
+        for (size_t i = 0; i < buckets.size(); i++) {
             // This is a confusing operation. If a virtual account has a negative balance
             // we conceptually treat it as if it had a bigger balance since the whole thing is
             // a "how much do I deduct from what's available" operation. Hence the abs() here.
-            iReservedDollars += abs(envelopes[i]->getBalance());
+            iReservedDollars += abs(buckets[i]->getBalance());
         }
 
         int iAvailable = iBalance - iReservedDollars;
@@ -283,8 +283,8 @@ void AccountInfoDlg::getMasterSummary(std::wstring& summary, bool& isError)
         isError = (iBalance - iReservedDollars) < 0;
 
         if (isError) {
-            swprintf(szCaption, 1024, L"You have %ls reserved in envelopes but only %ls in on-budget accounts. "
-                L"Deposit at least %ls or remove %ls from envelopes to correct.\n",
+            swprintf(szCaption, 1024, L"You have %ls reserved in buckets but only %ls in on-budget accounts. "
+                L"Deposit at least %ls or remove %ls from buckets to correct.\n",
                 reservedDollars.c_str(), totalDollars.c_str(), difference.c_str(), difference.c_str());
         }
         else
@@ -334,18 +334,18 @@ void AccountInfoDlg::updateReport()
         appendText(szBuff, cr, false, false, TEXT_SIZE);
     }
 
-    appendText(L"\nEnvelope Status\n", TEXT_COLOR_NORMAL, false, true, HEADER_SIZE);
-    auto envelopes = AccountBase::getAllAccountsOfType(AccountBase::ENVELOPE);
+    appendText(L"\nBucket Status\n", TEXT_COLOR_NORMAL, false, true, HEADER_SIZE);
+    auto buckets = AccountBase::getAllAccountsOfType(AccountBase::BUCKET);
     bool overBudget = false;
-    for (size_t i = 0; i < envelopes.size(); i++)
+    for (size_t i = 0; i < buckets.size(); i++)
     {
-        AccountEnvelope* envelope = dynamic_cast<AccountEnvelope *>(envelopes[i]);
-        std::wstring budgeted = Utils::penniesToDollarsString(abs(envelope->getBudgeted()));
-        std::wstring actual = Utils::penniesToDollarsString(abs(envelope->getCurrentMonthTransacationTotal()));
-        Transaction::getTransactionsForItem(envelope);
-        if (envelope->getBudgeted() > envelope->getCurrentMonthTransacationTotal()) {
+        AccountBucket* bucket = dynamic_cast<AccountBucket *>(buckets[i]);
+        std::wstring budgeted = Utils::penniesToDollarsString(abs(bucket->getBudgeted()));
+        std::wstring actual = Utils::penniesToDollarsString(abs(bucket->getCurrentMonthTransacationTotal()));
+        Transaction::getTransactionsForItem(bucket);
+        if (bucket->getBudgeted() > bucket->getCurrentMonthTransacationTotal()) {
             wchar_t szBuff[1024] = { 0 };
-            swprintf(szBuff, 1024, L"Envelope '%s' has a budget of [%s] and monthly expenses of [%s]\n", envelope->getName(), budgeted.c_str(), actual.c_str());
+            swprintf(szBuff, 1024, L"Bucket '%s' has a budget of [%s] and monthly expenses of [%s]\n", bucket->getName(), budgeted.c_str(), actual.c_str());
             appendText(szBuff, TEXT_COLOR_NEGATIVE, false, false, TEXT_SIZE);
         }
     }

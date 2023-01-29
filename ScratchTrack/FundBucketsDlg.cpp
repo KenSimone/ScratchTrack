@@ -1,4 +1,4 @@
-#include "FundEnvelopesDlg.h"
+#include "FundBucketsDlg.h"
 #include "resource.h"
 #include "Utils.h"
 #include "AccountInfo.h"
@@ -10,23 +10,23 @@ extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 extern AccountInfoDlg g_accountInfoDlg;
 
-bool FundEnvelopesDlg::ShowDialog()
+bool FundBucketsDlg::ShowDialog()
 {
     PTHIS = this;
 
     g_accountInfoDlg.saveText();
-    g_accountInfoDlg.appendText(L"About Envelope Funding\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
+    g_accountInfoDlg.appendText(L"About Bucket Funding\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
 
-    g_accountInfoDlg.appendText(L"ScratchTrack follows the 'Envelope Budgeting' philosophy. The idea is that money is assigned to separate envelopes for different spending categories. Expenses are paid from the envelopes. "
-        L"When an envelope is empty, spending in that category stops until more funds are added.\n\n",
+    g_accountInfoDlg.appendText(L"ScratchTrack follows the 'Bucket Budgeting' philosophy. The idea is that money is assigned to separate buckets for different spending categories. Expenses are paid from the buckets. "
+        L"When an bucket is empty, spending in that category stops until more funds are added.\n\n",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
-    g_accountInfoDlg.appendText(L"This dialog box allows you to assign money to all envelopes in a folder. It's important to note that money stays in its account when assigned to envelopes. "
-        L"When money is assigned, you'll have less budgetable dollars available to place in other envelopes, but no money actually moves. Think of envelopes as a way to organize "
+    g_accountInfoDlg.appendText(L"This dialog box allows you to assign money to all buckets in a folder. It's important to note that money stays in its account when assigned to buckets. "
+        L"When money is assigned, you'll have less budgetable dollars available to place in other buckets, but no money actually moves. Think of buckets as a way to organize "
         L"the money in your account(s).",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
-    INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_FUND_GROUP_DIALOG), g_hTopWindow, FundEnvelopesDlgProc);
+    INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_FUND_GROUP_DIALOG), g_hTopWindow, FundBucketsDlgProc);
     PTHIS = nullptr;
 
     g_accountInfoDlg.restoreText();
@@ -34,7 +34,7 @@ bool FundEnvelopesDlg::ShowDialog()
     return result == IDOK;
 }
 
-void FundEnvelopesDlg::updateUi(HWND hDlg)
+void FundBucketsDlg::updateUi(HWND hDlg)
 {
     // Get all available dollars
     auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
@@ -54,33 +54,33 @@ void FundEnvelopesDlg::updateUi(HWND hDlg)
 
     // Get budgeted dollars
     auto groups = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
-    int totalEnvelopeBalance = 0;
+    int totalBucketBalance = 0;
     for (size_t i = 0; i < groups.size(); i++) {
         AccountGroup* pGroup = dynamic_cast<AccountGroup*>(groups[i]);
         auto children = pGroup->getChildren();
         for (size_t x = 0; x < children.size(); x++)
         {
-            totalEnvelopeBalance += children[x]->getBalance();
+            totalBucketBalance += children[x]->getBalance();
         }
     }
 
     // Get budget of this group
     int myBudget = _pGroup->budgetedToSubAccounts();
 
-    // Total dollars available for envelopes
-    int availabeDollars = totalBalance - totalEnvelopeBalance;
+    // Total dollars available for buckets
+    int availabeDollars = totalBalance - totalBucketBalance;
 
     // Cost to top off accounts
     int costToTopOff = 0;
     int costToFullyFund = 0;
 
     // Get balance of this group
-    auto envelopes = _pGroup->getChildren();
+    auto buckets = _pGroup->getChildren();
     int myBalance = 0;
-    for (size_t i = 0; i < envelopes.size(); i++) {
-        myBalance += envelopes[i]->getBalance();
-        costToFullyFund += -envelopes[i]->getBudgeted();
-        costToTopOff += -envelopes[i]->getBudgeted() - envelopes[i]->getBalance();
+    for (size_t i = 0; i < buckets.size(); i++) {
+        myBalance += buckets[i]->getBalance();
+        costToFullyFund += -buckets[i]->getBudgeted();
+        costToTopOff += -buckets[i]->getBudgeted() - buckets[i]->getBalance();
     }
 
     // No whip up some sort of smart statement
@@ -92,12 +92,12 @@ void FundEnvelopesDlg::updateUi(HWND hDlg)
     SetDlgItemText(hDlg, IDC_STATIC_NOTES, szBuff);
 }
 
-INT_PTR CALLBACK FundEnvelopesDlg::FundEnvelopesDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK FundBucketsDlg::FundBucketsDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
     case WM_INITDIALOG:
-        if (FundEnvelopesDlg::PTHIS) {
+        if (FundBucketsDlg::PTHIS) {
             SendDlgItemMessage(hDlg, IDC_RADIO_ADD_TO_EXISTING_BALANCE, BM_SETCHECK, BST_CHECKED, 0);
             PTHIS->updateUi(hDlg);
         }
@@ -119,4 +119,4 @@ INT_PTR CALLBACK FundEnvelopesDlg::FundEnvelopesDlgProc(HWND hDlg, UINT message,
     return (INT_PTR)FALSE;
 }
 
-FundEnvelopesDlg* FundEnvelopesDlg::PTHIS = nullptr;
+FundBucketsDlg* FundBucketsDlg::PTHIS = nullptr;

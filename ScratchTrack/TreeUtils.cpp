@@ -143,15 +143,15 @@ void handleDragDrop(HTREEITEM hDragSource, HTREEITEM hDragTarget)
 
         HTREEITEM hNewParent = nullptr, hInsertAfter = TVI_LAST;
 
-        if (dropSource->getType() == AccountBase::ENVELOPE && dropTarget->getType() == AccountBase::ENVELOPE)
+        if (dropSource->getType() == AccountBase::BUCKET && dropTarget->getType() == AccountBase::BUCKET)
         {
             // This is the most common case, re-ordering categories
-            // The real drop target is the parent of the target envelope
+            // The real drop target is the parent of the target bucket
             AccountBase* pParent = dropTarget->getParent();
             hNewParent = treeItemFromAccount(pParent);
             hInsertAfter = hDragTarget;
         }
-        else if (dropSource->getType() == AccountBase::ENVELOPE && dropTarget->getType() == AccountBase::GROUP)
+        else if (dropSource->getType() == AccountBase::BUCKET && dropTarget->getType() == AccountBase::GROUP)
         {
             // This is the second most common case, re-ordering categories, trying to get the item into the first spot
             hNewParent = hDragTarget;
@@ -164,10 +164,10 @@ void handleDragDrop(HTREEITEM hDragSource, HTREEITEM hDragTarget)
             hNewParent = TVI_ROOT;
             hInsertAfter = hDragTarget;
         }
-        else if ( dropSource->getType() == AccountBase::GROUP && dropTarget->getType() == AccountBase::ENVELOPE)
+        else if ( dropSource->getType() == AccountBase::GROUP && dropTarget->getType() == AccountBase::BUCKET)
         {
-            // Someone has dropped a group on to a envelope. Assume they want to move the group after the
-            // parent of the envelope
+            // Someone has dropped a group on to a bucket. Assume they want to move the group after the
+            // parent of the bucket
             AccountBase* pParent = dropTarget->getParent();
             hNewParent = TVI_ROOT;
             hInsertAfter = treeItemFromAccount(pParent);
@@ -246,7 +246,7 @@ HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountBase* pAccount, HTREEITEM hI
 {
     static const DWORD IMG_ACCOUNT = 0;
     static const DWORD IMG_FOLDER = 1;
-    static const DWORD IMG_ENVELOPE = 2;
+    static const DWORD IMG_BUCKET = 2;
     static const DWORD IMG_ADDMONEY = 3;
     static const DWORD IMG_SUBTRACTMONEY = 4;
 
@@ -273,8 +273,8 @@ HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountBase* pAccount, HTREEITEM hI
     case AccountBase::GROUP:
         tvi.itemex.iSelectedImage = tvi.itemex.iImage = IMG_FOLDER;
         break;
-    case AccountBase::ENVELOPE:
-        if (((AccountEnvelope*)pAccount)->isExpense()) {
+    case AccountBase::BUCKET:
+        if (((AccountBucket*)pAccount)->isExpense()) {
             tvi.itemex.iSelectedImage = tvi.itemex.iImage = IMG_SUBTRACTMONEY;
         }
         else {
@@ -325,7 +325,7 @@ HTREEITEM treeViewHitTestLinks(LONG xCur, LONG yCur, BUDGET_TREE_LINK_ITEM_TYPE&
         for (auto itr = g_budgetTreeLinkSpots.begin(); itr != g_budgetTreeLinkSpots.end(); itr++)
         {
             // Weed out the wrong types
-            if (pItem->getType() == AccountBase::ENVELOPE && (itr->first < ENV_FIRST || itr->first > ENV_LAST))
+            if (pItem->getType() == AccountBase::BUCKET && (itr->first < ENV_FIRST || itr->first > ENV_LAST))
             {
                 continue;
 
@@ -413,19 +413,19 @@ bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
             switch (type) 
             {
             case ENV_HIDE:
-                swprintf(szBuffer, 1024, L"Hide the '%ls' envelope", pHitItem->getName());
+                swprintf(szBuffer, 1024, L"Hide the '%ls' bucket", pHitItem->getName());
                 break;
-            case ENV_ENVELOPE_EDIT:
-                swprintf(szBuffer, 1024, L"Edit the '%ls' envelope", pHitItem->getName());
+            case ENV_BUCKET_EDIT:
+                swprintf(szBuffer, 1024, L"Edit the '%ls' bucket", pHitItem->getName());
                 break;
             case ENV_TRANS_ADD:
-                swprintf(szBuffer, 1024, L"Record expense in the '%ls' envelope", pHitItem->getName());
+                swprintf(szBuffer, 1024, L"Record expense in the '%ls' bucket", pHitItem->getName());
                 break;
             case ENV_MONEY_ADD:
-                swprintf(szBuffer, 1024, L"Assign money to the '%ls' envelope", pHitItem->getName());
+                swprintf(szBuffer, 1024, L"Assign money to the '%ls' bucket", pHitItem->getName());
                 break;
-            case GRP_ENVELOPE_ADD:
-                swprintf(szBuffer, 1024, L"Add a new envelope to the '%ls' folder", pHitItem->getName());
+            case GRP_BUCKET_ADD:
+                swprintf(szBuffer, 1024, L"Add a new bucket to the '%ls' folder", pHitItem->getName());
                 break;
             case GRP_FOLDER_EDIT:
                 swprintf(szBuffer, 1024, L"Edit the '%ls' folder", pHitItem->getName());
@@ -434,7 +434,7 @@ bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
                 swprintf(szBuffer, 1024, L"Hide the '%ls' folder", pHitItem->getName());
                 break;
             case GRP_FUND_CHILDREN:
-                swprintf(szBuffer, 1024, L"Assign money to the envelopes in the '%ls' folder", pHitItem->getName());
+                swprintf(szBuffer, 1024, L"Assign money to the buckets in the '%ls' folder", pHitItem->getName());
                 break;
             }
             g_toolTip.lpszText = szBuffer;
@@ -499,19 +499,19 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
     // static const wchar_t* szAddTransaction = L"\U0001F4B5"; // cash stack
     //static const wchar_t* szAddTransaction = L"\U0001F4B2"; // dollar sign
     //static const wchar_t* szAddTransaction = L"\U0001f4c9"; // downward graph
-    //static const wchar_t* szAddTransaction = L"\U0001F4E9"; // Envelope in
+    //static const wchar_t* szAddTransaction = L"\U0001F4E9"; // Bucket in
 
     
-    static const wchar_t* szEditEnvelope= L"\u270E";  // pencil
-    //static const wchar_t* szAddEnvelope = L"\u271A"; // plus sign
-    static const wchar_t* szAddEnvelope = L"\u2709"; // Envelope
+    static const wchar_t* szEditBucket= L"\u270E";  // pencil
+    //static const wchar_t* szAddBucket = L"\u271A"; // plus sign
+    static const wchar_t* szAddBucket = L"\u2709"; // Bucket
     static const wchar_t* szAddMoney = L"\U0001F4B2";
     //static const wchar_t* szHide = L"\U0001F576"; // sunglasses
     static const wchar_t* szHide = L"\U0001F441"; // eye
 
     static const COLORREF ACCOUNT_COLOR = RGB(230, 240, 250);
     static const COLORREF GROUP_COLOR = RGB(230, 240, 250);
-    static const COLORREF ENVELOPE_COLOR = RGB(255, 255, 255);
+    static const COLORREF BUCKET_COLOR = RGB(255, 255, 255);
 
     static const COLORREF SEL_COLOR = GetSysColor(COLOR_HIGHLIGHT);
     static const COLORREF LINK_COLOR = GetSysColor(COLOR_HOTLIGHT);
@@ -542,8 +542,8 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             case AccountBase::GROUP:
                 cr = GROUP_COLOR;
                 break;
-            case AccountBase::ENVELOPE:
-                cr = ENVELOPE_COLOR;
+            case AccountBase::BUCKET:
+                cr = BUCKET_COLOR;
                 break;
             }
 
@@ -578,12 +578,12 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             std::wstring balance = Utils::penniesToDollarsString(iBalance);
 
             // Amount budgeted for this item
-            int iBudget = pItem->getType() == AccountBase::ENVELOPE ? pItem->getBudgeted() : pItem->budgetedToSubAccounts();
+            int iBudget = pItem->getType() == AccountBase::BUCKET ? pItem->getBudgeted() : pItem->budgetedToSubAccounts();
             std::wstring budgeted = Utils::penniesToDollarsString(iBudget);
 
             // Money allocated to this item
-            int iEnvelopes = pItem->getType() == AccountBase::ENVELOPE ? pItem->getBalance() : pItem->allocatedToSubAccounts();
-            std::wstring allocated = Utils::penniesToDollarsString(iEnvelopes);
+            int iBuckets = pItem->getType() == AccountBase::BUCKET ? pItem->getBalance() : pItem->allocatedToSubAccounts();
+            std::wstring allocated = Utils::penniesToDollarsString(iBuckets);
 
             // Sum of all transactions for this item
             int iTransactionSum = pItem->getCurrentMonthTransacationTotal();
@@ -594,8 +594,8 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
 
             int nameSpot = rcText.left;
             int budgetedSpot = g_columnSizes._name;
-            int inEnvelopes = budgetedSpot + g_columnSizes._budgeted;
-            int balanceSpot = inEnvelopes + g_columnSizes._inCategories;
+            int inBuckets = budgetedSpot + g_columnSizes._budgeted;
+            int balanceSpot = inBuckets + g_columnSizes._inCategories;
             int availableBalanceSpot = balanceSpot + g_columnSizes._balance;
 
             HPEN pen = CreatePen(PS_SOLID, 1, RGB(200, 200, 200));
@@ -606,12 +606,12 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             // Name
             const wchar_t* szFolderOpen = L"\U0001F5C1 ";
             const wchar_t* szFolderClosed = L"\U0001F5C0 ";
-            const wchar_t* szEnvelope = L"\u2709 ";
+            const wchar_t* szBucket = L"\u2709 ";
             std::wstring name;
             if (TreeView_GetItemState(g_hwndTV, hItem, TVIF_STATE) & TVIS_EXPANDED)
                 name = szFolderOpen;
-            else if (pItem->getType() == AccountBase::ENVELOPE)
-                name = szEnvelope;
+            else if (pItem->getType() == AccountBase::BUCKET)
+                name = szBucket;
             else
                 name = szFolderClosed;
 
@@ -625,13 +625,13 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
 
             // Monthly transaction sum
             setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iTransactionSum, selected, false);
-            TextOut(pCustomDrawItem->nmcd.hdc, inEnvelopes, pCustomDrawItem->nmcd.rc.top, transactionSum.c_str(), (int)transactionSum.length());
+            TextOut(pCustomDrawItem->nmcd.hdc, inBuckets, pCustomDrawItem->nmcd.rc.top, transactionSum.c_str(), (int)transactionSum.length());
 
             // Balance
-            if (pItem->getType() == AccountBase::ENVELOPE)
+            if (pItem->getType() == AccountBase::BUCKET)
             {
-                AccountEnvelope* pEnvelope = (AccountEnvelope*)pItem;
-                if (pEnvelope->isVirtualAccount()) {
+                AccountBucket* pBucket = (AccountBucket*)pItem;
+                if (pBucket->isVirtualAccount()) {
                     setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iBalance, selected, true);
                     TextOut(pCustomDrawItem->nmcd.hdc, balanceSpot, pCustomDrawItem->nmcd.rc.top, balance.c_str(), (int)balance.length());
                 }
@@ -649,14 +649,14 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             int rightEdge = budgetedSpot;
             switch (pItem->getType())
             {
-            case AccountBase::ENVELOPE:
+            case AccountBase::BUCKET:
             {
-                AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(pItem);
-                if (!pEnvelope->getReadOnly()) {
+                AccountBucket* pBucket = dynamic_cast<AccountBucket*>(pItem);
+                if (!pBucket->getReadOnly()) {
 #ifdef ICON_HIDE_ITEM
                     rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szHide, ENV_HIDE, rightEdge, rcText.top);
 #endif
-                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditEnvelope, ENV_ENVELOPE_EDIT, rightEdge, rcText.top);
+                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditBucket, ENV_BUCKET_EDIT, rightEdge, rcText.top);
                     rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddMoney, ENV_MONEY_ADD, rightEdge, rcText.top);
                     rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddTransaction, ENV_TRANS_ADD, rightEdge, rcText.top);
 
@@ -668,9 +668,9 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
 #ifdef ICON_HIDE_ITEM
                     rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szHide, GRP_FOLDER_HIDE, rightEdge, rcText.top);
 #endif
-                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditEnvelope, GRP_FOLDER_EDIT, rightEdge, rcText.top);
+                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditBucket, GRP_FOLDER_EDIT, rightEdge, rcText.top);
                     rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddMoney, GRP_FUND_CHILDREN, rightEdge, rcText.top);
-                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddEnvelope, GRP_ENVELOPE_ADD, rightEdge, rcText.top);
+                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddBucket, GRP_BUCKET_ADD, rightEdge, rcText.top);
                 }
                 break;
 
@@ -690,8 +690,8 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             MoveToEx(pCustomDrawItem->nmcd.hdc, budgetedSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
             LineTo(pCustomDrawItem->nmcd.hdc, budgetedSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
 
-            MoveToEx(pCustomDrawItem->nmcd.hdc, inEnvelopes - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
-            LineTo(pCustomDrawItem->nmcd.hdc, inEnvelopes - 2, pCustomDrawItem->nmcd.rc.bottom);
+            MoveToEx(pCustomDrawItem->nmcd.hdc, inBuckets - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
+            LineTo(pCustomDrawItem->nmcd.hdc, inBuckets - 2, pCustomDrawItem->nmcd.rc.bottom);
 
             MoveToEx(pCustomDrawItem->nmcd.hdc, balanceSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
             LineTo(pCustomDrawItem->nmcd.hdc, balanceSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
@@ -748,7 +748,7 @@ void budgetTreeCreateTreeControl()
     // Create tree
     HDITEM item = { 0 };
     item.cxy = g_columnSizes._name;
-    item.pszText = const_cast<wchar_t*>(L"Envelope");
+    item.pszText = const_cast<wchar_t*>(L"Bucket");
     item.mask = HDI_TEXT | HDI_WIDTH;
     Header_InsertItem(g_hwndTreeHeader, 99, &item);
 
@@ -779,7 +779,7 @@ void budgetTreeCreateTreeControl()
     h = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_FOLDER));
     ImageList_AddIcon(il, h);
 
-    h = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_ENVELOPE));
+    h = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_BUCKET));
     ImageList_AddIcon(il, h);
 
     h = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_ADD_MONEYICON));

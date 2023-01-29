@@ -8,9 +8,9 @@
 std::vector<Transaction*> _Transactions;
 
 
-Transaction* Transaction::addTransaction(TRANSACTION_TYPE type, int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int envelopeId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp /*= nullptr*/)
+Transaction* Transaction::addTransaction(TRANSACTION_TYPE type, int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int bucketId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp /*= nullptr*/)
 {
-	Transaction* pTransaction = new Transaction(type, amount, payFromAccountId, payToAccountId, envelopeId, szPayee, szDescription, pTimeStamp);
+	Transaction* pTransaction = new Transaction(type, amount, payFromAccountId, payToAccountId, bucketId, szPayee, szDescription, pTimeStamp);
 
 	_Transactions.push_back(pTransaction);
 
@@ -28,7 +28,7 @@ std::vector<Transaction*> Transaction::getTransactionsForItem(AccountBase* pItem
 
 	for (size_t i = 0; i < _Transactions.size(); i++)
 	{
-		if (ids.find(_Transactions[i]->getEnvelopeId()) != ids.end())
+		if (ids.find(_Transactions[i]->getBucketId()) != ids.end())
 		{
 			ret.push_back(_Transactions[i]);
 		}
@@ -45,7 +45,7 @@ int Transaction::serialize(tinyxml2::XMLElement* pParent)
 {
 	tinyxml2::XMLElement* pElement = pParent->GetDocument()->NewElement("transaction");
 
-	pElement->SetAttribute("envelope", _envelopeId);
+	pElement->SetAttribute("bucket", _bucketId);
 	pElement->SetAttribute("accountFrom", _payFromAccountId);
 	pElement->SetAttribute("accountTo", _payToAccountId);
 
@@ -77,8 +77,8 @@ int Transaction::deserialize(tinyxml2::XMLElement* pRoot)
 		tinyxml2::XMLElement* pTransaction = pTransactions->FirstChildElement("transaction");
 		while (pTransaction) {
 			// deserialize
-			int envelopeId = 0, fromAccountId = 0, toAccountId = INVALID_ACCOUNT_ID;
-			pTransaction->QueryIntAttribute("envelope", &envelopeId);
+			int bucketId = 0, fromAccountId = 0, toAccountId = INVALID_ACCOUNT_ID;
+			pTransaction->QueryIntAttribute("bucket", &bucketId);
 			pTransaction->QueryIntAttribute("accountFrom", &fromAccountId);
 			pTransaction->QueryIntAttribute("accountTo", &toAccountId);
 
@@ -138,7 +138,7 @@ int Transaction::deserialize(tinyxml2::XMLElement* pRoot)
 
 			int type = 0;
 			pTransaction->QueryIntAttribute("type", &type);
-			Transaction::addTransaction((Transaction::TRANSACTION_TYPE)type, amount, fromAccountId, toAccountId, envelopeId, szPayeeW, szDescriptionW, &st);
+			Transaction::addTransaction((Transaction::TRANSACTION_TYPE)type, amount, fromAccountId, toAccountId, bucketId, szPayeeW, szDescriptionW, &st);
 
 			// next
 			pTransaction = pTransaction->NextSiblingElement("transaction");

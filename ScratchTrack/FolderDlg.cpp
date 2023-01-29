@@ -27,17 +27,17 @@ bool FolderDlg::ShowDialog()
     g_accountInfoDlg.saveText();
     g_accountInfoDlg.appendText(L"About Folders\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
 
-    g_accountInfoDlg.appendText(L"ScratchTrack follows the 'Envelope Budgeting' philosophy. The idea is that money is assigned to separate envelopes for different spending categories. Expenses are paid from the envelopes. "
-        L"When an envelope is empty, spending in that category stops until more funds are added.\n\n",
+    g_accountInfoDlg.appendText(L"ScratchTrack follows the 'Bucket Budgeting' philosophy. The idea is that money is assigned to separate buckets for different spending categories. Expenses are paid from the buckets. "
+        L"When an bucket is empty, spending in that category stops until more funds are added.\n\n",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
-    g_accountInfoDlg.appendText(L"Folders help organize envelopes. One approach is to create folders for each monthly income event. If you're paid twice a month, create "
+    g_accountInfoDlg.appendText(L"Folders help organize buckets. One approach is to create folders for each monthly income event. If you're paid twice a month, create "
         L"folders titled 'paycheck1' and 'paycheck2'. "
-        L"Use the paycheck to fill the envelopes in the folder when it arrives.\n\n", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
+        L"Use the paycheck to fill the buckets in the folder when it arrives.\n\n", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
     g_accountInfoDlg.appendText(L"You can optionally set expense limits for folders. This helps organize "
         L"your budget. If your folders are aligned with your paychecks, set the expense limit to your paycheck amount. "
-        L"As envelopes are added to the folder, you'll be able to see how close you are to the limit in this window.", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
+        L"As buckets are added to the folder, you'll be able to see how close you are to the limit in this window.", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
     INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_FOLDER_DIALOG), g_hTopWindow, FolderDlgProc);
     PTHIS = nullptr;
