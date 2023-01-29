@@ -171,7 +171,7 @@ int setupPaymentBucketForAccount(Account* pAccount)
     }
     else
     {
-        // We do have an bucket, update it's name as appropriate
+        // We do have a bucket, update it's name as appropriate
         pBucket->setName(bucketName.c_str());
     }
 

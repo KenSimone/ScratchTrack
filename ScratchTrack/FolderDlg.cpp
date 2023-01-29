@@ -28,7 +28,7 @@ bool FolderDlg::ShowDialog()
     g_accountInfoDlg.appendText(L"About Folders\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
 
     g_accountInfoDlg.appendText(L"ScratchTrack follows the 'Bucket Budgeting' philosophy. The idea is that money is assigned to separate buckets for different spending categories. Expenses are paid from the buckets. "
-        L"When an bucket is empty, spending in that category stops until more funds are added.\n\n",
+        L"When a bucket is empty, spending in that category stops until more funds are added.\n\n",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
     g_accountInfoDlg.appendText(L"Folders help organize buckets. One approach is to create folders for each monthly income event. If you're paid twice a month, create "

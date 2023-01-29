@@ -30,14 +30,14 @@ bool BucketDialog::ShowDialog()
     g_accountInfoDlg.appendText(L"About Buckets\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
 
     g_accountInfoDlg.appendText(L"ScratchTrack follows the 'Bucket Budgeting' philosophy. The idea is that money is assigned to separate buckets for different spending categories. Expenses are paid from the buckets. "
-        L"When an bucket is empty, spending in that category stops until more funds are added.\n\n",
+        L"When a bucket is empty, spending in that category stops until more funds are added.\n\n",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
     g_accountInfoDlg.appendText(L"Examples of typical buckets include 'Dining out', 'Utilities', and 'Car payment'. "
         L"Buckets have a budget. This is a best guess of how much you'll spend in a month. Don't worry if you're not sure. You can adjust this value as needed at a later time.\n\n",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
-    g_accountInfoDlg.appendText(L"Expenses are paid from buckets through the bucket's action icon or right click menu. If an bucket "
+    g_accountInfoDlg.appendText(L"Expenses are paid from buckets through the bucket's action icon or right click menu. If a bucket "
         L"is paid from the same account, to the same payee, or is the same amount each time, you can set those values here. When you "
         L"create a transaction in this bucket, those settings will be filled in for you.",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);

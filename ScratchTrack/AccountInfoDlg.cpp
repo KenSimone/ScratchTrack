@@ -251,10 +251,10 @@ void AccountInfoDlg::getMasterSummary(std::wstring& summary, bool& isError)
     }
     else if (buckets.empty()) {
         swprintf(szCaption, 1024, L"It looks like you don't have any expense buckets. Buckets are used to reserve money"
-            L"for upcoming expenses. An bucket will have an expense name such as 'eating out' and a monthly budget.\n\n"
+            L"for upcoming expenses. A bucket will have an expense name such as 'eating out' and a monthly budget.\n\n"
             L"You'll add money to your buckets and then pay expenses from those buckets as needed. If your\n\n"
             L"bucket runs out of money you'll need to replenish that bucket.\n\n"
-            L"Click the bucket icon next to a folder name to create an bucket.\n\n");
+            L"Click the bucket icon next to a folder name to create a bucket.\n\n");
     }
     else {
 

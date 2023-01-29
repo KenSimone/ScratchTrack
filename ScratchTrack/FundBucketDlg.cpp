@@ -18,10 +18,10 @@ bool FundBucketDlg::ShowDialog()
     g_accountInfoDlg.appendText(L"About Bucket Funding\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
 
     g_accountInfoDlg.appendText(L"ScratchTrack follows the 'Bucket Budgeting' philosophy. The idea is that money is assigned to separate buckets for different spending categories. Expenses are paid from the buckets. "
-        L"When an bucket is empty, spending in that category stops until more funds are added.\n\n",
+        L"When a bucket is empty, spending in that category stops until more funds are added.\n\n",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
-    g_accountInfoDlg.appendText(L"This dialog box allows you to assign money to an bucket. It's important to note that money stays in its account when assigned to an bucket. "
+    g_accountInfoDlg.appendText(L"This dialog box allows you to assign money to a bucket. It's important to note that money stays in its account when assigned to a bucket. "
         L"When money is assigned, you'll have less budgetable dollars available to place in other buckets, but no money actually moves. Think of buckets as a way to organize "
         L"the money in your account(s).",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);

@@ -326,7 +326,7 @@ public:
 
 	virtual void addBalance(int balance) 
 	{ 
-		// An bucket can't have negative money in it
+		// A bucket can't have negative money in it
 		_balance += balance; 
 		if (_balance < 0) {
 			_balance = 0;
