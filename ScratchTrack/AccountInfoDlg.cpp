@@ -241,20 +241,20 @@ void AccountInfoDlg::getMasterSummary(std::wstring& summary, bool& isError)
     if (accounts.empty()) {
         swprintf(szCaption, 1024, L"It looks like you don't have any accounts. Accounts represent money (or debt).\n"
         L"Examples of common account types are checking, savings, and credit card.\n\n"
-        L"Click 'Add Account...' to add an account.");
+        L"Click 'Add Account...' to add an account to ScratchTrack.\n");
     }
     else if (folders.empty()) {
         swprintf(szCaption, 1024, L"It looks like you don't have any folders. Folders help you organize expenses.\n"
             L"A common strategy is to create a folder for each pay peried. For example, if you're paid on the 15th and 31st\n"
             L"you might have folders titled '15th' and '31st'.\n\n"
-            L"Click 'Add Folder...' to get started.");
+            L"Click 'Add Folder...' to add a folder to ScratchTrack.\n");
     }
     else if (envelopes.empty()) {
         swprintf(szCaption, 1024, L"It looks like you don't have any expense envelopes. Envelopes are used to reserve money\n"
-            L"for specifc expenses. An envelope will have an expense name such as 'eating out' and a monthly budget.\n"
+            L"for upcoming expenses. An envelope will have an expense name such as 'eating out' and a monthly budget.\n"
             L"You'll add money to your envelopes and then pay expenses from those envelopes as needed. If your\n"
             L"envelope runs out of money you'll need to replenish that envelope.\n\n"
-            L"Click the envelope icon next to a folder name to create an envelope.");
+            L"Click the envelope icon next to a folder name to create an envelope.\n");
     }
     else {
 
