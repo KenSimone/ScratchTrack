@@ -18,15 +18,15 @@ public:
 	enum accountItemType
 	{
 		ACCOUNT, // Holds funds
-		GROUP, // Display-only method for dividing buckets
-		BUCKET // A virtual account, essentially
+		GROUP, // Display-only method for dividing categories
+		CATEGORY // A virtual account, essentially
 	}; // enum accountItemType
 
 	// Construction / destruction
 	AccountBase(accountItemType type);
 	virtual ~AccountBase() {};
 
-	// The item-type (account/group/bucket)
+	// The item-type (account/group/category)
 	virtual accountItemType getType() = 0;
 	static std::vector<AccountBase*> getAllAccountsOfType(accountItemType type);
 
@@ -44,11 +44,11 @@ public:
 	virtual void setName(const wchar_t* szName) { _name = szName; }
 
 	// How many dollars an item has or is holding. Th is is a direct
-	// value for accounts and buckets, and is a calculated value for groups
+	// value for accounts and categories, and is a calculated value for groups
 	virtual int getBalance() { return _balance; }
 	virtual void addBalance(int balance) { _balance += balance; }
 
-	// The dollars budgeted to this item. This is a direct value for buckets
+	// The dollars budgeted to this item. This is a direct value for categories
 	// and a calculated value for containers.
 	virtual int getBudgeted() { return _budgeted; }
 	virtual void setBudgeted(int budgeted) { _budgeted = budgeted; }
@@ -100,7 +100,7 @@ public:
 	virtual int serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement);
 	virtual int initItemFromXmlElement(tinyxml2::XMLElement* pAccount);
 
-	// The item-type (account/group/bucket)
+	// The item-type (account/group/category)
 	virtual accountItemType getType() { return AccountBase::GROUP; }
 
 	// Groups only have aggregate balances from their children and hold no value on their own
@@ -240,23 +240,23 @@ public:
 	void setContributesToBudget(bool budgeted) { _isBudgeted = budgeted; }
 
 	// If this is a credit card account, when an expense is charged to this account,
-	// funds will be taken from the expense bucket and applied to '_paidFromBucketId'.
-	// This allows "paying" for items via credit card (removing funds from a bucket), and
+	// funds will be taken from the expense category and applied to '_paidFromCategoryId'.
+	// This allows "paying" for items via credit card (removing funds from a category), and
 	// still properly tracking expenses.
 	// 
 	// Example
-	// 1) Dining transaction bucket has a balance of $50 dollars.
+	// 1) Dining transaction category has a balance of $50 dollars.
 	// 2) You spend $25 dollars at McDonalds, and pay with a credit card.
-	// 3) You record the transaction against the dining bucket, paid with CC.
-	// 4) $25 dollars comes out of the dining bucket and moves to the "pay cc" bucket.
+	// 3) You record the transaction against the dining category, paid with CC.
+	// 4) $25 dollars comes out of the dining category and moves to the "pay cc" category.
 	// 5) The CC account balance is deducted by $25.
 	//
 	// Later, when the credit card is paid, record an expense transaction against that 
-	// bucket.
+	// category.
 	unsigned int isCCAccount() { return _isCCAccount; }
 	void setIsCCAccount(bool isCC) { _isCCAccount = isCC; }
 
-	// The item-type (account/group/bucket)
+	// The item-type (account/group/category)
 	virtual accountItemType getType() { return AccountBase::ACCOUNT; }
 
 	virtual int initItemFromXmlElement(tinyxml2::XMLElement* pAccount);
@@ -294,14 +294,14 @@ protected:
 
 }; // class Account
 
-// Bucket (bucket) class and implementation
-class AccountBucket : public AccountBase
+// Category (category) class and implementation
+class AccountCategory : public AccountBase
 {
 public:
-	AccountBucket() : AccountBase(BUCKET), _pDefaultTransactionPayFromAccount(nullptr), _defaultTransactionAmount(0), 
+	AccountCategory() : AccountBase(CATEGORY), _pDefaultTransactionPayFromAccount(nullptr), _defaultTransactionAmount(0), 
 		_isExpense(true), _isVirtualAccount(false), _pDefaultTransactionPayToAccount(nullptr){};
 
-	virtual accountItemType getType() { return AccountBase::BUCKET; }
+	virtual accountItemType getType() { return AccountBase::CATEGORY; }
 
 	// Transaction defaults
 	int getDefaultTransactionAmount() { return _defaultTransactionAmount; }
@@ -319,7 +319,7 @@ public:
 
 	virtual void addBalance(int balance) 
 	{ 
-		// A bucket can't have negative money in it
+		// A category can't have negative money in it
 		_balance += balance; 
 		if (_balance < 0) {
 			_balance = 0;
@@ -333,7 +333,7 @@ public:
 	virtual int initItemFromXmlElement(tinyxml2::XMLElement* pAccount);
 	virtual int serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement);
 
-	static AccountBucket* getOrCreateCCBucket();
+	static AccountCategory* getOrCreateCCCategory();
 
 protected:
 	std::wstring _defaultTransactionPayee;
@@ -342,7 +342,7 @@ protected:
 	int _defaultTransactionAmount;
 	bool _isExpense;
 	bool _isVirtualAccount;
-}; // class Bucket
+}; // class Category
 
 int serialize(std::vector<AccountBase*>& topLevelItems, const char* szFilename);
 int deserialize(const char* szFilename, std::vector<AccountBase*>& topLevelItems);

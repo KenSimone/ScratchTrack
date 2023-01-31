@@ -5,14 +5,14 @@
 
 class AccountGroup;
 
-class FundBucketsDlg
+class FundCategoriesDlg
 {
 public:
-	FundBucketsDlg(AccountGroup* pGroups) : _pGroup(pGroups), _resetBalance(false)
+	FundCategoriesDlg(AccountGroup* pGroups) : _pGroup(pGroups), _resetBalance(false)
 	{
 	};
 
-	~FundBucketsDlg() {};
+	~FundCategoriesDlg() {};
 
 	bool ShowDialog();
 
@@ -21,7 +21,7 @@ public:
 	bool getResetBalance() { return _resetBalance; }
 
 protected:
-	static INT_PTR CALLBACK FundBucketsDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
+	static INT_PTR CALLBACK FundCategoriesDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 
 	void updateUi(HWND hDlg);
 
@@ -29,6 +29,6 @@ protected:
 	AccountGroup* _pGroup;
 	bool _resetBalance;
 
-	static FundBucketsDlg* PTHIS;
+	static FundCategoriesDlg* PTHIS;
 
-}; // class FundBucketsDlg
+}; // class FundCategoriesDlg

@@ -1,4 +1,4 @@
-#include "FundBucketDlg.h"
+#include "FundCategoryDlg.h"
 #include "resource.h"
 #include "Utils.h"
 #include "AccountInfo.h"
@@ -10,24 +10,24 @@ extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 extern AccountInfoDlg g_accountInfoDlg;
 
-bool FundBucketDlg::ShowDialog()
+bool FundCategoryDlg::ShowDialog()
 {
     PTHIS = this;
 
     g_accountInfoDlg.saveText();
-    g_accountInfoDlg.appendText(L"About Bucket Funding\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
+    g_accountInfoDlg.appendText(L"About Category Funding\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
 
-    g_accountInfoDlg.appendText(L"ScratchTrack follows the 'Bucket Budgeting' philosophy. The idea is that money is assigned to separate buckets for different spending categories. Expenses are paid from the buckets. "
-        L"When a bucket is empty, spending in that category stops until more funds are added.\n\n",
+    g_accountInfoDlg.appendText(L"ScratchTrack follows the 'Category Budgeting' philosophy. The idea is that money is assigned to separate categories for different spending categories. Expenses are paid from the categories. "
+        L"When a category is empty, spending in that category stops until more funds are added.\n\n",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
-    g_accountInfoDlg.appendText(L"This dialog box allows you to assign money to a bucket. It's important to note that money stays in its account when assigned to a bucket. "
-        L"When money is assigned, you'll have less budgetable dollars available to place in other buckets, but no money actually moves. Think of buckets as a way to organize "
+    g_accountInfoDlg.appendText(L"This dialog box allows you to assign money to a category. It's important to note that money stays in its account when assigned to a category. "
+        L"When money is assigned, you'll have less budgetable dollars available to place in other categories, but no money actually moves. Think of categories as a way to organize "
         L"the money in your account(s).",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
 
-    INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_FILL_BUCKETS_DIALOG), g_hTopWindow, FundBucketDlgProc);
+    INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_FILL_CATEGORIES_DIALOG), g_hTopWindow, FundCategoryDlgProc);
     PTHIS = nullptr;
 
     g_accountInfoDlg.restoreText();
@@ -35,16 +35,16 @@ bool FundBucketDlg::ShowDialog()
     return result == IDOK;
 }
 
-void FundBucketDlg::calcNewBalance(HWND hDlg)
+void FundCategoryDlg::calcNewBalance(HWND hDlg)
 {
     _newBalance = 0;
     if (SendDlgItemMessage(hDlg, IDC_ADD_BUDGETED_RADIO, BM_GETCHECK, 0, 0))
     {
-        _newBalance = _pBucket->getBalance() + abs(_pBucket->getBudgeted());
+        _newBalance = _pCategory->getBalance() + abs(_pCategory->getBudgeted());
     }
     else if (SendDlgItemMessage(hDlg, IDC_ADD_TO_TOP_RADIO, BM_GETCHECK, 0, 0))
     {
-        _newBalance = abs(_pBucket->getBudgeted());
+        _newBalance = abs(_pCategory->getBudgeted());
     }
     else if (SendDlgItemMessage(hDlg, IDC_SET_ANY_RADIO, BM_GETCHECK, 0, 0))
     {
@@ -53,29 +53,29 @@ void FundBucketDlg::calcNewBalance(HWND hDlg)
 
 }
 
-void FundBucketDlg::updateUi(HWND hDlg)
+void FundCategoryDlg::updateUi(HWND hDlg)
 {
     calcNewBalance(hDlg);
     Utils::setDlgItemDollarText(hDlg, IDC_EDIT_NEW_BALANCE, _newBalance);
 
 }
 
-INT_PTR CALLBACK FundBucketDlg::FundBucketDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK FundCategoryDlg::FundCategoryDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
     case WM_INITDIALOG:
-        if (FundBucketDlg::PTHIS) {
-            AccountBucket* pBucket = PTHIS->_pBucket;
+        if (FundCategoryDlg::PTHIS) {
+            AccountCategory* pCategory = PTHIS->_pCategory;
 
             
-            Utils::setDlgItemDollarText(hDlg, IDC_EDIT_ADD_BUDGETED, abs(pBucket->getBudgeted()));
-            Utils::setDlgItemDollarText(hDlg, IDC_EDIT_FILL_TO_BUDGETED, abs(pBucket->getBudgeted()) - pBucket->getBalance());
+            Utils::setDlgItemDollarText(hDlg, IDC_EDIT_ADD_BUDGETED, abs(pCategory->getBudgeted()));
+            Utils::setDlgItemDollarText(hDlg, IDC_EDIT_FILL_TO_BUDGETED, abs(pCategory->getBudgeted()) - pCategory->getBalance());
             Utils::setDlgItemDollarText(hDlg, IDC_EDIT_SET_ARBITRARY, 0);
 
-            Utils::setDlgItemDollarText(hDlg, IDC_EDIT_CUR_BALANCE, pBucket->getBalance());
+            Utils::setDlgItemDollarText(hDlg, IDC_EDIT_CUR_BALANCE, pCategory->getBalance());
 
-            if (pBucket->getBudgeted()){
+            if (pCategory->getBudgeted()){
                 SendDlgItemMessage(hDlg, IDC_ADD_BUDGETED_RADIO, BM_SETCHECK, BST_CHECKED, 0);
             }
             else {
@@ -109,4 +109,4 @@ INT_PTR CALLBACK FundBucketDlg::FundBucketDlgProc(HWND hDlg, UINT message, WPARA
     return (INT_PTR)FALSE;
 }
 
-FundBucketDlg* FundBucketDlg::PTHIS = nullptr;
+FundCategoryDlg* FundCategoryDlg::PTHIS = nullptr;

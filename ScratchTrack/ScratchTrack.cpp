@@ -19,11 +19,11 @@
 #include "DepositDlg.h"
 #include "TransferDlg.h"
 #include "PayCCDlg.h"
-#include "BucketDlg.h"
+#include "CategoryDlg.h"
 #include "AccountDlg.h"
 #include "FolderDlg.h"
-#include "FundBucketDlg.h"
-#include "FundBucketsDlg.h"
+#include "FundCategoryDlg.h"
+#include "FundCategoriesDlg.h"
 
 #include <commctrl.h>
 #include <Windows.h>
@@ -68,7 +68,7 @@ void positionControls();
 void calcColumnSpots();
 void addAccount(Account* pAccount);
 void setGuiFont(HWND hCtrl);
-bool doFundBuckets(AccountGroup* pGroup);
+bool doFundCategories(AccountGroup* pGroup);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -120,13 +120,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     return (int) msg.wParam;
 }
 
-int setupPaymentBucketForAccount(Account* pAccount)
+int setupPaymentCategoryForAccount(Account* pAccount)
 {
-    std::wstring bucketName = L"Credit card payment";
+    std::wstring categoryName = L"Credit card payment";
 
-    AccountBucket* pBucket = dynamic_cast<AccountBucket*>(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
+    AccountCategory* pCategory = dynamic_cast<AccountCategory*>(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
 
-    if (!pBucket) {
+    if (!pCategory) {
 
 #define CC_IN_FOLDER
 #ifdef CC_IN_FOLDER
@@ -159,37 +159,37 @@ int setupPaymentBucketForAccount(Account* pAccount)
         }
 
 
-        // No existing bucket. Make one.
-        pBucket = AccountBucket::getOrCreateCCBucket();
-        pBucket->setName(bucketName.c_str());
-        pBucket->setDefaultTransactionPayToAccount(pAccount);
-        pBucket->setIsExpense(true);
-        pBucket->setIsVirtualAccount(true);
+        // No existing category. Make one.
+        pCategory = AccountCategory::getOrCreateCCCategory();
+        pCategory->setName(categoryName.c_str());
+        pCategory->setDefaultTransactionPayToAccount(pAccount);
+        pCategory->setIsExpense(true);
+        pCategory->setIsVirtualAccount(true);
 
         pAccount->setIsCCAccount(true);
 
-        pFolder->addChild(pBucket);
-        addTreeItem(hItemFolder, pBucket);
+        pFolder->addChild(pCategory);
+        addTreeItem(hItemFolder, pCategory);
     }
     else
     {
-        // We do have a bucket, update it's name as appropriate
-        pBucket->setName(bucketName.c_str());
+        // We do have a category, update it's name as appropriate
+        pCategory->setName(categoryName.c_str());
     }
 #else
-        pBucket = AccountBucket::getOrCreateCCBucket();
-        pBucket->setName(bucketName.c_str());
-        pBucket->setDefaultTransactionPayToAccount(pAccount);
-        pBucket->setIsExpense(true);
-        pBucket->setIsVirtualAccount(true);
+        pCategory = AccountCategory::getOrCreateCCCategory();
+        pCategory->setName(categoryName.c_str());
+        pCategory->setDefaultTransactionPayToAccount(pAccount);
+        pCategory->setIsExpense(true);
+        pCategory->setIsVirtualAccount(true);
 
         pAccount->setIsCCAccount(true);
-        addTreeItem(TVI_ROOT, pBucket);
+        addTreeItem(TVI_ROOT, pCategory);
 
     }
 #endif
 
-    return pBucket->getId();
+    return pCategory->getId();
 }
 
 void createTransactionListControl()
@@ -218,7 +218,7 @@ void createTransactionListControl()
     column.pszText = const_cast<wchar_t*>(L"Payee");
     ListView_InsertColumn(g_hwndTransactionLV, 1, &column);
 
-    column.pszText = const_cast<wchar_t*>(L"Bucket");
+    column.pszText = const_cast<wchar_t*>(L"Category");
     ListView_InsertColumn(g_hwndTransactionLV, 2, &column);
 
     column.pszText = const_cast<wchar_t*>(L"Description");
@@ -362,31 +362,31 @@ bool addTransaction(HTREEITEM hItem)
     bool didSimonthing = false;
     AccountBase* pItem = accountFromTreeItem(hItem);
     TransactionDialog transactionDlg;
-    transactionDlg.setBucketId(pItem->getId());
-    AccountBucket* pBucket = nullptr;
-    if (pItem->getType() == AccountBase::BUCKET) {
-        pBucket = (AccountBucket*)pItem;
-        transactionDlg.setPayee(pBucket->getDefaultTransactionPayee());
-        transactionDlg.setAmount(pBucket->getDefaultTransactionAmount());
+    transactionDlg.setCategoryId(pItem->getId());
+    AccountCategory* pCategory = nullptr;
+    if (pItem->getType() == AccountBase::CATEGORY) {
+        pCategory = (AccountCategory*)pItem;
+        transactionDlg.setPayee(pCategory->getDefaultTransactionPayee());
+        transactionDlg.setAmount(pCategory->getDefaultTransactionAmount());
 
-        if (pBucket->getDefaultTransactionPayFromAccount()) {
-            transactionDlg.setAccountFromId(pBucket->getDefaultTransactionPayFromAccount()->getId());
+        if (pCategory->getDefaultTransactionPayFromAccount()) {
+            transactionDlg.setAccountFromId(pCategory->getDefaultTransactionPayFromAccount()->getId());
         }
         else {
             transactionDlg.setAccountFromId(ACCOUNT_ID_INVALID);
         }
 
-        if (pBucket->getDefaultTransactionPayFromAccount()) {
-            transactionDlg.setAccountFromId(pBucket->getDefaultTransactionPayFromAccount()->getId());
+        if (pCategory->getDefaultTransactionPayFromAccount()) {
+            transactionDlg.setAccountFromId(pCategory->getDefaultTransactionPayFromAccount()->getId());
         }
     }
 
     if (transactionDlg.ShowDialog())
     {
-        Transaction::addTransaction(Transaction::EXPENSE, transactionDlg.getAmount(), transactionDlg.getAccountFromId(), ACCOUNT_ID_INVALID, transactionDlg.getBucketId(), transactionDlg.getPayee(), transactionDlg.getDescription());
+        Transaction::addTransaction(Transaction::EXPENSE, transactionDlg.getAmount(), transactionDlg.getAccountFromId(), ACCOUNT_ID_INVALID, transactionDlg.getCategoryId(), transactionDlg.getPayee(), transactionDlg.getDescription());
 
-        // Apply the amount to the transaction bucket 
-        pBucket->addBalance(transactionDlg.getAmount());
+        // Apply the amount to the transaction category 
+        pCategory->addBalance(transactionDlg.getAmount());
 
         // Apply the amount to the account
         Account* pFromAccount = dynamic_cast<Account*>(AccountBase::lookupById(transactionDlg.getAccountFromId()));
@@ -397,13 +397,13 @@ bool addTransaction(HTREEITEM hItem)
 
             // See if this is a payment from a CC account
             if (pFromAccount->isCCAccount()) {
-                AccountBucket* pToBucket = dynamic_cast<AccountBucket*>(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
-                if (pToBucket)
+                AccountCategory* pToCategory = dynamic_cast<AccountCategory*>(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
+                if (pToCategory)
                 {
-                    pToBucket->addBalance(-transactionDlg.getAmount());
-                    if (pBucket->getBalance() < 0)
+                    pToCategory->addBalance(-transactionDlg.getAmount());
+                    if (pCategory->getBalance() < 0)
                     {
-                        pBucket->addBalance(-pBucket->getBalance());
+                        pCategory->addBalance(-pCategory->getBalance());
                     }
                 }
             }
@@ -439,21 +439,21 @@ bool editFolder(AccountGroup* pGroup)
     return false;
 }
 
-bool editBucket(AccountBucket* pBucket)
+bool editCategory(AccountCategory* pCategory)
 {
-    BucketDialog dlg;
-    dlg.setBudget(pBucket->getBudgeted());
-    dlg.setBucketName(pBucket->getName());
-    dlg.setDefaultTransactionPayFromAccount(pBucket->getDefaultTransactionPayFromAccount());
-    dlg.setDefaultTransactionAmount(pBucket->getDefaultTransactionAmount());
-    dlg.setDefaultTransactionPayee(pBucket->getDefaultTransactionPayee());
+    CategoryDialog dlg;
+    dlg.setBudget(pCategory->getBudgeted());
+    dlg.setCategoryName(pCategory->getName());
+    dlg.setDefaultTransactionPayFromAccount(pCategory->getDefaultTransactionPayFromAccount());
+    dlg.setDefaultTransactionAmount(pCategory->getDefaultTransactionAmount());
+    dlg.setDefaultTransactionPayee(pCategory->getDefaultTransactionPayee());
     if (dlg.ShowDialog())
     {
-        pBucket->setBudgeted(dlg.getBudget());
-        pBucket->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
-        pBucket->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
-        pBucket->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
-        pBucket->setName(dlg.getBucketName());
+        pCategory->setBudgeted(dlg.getBudget());
+        pCategory->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
+        pCategory->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
+        pCategory->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
+        pCategory->setName(dlg.getCategoryName());
         
         updateGuiValues();
 
@@ -462,42 +462,42 @@ bool editBucket(AccountBucket* pBucket)
     return false;
 }
 
-bool doBucketAdd(AccountGroup* pParent, HTREEITEM hParent)
+bool doCategoryAdd(AccountGroup* pParent, HTREEITEM hParent)
 {
     bool ret = false;
-    BucketDialog dlg;
+    CategoryDialog dlg;
     if (pParent && dlg.ShowDialog()) {
-        AccountBucket* pBucket = new AccountBucket;
-        pBucket->setName(dlg.getBucketName());
-        pBucket->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
-        pBucket->setDefaultTransactionPayToAccount(nullptr);
-        pBucket->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
-        pBucket->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
-        pBucket->setIsExpense(true);
-        pBucket->setIsVirtualAccount(true);
-        pBucket->setBudgeted(dlg.getBudget());
+        AccountCategory* pCategory = new AccountCategory;
+        pCategory->setName(dlg.getCategoryName());
+        pCategory->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
+        pCategory->setDefaultTransactionPayToAccount(nullptr);
+        pCategory->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
+        pCategory->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
+        pCategory->setIsExpense(true);
+        pCategory->setIsVirtualAccount(true);
+        pCategory->setBudgeted(dlg.getBudget());
 
-        pParent->addChild(pBucket);
-        addTreeItem(hParent, pBucket);
+        pParent->addChild(pCategory);
+        addTreeItem(hParent, pCategory);
         ret = true;
     }
     return ret;
 }
 
-bool doFundBuckets(AccountGroup* pGroup)
+bool doFundCategories(AccountGroup* pGroup)
 {
-    FundBucketsDlg dlg(pGroup);
+    FundCategoriesDlg dlg(pGroup);
     bool ret = dlg.ShowDialog();
     if (ret) {
         auto children = pGroup->getChildren();
         for (size_t i = 0; i < children.size(); i++) {
-            AccountBucket* pBucket = dynamic_cast<AccountBucket*>(children[i]);
-            if (pBucket) {
+            AccountCategory* pCategory = dynamic_cast<AccountCategory*>(children[i]);
+            if (pCategory) {
                 if (dlg.getResetBalance()) {
-                    pBucket->addBalance(-pBucket->getBalance() + -pBucket->getBudgeted());
+                    pCategory->addBalance(-pCategory->getBalance() + -pCategory->getBudgeted());
                 }
                 else {
-                    pBucket->addBalance(-pBucket->getBudgeted());
+                    pCategory->addBalance(-pCategory->getBudgeted());
                 }
             }
         }
@@ -515,9 +515,9 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
         pParentGroup = (AccountGroup*)pItem;
     }
 
-    if (dwCommand >= ID_ROOT_BUCKET_MOVE_TO_START && dwCommand < ID_ROOT_BUCKET_MOVE_TO_END) {
+    if (dwCommand >= ID_ROOT_CATEGORY_MOVE_TO_START && dwCommand < ID_ROOT_CATEGORY_MOVE_TO_END) {
         // This is a move
-        AccountGroup* pDestGroup = dynamic_cast<AccountGroup*>(AccountBase::lookupById(dwCommand - ID_ROOT_BUCKET_MOVE_TO_START));
+        AccountGroup* pDestGroup = dynamic_cast<AccountGroup*>(AccountBase::lookupById(dwCommand - ID_ROOT_CATEGORY_MOVE_TO_START));
         AccountGroup* pOrigGroup = dynamic_cast<AccountGroup*>(pItem->getParent());
         HTREEITEM hNewParent = treeItemFromAccount(pDestGroup);
 
@@ -531,7 +531,6 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
 
     switch (dwCommand)
     {
-    case ID_ROOT_HIDEBUCKET:
     case ID_ROOT_HIDECATEGORY:
     {
         if (Utils::confirmHide(pItem)) {
@@ -542,18 +541,18 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
 
         break;
     }
-    case ID_BUCKET_RESERVE_FUNDS:
+    case ID_CATEGORY_RESERVE_FUNDS:
     {
-        AccountBucket* pBucket = dynamic_cast<AccountBucket*>(pItem);
-        FundBucketDlg dlg(pBucket);
-        if (pBucket && dlg.ShowDialog()) {
-            pBucket->addBalance(-pBucket->getBalance() + dlg.getNewBalance());
+        AccountCategory* pCategory = dynamic_cast<AccountCategory*>(pItem);
+        FundCategoryDlg dlg(pCategory);
+        if (pCategory && dlg.ShowDialog()) {
+            pCategory->addBalance(-pCategory->getBalance() + dlg.getNewBalance());
             didSomething = true;
         }
         break;
     }
-    case ID_ROOT_EDITBUCKET:
-        didSomething = editBucket((AccountBucket*)pItem);
+    case ID_ROOT_EDITCATEGORY:
+        didSomething = editCategory((AccountCategory*)pItem);
         break;
     case ID_ROOT_SETBUDGETEDAMOUNT:
         if (pItem && getOneText(temp)) {
@@ -566,14 +565,14 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
         didSomething = editFolder((AccountGroup*)pItem);
         break;
     }
-    case ID_ROOT_FUNDBUCKETS:
+    case ID_ROOT_FUNDCATEGORIES:
     {
-        didSomething = doFundBuckets((AccountGroup*)pItem);
+        didSomething = doFundCategories((AccountGroup*)pItem);
         break;
     }
-    case ID_ROOT_ADDBUCKET:
+    case ID_ROOT_ADDCATEGORY:
     {
-        didSomething = doBucketAdd(pParentGroup, hItem);
+        didSomething = doCategoryAdd(pParentGroup, hItem);
         break;
     }
     case ID_ROOT_ADDTransaction:
@@ -610,8 +609,8 @@ void updateTransactionUiAndSave(Transaction* pTransaction, int listviewItemIndex
     }
     ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 1, const_cast<wchar_t*>(payee.c_str()));
 
-    // Bucket
-    AccountBase* ati = AccountBase::lookupById(pTransaction->getBucketId());
+    // Category
+    AccountBase* ati = AccountBase::lookupById(pTransaction->getCategoryId());
     if (ati) {
         ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 2, const_cast<wchar_t*>(ati->getName()));
     }
@@ -631,18 +630,18 @@ void updateTransactionUiAndSave(Transaction* pTransaction, int listviewItemIndex
 
 void applyModifiedTransaction(Transaction* pTransaction, int listviewItemIndex)
 {
-    AccountBucket* pBucket = dynamic_cast<AccountBucket*>(AccountBase::lookupById(pTransaction->getBucketId()));
+    AccountCategory* pCategory = dynamic_cast<AccountCategory*>(AccountBase::lookupById(pTransaction->getCategoryId()));
     Account* pAccountFrom = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountFromId()));
     Account* pAccountTo = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountToId()));
 
-    AccountBucket* pBucketTo = nullptr;
+    AccountCategory* pCategoryTo = nullptr;
     if (pAccountFrom && pAccountFrom->isCCAccount()) {
-        pBucketTo = dynamic_cast<AccountBucket*>(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
+        pCategoryTo = dynamic_cast<AccountCategory*>(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
     }
 
-    // Record the expense in the bucket
-    if (pBucket) {
-        pBucket->addBalance(pTransaction->getAmount());
+    // Record the expense in the category
+    if (pCategory) {
+        pCategory->addBalance(pTransaction->getAmount());
     }
 
     // Record the expense in the account
@@ -650,14 +649,14 @@ void applyModifiedTransaction(Transaction* pTransaction, int listviewItemIndex)
         pAccountFrom->addBalance(pTransaction->getAmount());
     }
 
-    // If this is a transfer to a bucket, record the reverse of the expense in the target account 
+    // If this is a transfer to a category, record the reverse of the expense in the target account 
     if (pAccountTo) {
         pAccountTo->addBalance(-pTransaction->getAmount());
     }
 
-    // If this is a transfer to a bucket, record the reverse of the expense in the target bucket
-    if (pBucketTo) {
-        pBucketTo->addBalance(-pTransaction->getAmount());
+    // If this is a transfer to a category, record the reverse of the expense in the target category
+    if (pCategoryTo) {
+        pCategoryTo->addBalance(-pTransaction->getAmount());
     }
 
     updateTransactionUiAndSave(pTransaction, listviewItemIndex);
@@ -685,11 +684,11 @@ void doPayCC(Account* pAccount)
     if (dlg.ShowDialog()) {
         Transaction::addTransaction(Transaction::CCPAYMENT, dlg.getAmount(), dlg.getPaidFromId(), pAccount->getId(), pAccount->isCCAccount() ? ACCOUNT_ID_PAY_CC : ACCOUNT_ID_INVALID, pAccount->getName(), dlg.getDescription());
         pAccount->addBalance(-dlg.getAmount());
-        AccountBucket* pBucket = nullptr;
+        AccountCategory* pCategory = nullptr;
         if (pAccount->isCCAccount()) {
-            pBucket = (AccountBucket*)Account::lookupById(ACCOUNT_ID_PAY_CC);
+            pCategory = (AccountCategory*)Account::lookupById(ACCOUNT_ID_PAY_CC);
         }
-        pBucket->addBalance(dlg.getAmount());
+        pCategory->addBalance(dlg.getAmount());
         Account* pFrom = (Account*)Account::lookupById(dlg.getPaidFromId());
         pFrom->addBalance(dlg.getAmount());
         serializeState();
@@ -759,8 +758,8 @@ void editDeposit(Transaction* pTransaction, int listviewItemIndex)
             Account* pNewAcct = dlg.getAccount();
             pNewAcct->addBalance(dlg.getAmount());
 
-            // Apply new balance to the bucket
-            pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), pTransaction->getBucketId(), pTransaction->getAccountFromId(), dlg.getAccount()->getId());
+            // Apply new balance to the category
+            pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), pTransaction->getCategoryId(), pTransaction->getAccountFromId(), dlg.getAccount()->getId());
             updateTransactionUiAndSave(pTransaction, listviewItemIndex);
         }
     }
@@ -781,12 +780,12 @@ void editTransfer(Transaction* pTransaction, int listviewItemIndex)
             // Take money away from the 'to' account
             pAcctTo->addBalance(-origAmount);
 
-            // Apply new balance to the bucket
+            // Apply new balance to the category
             pAcctTo = (Account*)AccountBase::lookupById(dlg.getAccountToId());
             pAcctFrom = (Account*)AccountBase::lookupById(dlg.getAccountFromId());
             pAcctFrom->addBalance(-dlg.getAmount());
             pAcctTo->addBalance(dlg.getAmount());
-            pTransaction->setDetails(dlg.getAmount(), pTransaction->getPayee(), dlg.getDescription(), pTransaction->getBucketId(), dlg.getAccountFromId(), dlg.getAccountToId());
+            pTransaction->setDetails(dlg.getAmount(), pTransaction->getPayee(), dlg.getDescription(), pTransaction->getCategoryId(), dlg.getAccountFromId(), dlg.getAccountToId());
             updateTransactionUiAndSave(pTransaction, listviewItemIndex);
         }
     }
@@ -798,20 +797,20 @@ void editPayCC(Transaction* pTransaction, int listviewItemIndex)
     if (pAcct) {
         PayCCDlg dlg(pAcct, pTransaction->getAmount(), pTransaction->getAccountFromId(), pTransaction->getDescription());
         if (dlg.ShowDialog()) {
-            AccountBucket* pBucket = dynamic_cast<AccountBucket*>(AccountBase::lookupById(pTransaction->getBucketId()));
+            AccountCategory* pCategory = dynamic_cast<AccountCategory*>(AccountBase::lookupById(pTransaction->getCategoryId()));
             Account* pAccountTo = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountToId()));
             Account* pAccountFrom = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountFromId()));
 
-            // Put money back in the bucket and "from account"
+            // Put money back in the category and "from account"
             int origAmount = pTransaction->getAmount();
-            pBucket->addBalance(-origAmount);
+            pCategory->addBalance(-origAmount);
             pAccountFrom->addBalance(-origAmount);
 
             // Take money away from the CC account
             pAccountTo->addBalance(origAmount);
 
-            // Apply new balance to the bucket
-            pTransaction->setDetails(dlg.getAmount(), pTransaction->getPayee(), dlg.getDescription(), pTransaction->getBucketId(), pTransaction->getAccountFromId(), pTransaction->getAccountToId());
+            // Apply new balance to the category
+            pTransaction->setDetails(dlg.getAmount(), pTransaction->getPayee(), dlg.getDescription(), pTransaction->getCategoryId(), pTransaction->getAccountFromId(), pTransaction->getAccountToId());
             applyModifiedTransaction(pTransaction, listviewItemIndex);
 
         }
@@ -825,24 +824,24 @@ void editExpense(Transaction* pTransaction, int listviewItemIndex)
     dlg.setPayee(pTransaction->getPayee());
     dlg.setDescription(pTransaction->getDescription());
     dlg.setAccountFromId(pTransaction->getAccountFromId());
-    dlg.setBucketId(pTransaction->getBucketId());
+    dlg.setCategoryId(pTransaction->getCategoryId());
 
     if (dlg.ShowDialog())
     {
         // This is actually kind of complicated. 
         // We need to undo the original transacation first.
-        AccountBucket* pBucket = dynamic_cast<AccountBucket*>(AccountBase::lookupById(pTransaction->getBucketId()));
+        AccountCategory* pCategory = dynamic_cast<AccountCategory*>(AccountBase::lookupById(pTransaction->getCategoryId()));
         Account* pAccountFrom = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountFromId()));
         Account* pAccountTo = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountToId()));
-        AccountBucket* pBucketTo = nullptr;
+        AccountCategory* pCategoryTo = nullptr;
 
         if (pAccountFrom->isCCAccount()) {
-            pBucketTo = dynamic_cast<AccountBucket*>(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
+            pCategoryTo = dynamic_cast<AccountCategory*>(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
         }
 
         int origAmount = pTransaction->getAmount();
-        if (pBucket) {
-            pBucket->addBalance(-origAmount);
+        if (pCategory) {
+            pCategory->addBalance(-origAmount);
         }
 
         // Put the money back in the original account
@@ -853,13 +852,13 @@ void editExpense(Transaction* pTransaction, int listviewItemIndex)
             pAccountTo->addBalance(origAmount);
         }
 
-        // Take it out of the target bucket (if any)
-        if (pBucketTo) {
-            pBucketTo->addBalance(origAmount);
+        // Take it out of the target category (if any)
+        if (pCategoryTo) {
+            pCategoryTo->addBalance(origAmount);
         }
 
         // Now this is basically the same as add
-        pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), dlg.getBucketId(), dlg.getAccountFromId(), ACCOUNT_ID_INVALID);
+        pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), dlg.getCategoryId(), dlg.getAccountFromId(), ACCOUNT_ID_INVALID);
         applyModifiedTransaction(pTransaction, listviewItemIndex);
 
     }
@@ -920,20 +919,20 @@ void editAccount(Account* pAccount)
         pAccount->setName(dlg.getName());
         pAccount->setContributesToBudget(dlg.getBudgeted());
         if (dlg.getCreditCard()) {
-            setupPaymentBucketForAccount(pAccount);
+            setupPaymentCategoryForAccount(pAccount);
         }
         else if (pAccount->isCCAccount())
         {
-            // This was a CC account, but isn't any more. Hide the bucket, and return any balance
-            AccountBucket* pBucket = dynamic_cast<AccountBucket * >(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
-            pBucket->addBalance(-pBucket->getBalance());
-            pBucket->setHidden(true);
+            // This was a CC account, but isn't any more. Hide the category, and return any balance
+            AccountCategory* pCategory = dynamic_cast<AccountCategory * >(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
+            pCategory->addBalance(-pCategory->getBalance());
+            pCategory->setHidden(true);
             pAccount->setIsCCAccount(false);
-            HTREEITEM hBucket = treeItemFromAccount(pBucket);
-            HTREEITEM hParent = TreeView_GetParent(g_hwndTV, hBucket);
+            HTREEITEM hCategory = treeItemFromAccount(pCategory);
+            HTREEITEM hParent = TreeView_GetParent(g_hwndTV, hCategory);
 
-            if (hBucket) {
-                TreeView_DeleteItem(g_hwndTV, hBucket);
+            if (hCategory) {
+                TreeView_DeleteItem(g_hwndTV, hCategory);
             }
 
             if (!TreeView_GetChild(g_hwndTV, hParent)) {
@@ -972,7 +971,7 @@ void doAddAccountDlg()
         pAccount->addBalance(dlg.getBalance());
         pAccount->setContributesToBudget(dlg.getBudgeted());
         if (dlg.getCreditCard()) {
-            setupPaymentBucketForAccount(pAccount);
+            setupPaymentCategoryForAccount(pAccount);
         }
         addTreeItem(TVI_ROOT, pAccount);
         serializeState();
@@ -1039,7 +1038,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             doAddAccountDlg();
             break;
         }
-        case ID_FILE_ADDBUCKET:
+        case ID_FILE_ADDCATEGORY:
             doAddFolder();
             break;
         default:
@@ -1238,7 +1237,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             if (pHeader->code == TVN_SELCHANGED)
             {
-                if (g_transactionFilterDlg.filterToBucketSelection()) {
+                if (g_transactionFilterDlg.filterToCategorySelection()) {
                     populateTransactions();
                 }
             }
@@ -1268,21 +1267,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 }
                 else if (hItem && type == ENV_MONEY_ADD)
                 {
-                    processContextMenu(ID_BUCKET_RESERVE_FUNDS, hItem, accountFromTreeItem(hItem));
+                    processContextMenu(ID_CATEGORY_RESERVE_FUNDS, hItem, accountFromTreeItem(hItem));
                 }
-                else if (hItem && type == GRP_BUCKET_ADD)
+                else if (hItem && type == GRP_CATEGORY_ADD)
                 {
-                    processContextMenu(ID_ROOT_ADDBUCKET, hItem, accountFromTreeItem(hItem));
+                    processContextMenu(ID_ROOT_ADDCATEGORY, hItem, accountFromTreeItem(hItem));
                 }
-                else if (hItem && type == ENV_BUCKET_EDIT)
+                else if (hItem && type == ENV_CATEGORY_EDIT)
                 {
-                    processContextMenu(ID_ROOT_EDITBUCKET, hItem, accountFromTreeItem(hItem));
+                    processContextMenu(ID_ROOT_EDITCATEGORY, hItem, accountFromTreeItem(hItem));
                 }
                 else if (hItem && type == GRP_FOLDER_EDIT) {
                     processContextMenu(IDM_EDIT_FOLDER, hItem, accountFromTreeItem(hItem));
                 }
                 else if (hItem && (type == GRP_FUND_CHILDREN)) {
-                    processContextMenu(ID_ROOT_FUNDBUCKETS, hItem, accountFromTreeItem(hItem));
+                    processContextMenu(ID_ROOT_FUNDCATEGORIES, hItem, accountFromTreeItem(hItem));
                 }
                 else
                 {
@@ -1306,8 +1305,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 auto acctBase = accountFromTreeItem(hItem);
                 if (acctBase && !acctBase->getReadOnly())
                 {
-                    AccountBucket* pBucket = dynamic_cast<AccountBucket*>(acctBase);
-                    if (pBucket && editBucket(pBucket) ){
+                    AccountCategory* pCategory = dynamic_cast<AccountCategory*>(acctBase);
+                    if (pCategory && editCategory(pCategory) ){
                         serializeState();
                     }
                     return true;
@@ -1340,9 +1339,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_GROUP_MENU));
                         hSubMenu = GetSubMenu(hMenu, 0);
                     }
-                    else if (pItem->getType() == AccountBase::BUCKET) {
+                    else if (pItem->getType() == AccountBase::CATEGORY) {
                         if (!pItem->getReadOnly()) {
-                            hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_BUCKET_MENU));
+                            hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_CATEGORY_MENU));
                             hSubMenu = GetSubMenu(hMenu, 0);
                         }
 
@@ -1352,7 +1351,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         HMENU groupMenu = CreatePopupMenu();
                         for (size_t i = 0; i < groups.size(); i++) {
                             if (pParentItem && groups[i]->getId() != pParentItem->getId() && !groups[i]->getReadOnly()) {
-                                AppendMenu(groupMenu, MF_STRING, ID_ROOT_BUCKET_MOVE_TO_START + groups[i]->getId(), groups[i]->getName());
+                                AppendMenu(groupMenu, MF_STRING, ID_ROOT_CATEGORY_MOVE_TO_START + groups[i]->getId(), groups[i]->getName());
                                 added = true;
                             }
                         }
@@ -1368,7 +1367,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         //for (size_t i = 0; i < groups.size(); i++) {
                         //    if (pParentItem && groups[i]->getId() != pParentItem->getId()) {
                         //        added = true;
-                        //        AppendMenu(accountMenu, MF_STRING, ID_ROOT_BUCKET_MOVE_TO_START + groups[i]->getId(), groups[i]->getName());
+                        //        AppendMenu(accountMenu, MF_STRING, ID_ROOT_CATEGORY_MOVE_TO_START + groups[i]->getId(), groups[i]->getName());
                         //    }
                         //}
                         //if (added) {
@@ -1554,7 +1553,7 @@ void populateTransactions()
     AccountBase* pItem = accountFromTreeItem(hItem);
 
     // Get Transactions for item
-    std::vector<Transaction*> Transactions = g_transactionFilterDlg.filterToBucketSelection() ? Transaction::getTransactionsForItem(pItem) : Transaction::getAllTransactions();
+    std::vector<Transaction*> Transactions = g_transactionFilterDlg.filterToCategorySelection() ? Transaction::getTransactionsForItem(pItem) : Transaction::getAllTransactions();
 
     // Filter to account, if requested
     if (g_transactionFilterDlg.filterToAccount()) {
@@ -1603,7 +1602,7 @@ void populateTransactions()
             matched = matched || Utils::searchText(pCurTransaction->getPayee(), filterText.c_str());
             matched = matched || Utils::searchText(amount.c_str(), filterText.c_str());
 
-            AccountBase* pCat = AccountBase::lookupById(pCurTransaction->getBucketId());
+            AccountBase* pCat = AccountBase::lookupById(pCurTransaction->getCategoryId());
             if (pCat) {
                 matched = matched || Utils::searchText(pCat->getName(), filterText.c_str());
             }
@@ -1636,8 +1635,8 @@ void populateTransactions()
 
         ListView_SetItemText(g_hwndTransactionLV, 0, 1, const_cast<wchar_t*>(payee.c_str()));
 
-        // Bucket
-        AccountBase* ati = AccountBase::lookupById((*itr)->getBucketId());
+        // Category
+        AccountBase* ati = AccountBase::lookupById((*itr)->getCategoryId());
         if (ati) {
             ListView_SetItemText(g_hwndTransactionLV, 0, 2, const_cast<wchar_t*>(ati->getName()));
         }
@@ -1786,18 +1785,18 @@ void positionControls()
     treeHeaderLayout.pwpos = &wpTreeHeaderSize; // This is the suggested size of the header. We care about the height.
     SendMessage(g_hwndTreeHeader, HDM_LAYOUT, 0, (LPARAM)&treeHeaderLayout);
 
-    // Bucket tree header
+    // Category tree header
     SetWindowPos(g_hwndTreeHeader, wpTreeHeaderSize.hwndInsertAfter, middleEdge, top, rSideWidth, wpTreeHeaderSize.cy, wpTreeHeaderSize.flags | SWP_SHOWWINDOW);
 
-    // Bucket tree control
-    int bucketTreeHeigth = 0;
+    // Category tree control
+    int categoryTreeHeigth = 0;
     if (showTransactionList) {
-        bucketTreeHeigth = transactionFilterTop - rClient.top - wpTreeHeaderSize.cy;
+        categoryTreeHeigth = transactionFilterTop - rClient.top - wpTreeHeaderSize.cy;
     } else{ 
-        bucketTreeHeigth = rClient.bottom - rClient.top - wpTreeHeaderSize.cy - transactionFilterHeight;
+        categoryTreeHeigth = rClient.bottom - rClient.top - wpTreeHeaderSize.cy - transactionFilterHeight;
     }
 
-    SetWindowPos(g_hwndTV, nullptr, middleEdge, rTree.top, rSideWidth, bucketTreeHeigth, SWP_NOZORDER);
+    SetWindowPos(g_hwndTV, nullptr, middleEdge, rTree.top, rSideWidth, categoryTreeHeigth, SWP_NOZORDER);
 
 
     for (size_t i = 0; i < 3; i++) {

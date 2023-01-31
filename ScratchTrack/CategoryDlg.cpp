@@ -1,4 +1,4 @@
-#include "BucketDlg.h"
+#include "CategoryDlg.h"
 #include "resource.h"
 #include "AccountInfo.h"
 #include "Transaction.h"
@@ -12,38 +12,38 @@ extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 extern AccountInfoDlg g_accountInfoDlg;
 
-BucketDialog::BucketDialog() : _amount(0), _pDefaultTransactionPayFromAccount(nullptr), _budget(0)
+CategoryDialog::CategoryDialog() : _amount(0), _pDefaultTransactionPayFromAccount(nullptr), _budget(0)
 {
 
 }
 
-BucketDialog::~BucketDialog()
+CategoryDialog::~CategoryDialog()
 {
 
 }
 
-bool BucketDialog::ShowDialog()
+bool CategoryDialog::ShowDialog()
 {
     PTHIS = this;
 
     g_accountInfoDlg.saveText();
-    g_accountInfoDlg.appendText(L"About Buckets\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
+    g_accountInfoDlg.appendText(L"About Categories\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
 
-    g_accountInfoDlg.appendText(L"ScratchTrack follows the 'Bucket Budgeting' philosophy. The idea is that money is assigned to separate buckets for different spending categories. Expenses are paid from the buckets. "
-        L"When a bucket is empty, spending in that category stops until more funds are added.\n\n",
+    g_accountInfoDlg.appendText(L"ScratchTrack follows the 'Category Budgeting' philosophy. The idea is that money is assigned to separate categories for different spending categories. Expenses are paid from the categories. "
+        L"When a category is empty, spending in that category stops until more funds are added.\n\n",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
-    g_accountInfoDlg.appendText(L"Examples of typical buckets include 'Dining out', 'Utilities', and 'Car payment'. "
-        L"Buckets have a budget. This is a best guess of how much you'll spend in a month. Don't worry if you're not sure. You can adjust this value as needed at a later time.\n\n",
+    g_accountInfoDlg.appendText(L"Examples of typical categories include 'Dining out', 'Utilities', and 'Car payment'. "
+        L"Categories have a budget. This is a best guess of how much you'll spend in a month. Don't worry if you're not sure. You can adjust this value as needed at a later time.\n\n",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
-    g_accountInfoDlg.appendText(L"Expenses are paid from buckets through the bucket's action icon or right click menu. If a bucket "
+    g_accountInfoDlg.appendText(L"Expenses are paid from categories through the category's action icon or right click menu. If a category "
         L"is paid from the same account, to the same payee, or is the same amount each time, you can set those values here. When you "
-        L"create a transaction in this bucket, those settings will be filled in for you.",
+        L"create a transaction in this category, those settings will be filled in for you.",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
 
-    INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_BUCKET_DIALOG), g_hTopWindow, BucketDialogProc);
+    INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_CATEGORY_DIALOG), g_hTopWindow, CategoryDialogProc);
     PTHIS = nullptr;
 
     g_accountInfoDlg.restoreText();
@@ -52,7 +52,7 @@ bool BucketDialog::ShowDialog()
 
 }
 
-void BucketDialog::enableDisableUi(HWND hDlg)
+void CategoryDialog::enableDisableUi(HWND hDlg)
 {
 
     bool enableOk = true;
@@ -64,7 +64,7 @@ void BucketDialog::enableDisableUi(HWND hDlg)
 }
 
 
-INT_PTR CALLBACK BucketDialog::BucketDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     UNREFERENCED_PARAMETER(lParam);
     switch (message)
@@ -73,7 +73,7 @@ INT_PTR CALLBACK BucketDialog::BucketDialogProc(HWND hDlg, UINT message, WPARAM 
         if (PTHIS) {
 
             HWND hCatNameEdit = GetDlgItem(hDlg, IDC_EDIT_CAT_NAME);
-            SetWindowText(hCatNameEdit, const_cast<wchar_t*>(PTHIS->getBucketName()));
+            SetWindowText(hCatNameEdit, const_cast<wchar_t*>(PTHIS->getCategoryName()));
 
             HWND hAccountCombo = GetDlgItem(hDlg, IDC_COMBO_CAT_ACCOUNT);
             auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
@@ -132,7 +132,7 @@ INT_PTR CALLBACK BucketDialog::BucketDialogProc(HWND hDlg, UINT message, WPARAM 
                     // Name
                     wchar_t szBuff[1024] = { 0 };
                     GetDlgItemText(hDlg, IDC_EDIT_CAT_NAME, szBuff, 1024);
-                    PTHIS->setBucketName(szBuff);
+                    PTHIS->setCategoryName(szBuff);
 
                     // Account from
                     HWND hAccountCombo = GetDlgItem(hDlg, IDC_COMBO_CAT_ACCOUNT);
@@ -178,4 +178,4 @@ INT_PTR CALLBACK BucketDialog::BucketDialogProc(HWND hDlg, UINT message, WPARAM 
     return (INT_PTR)FALSE;
 }
 
-BucketDialog* BucketDialog::PTHIS = nullptr;
+CategoryDialog* CategoryDialog::PTHIS = nullptr;

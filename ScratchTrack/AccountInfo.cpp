@@ -142,8 +142,8 @@ AccountBase* AccountItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	case AccountBase::GROUP:
 		pItem = new AccountGroup;
 		break;
-	case AccountBase::BUCKET:
-		pItem = new AccountBucket;
+	case AccountBase::CATEGORY:
+		pItem = new AccountCategory;
 		break;
 	}
 
@@ -251,7 +251,7 @@ int AccountBase::getCurrentMonthTransacationTotal()
 		if ((transactionTime.wYear == currentTime.wYear) &&
 			(transactionTime.wMonth == currentTime.wMonth))
 		{
-			if (accountIds.find((*itr)->getBucketId()) != accountIds.end())
+			if (accountIds.find((*itr)->getCategoryId()) != accountIds.end())
 			{
 				ret += (*itr)->getAmount();
 			}
@@ -302,7 +302,7 @@ int AccountGroup::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	return ERROR_SUCCESS;
 }
 
-int AccountBucket::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
+int AccountCategory::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 {
 	AccountBase::initItemFromXmlElement(pAccount);
 
@@ -334,7 +334,7 @@ int AccountBucket::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	return ERROR_SUCCESS;
 }
 
-int AccountBucket::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement)
+int AccountCategory::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement)
 {
 	tinyxml2::XMLElement* pNewElement = nullptr;
 	if (!ppSerializedElement) {
@@ -370,7 +370,7 @@ int Account::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	pAccount->QueryBoolAttribute("isCCAccount", &_isCCAccount);
 
 	unsigned int temp = ACCOUNT_ID_INVALID;
-	pAccount->QueryUnsignedAttribute("paidFromBucketId", &temp);
+	pAccount->QueryUnsignedAttribute("paidFromCategoryId", &temp);
 	if (temp != ACCOUNT_ID_INVALID) {
 		_isCCAccount = true;
 	}
@@ -394,13 +394,13 @@ int Account::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppS
 	return ERROR_SUCCESS;
 }
 
-AccountBucket* AccountBucket::getOrCreateCCBucket()
+AccountCategory* AccountCategory::getOrCreateCCCategory()
 {
-	AccountBucket* pBucket = dynamic_cast<AccountBucket*>(lookupById(ACCOUNT_ID_PAY_CC));
-	if (!pBucket) {
-		pBucket = new AccountBucket;
-		pBucket->_id = ACCOUNT_ID_PAY_CC;
-		_idToItem[ACCOUNT_ID_PAY_CC] = pBucket;
+	AccountCategory* pCategory = dynamic_cast<AccountCategory*>(lookupById(ACCOUNT_ID_PAY_CC));
+	if (!pCategory) {
+		pCategory = new AccountCategory;
+		pCategory->_id = ACCOUNT_ID_PAY_CC;
+		_idToItem[ACCOUNT_ID_PAY_CC] = pCategory;
 	}
-	return pBucket;
+	return pCategory;
 }

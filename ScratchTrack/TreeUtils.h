@@ -32,9 +32,9 @@ enum BUDGET_TREE_LINK_ITEM_TYPE
 {
     INVALID_LINK_ITEM_TYPE,
 
-    // Bucket operations
+    // Category operations
     ENV_FIRST,
-    ENV_BUCKET_EDIT = ENV_FIRST,
+    ENV_CATEGORY_EDIT = ENV_FIRST,
     ENV_TRANS_ADD,
     ENV_MONEY_ADD,
 
@@ -42,7 +42,7 @@ enum BUDGET_TREE_LINK_ITEM_TYPE
 
     // Group operations
     GRP_FIRST,
-    GRP_BUCKET_ADD = GRP_FIRST,
+    GRP_CATEGORY_ADD = GRP_FIRST,
     GRP_FOLDER_EDIT,
     GRP_FUND_CHILDREN,
     GRP_LAST = GRP_FUND_CHILDREN

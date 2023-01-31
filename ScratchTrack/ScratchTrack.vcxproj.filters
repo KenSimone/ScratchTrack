@@ -51,7 +51,7 @@
     <ClInclude Include="DepositDlg.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
-    <ClInclude Include="BucketDlg.h">
+    <ClInclude Include="CategoryDlg.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="FolderDlg.h">
@@ -90,10 +90,10 @@
     <ClInclude Include="TransferDlg.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
-    <ClInclude Include="FundBucketDlg.h">
+    <ClInclude Include="FundCategoryDlg.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
-    <ClInclude Include="FundBucketsDlg.h">
+    <ClInclude Include="FundCategoriesDlg.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
   </ItemGroup>
@@ -110,7 +110,7 @@
     <ClCompile Include="DepositDlg.cpp">
       <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
-    <ClCompile Include="BucketDlg.cpp">
+    <ClCompile Include="CategoryDlg.cpp">
       <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
     <ClCompile Include="FolderDlg.cpp">
@@ -146,10 +146,10 @@
     <ClCompile Include="Utils.cpp">
       <Filter>Source Files\Utility</Filter>
     </ClCompile>
-    <ClCompile Include="FundBucketDlg.cpp">
+    <ClCompile Include="FundCategoryDlg.cpp">
       <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
-    <ClCompile Include="FundBucketsDlg.cpp">
+    <ClCompile Include="FundCategoriesDlg.cpp">
       <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
   </ItemGroup>
@@ -165,13 +165,13 @@
     <Image Include="SimpleBudget.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="..\..\..\..\Downloads\icons8-open-bucket-16.png">
+    <Image Include="..\..\..\..\Downloads\icons8-open-category-16.png">
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="icon1.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="..\..\..\..\Downloads\icons8-open-bucket-16.ico">
+    <Image Include="..\..\..\..\Downloads\icons8-open-category-16.ico">
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="..\..\..\..\Downloads\icons8-folder-16.png">
@@ -189,7 +189,7 @@
     <Image Include="addmoney.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="bucket-16.ico">
+    <Image Include="category-16.ico">
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="folder-16.ico">

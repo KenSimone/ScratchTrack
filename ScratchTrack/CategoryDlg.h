@@ -7,23 +7,23 @@
 class AccountBase;
 class Account;
 
-class BucketDialog
+class CategoryDialog
 {
 public:
-	BucketDialog();
-	~BucketDialog();
+	CategoryDialog();
+	~CategoryDialog();
 
 	bool ShowDialog();
 
 	// Pre-show functions
-	void setBucketName(const wchar_t* szBucket) { _name = szBucket;  }
+	void setCategoryName(const wchar_t* szCategory) { _name = szCategory;  }
 	void setBudget(int budget) { _budget = budget; }
 	void setDefaultTransactionAmount(int defTransAmt) { _amount = defTransAmt; }
 	void setDefaultTransactionPayFromAccount(Account* pDefaultAccount) { _pDefaultTransactionPayFromAccount = pDefaultAccount; }
 	void setDefaultTransactionPayee(const wchar_t* szPayee) { _payee = szPayee; }
 
 	// Post-show functions
-	const wchar_t* getBucketName() { return _name.c_str(); }
+	const wchar_t* getCategoryName() { return _name.c_str(); }
 	int getBudget() { return _budget; }
 	int getDefaultTransactionAmount() { return _amount; }
 	Account* getDefaultTransactionPayFromAccount() { return _pDefaultTransactionPayFromAccount; }
@@ -33,13 +33,13 @@ protected:
 	std::wstring _name;
 	Account* _pDefaultTransactionPayFromAccount;
 	std::wstring _payee;
-	std::wstring _bucket;
+	std::wstring _category;
 	int _amount;
 	int _budget;
 
-	static INT_PTR CALLBACK BucketDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
+	static INT_PTR CALLBACK CategoryDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 	void enableDisableUi(HWND hDlg);
 
-	static BucketDialog* PTHIS;
+	static CategoryDialog* PTHIS;
 };
 
