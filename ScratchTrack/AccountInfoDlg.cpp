@@ -304,14 +304,14 @@ void AccountInfoDlg::updateReport()
     //SendMessageW(hRichText, WM_SETREDRAW, false, 0);
     SendMessageW(hRichText, WM_SETTEXT, 0, (LPARAM)L"");
 
-    appendText(L"State of the Budget\n", TEXT_COLOR_NORMAL, false, true, HEADER_SIZE);
+    appendText(L"State of the Budget\n", TEXT_COLOR_NORMAL, true, true, HEADER_SIZE);
 
     std::wstring summary;
     bool isErrorState = false;
     getMasterSummary(summary, isErrorState);
     appendText(summary.c_str(), isErrorState ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL, false, false, TEXT_SIZE);
 
-    appendText(L"\nFolder Status\n", TEXT_COLOR_NORMAL, false, true, HEADER_SIZE);
+    appendText(L"\nFolder Status\n", TEXT_COLOR_NORMAL, true, true, HEADER_SIZE);
     auto folders = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
     for (size_t i = 0; i < folders.size(); i++) {
         AccountGroup* folder = dynamic_cast<AccountGroup* >(folders[i]);
@@ -325,33 +325,66 @@ void AccountInfoDlg::updateReport()
         std::wstring diff = Utils::penniesToDollarsString(abs(folder->getExpenseLimit()) - abs(folder->budgetedToSubAccounts()));
 
         wchar_t szBuff[1024] = { 0 };
-        if (!folder->getExpenseLimit()) {
-            swprintf(szBuff, 1024, L"Folder '%s' has no set limit, %s budgeted and monthly expenses totalling %s\n", folder->getName(), budgeted.c_str(), transTotal.c_str());
+        if (folder->getExpenseLimit()) {
+            swprintf(szBuff, 1024, L" has a budget of %ls, expenses totalling %ls, and a limit of %ls\n", budgeted.c_str(), transTotal.c_str(), limit.c_str());
         }
-        else {
-            swprintf(szBuff, 1024, L"Folder '%s' [%s limit/%s budgeted/%s remaining] - monthly expenses totalling %s\n", folder->getName(), limit.c_str(), budgeted.c_str(), diff.c_str(), transTotal.c_str());
+        else{
+            swprintf(szBuff, 1024, L" has a budget of %ls and expenses totalling %ls\n", budgeted.c_str(), transTotal.c_str());
         }
-        bool errorState = abs(folder->getExpenseLimit()) < abs(folder->budgetedToSubAccounts());
+
+        int monthTotal = folder->getCurrentMonthTransacationTotal();
+        int budgetedTotal = folder->budgetedToSubAccounts();
+        bool errorState =  budgetedTotal > monthTotal;
         COLORREF cr = errorState ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL;
+        std::wstring prefix(L"\u2022 ");
+        prefix += folder->getName();
+        appendText(prefix.c_str(), cr, true, false, TEXT_SIZE);
         appendText(szBuff, cr, false, false, TEXT_SIZE);
     }
 
-    appendText(L"\nCategory Status\n", TEXT_COLOR_NORMAL, false, true, HEADER_SIZE);
+    appendText(L"\nCategory Status\n", TEXT_COLOR_NORMAL, true, true, HEADER_SIZE);
     auto categories = AccountBase::getAllAccountsOfType(AccountBase::CATEGORY);
     bool overBudget = false;
     for (size_t i = 0; i < categories.size(); i++)
     {
         AccountCategory* category = dynamic_cast<AccountCategory *>(categories[i]);
+        if (category->getId() == ACCOUNT_ID_PAY_CC) {
+            continue;
+        }
         std::wstring budgeted = Utils::penniesToDollarsString(abs(category->getBudgeted()));
         std::wstring actual = Utils::penniesToDollarsString(abs(category->getCurrentMonthTransacationTotal()));
+        std::wstring balance = Utils::penniesToDollarsString(abs(category->getBalance()));
         Transaction::getTransactionsForItem(category);
         if (category->getBudgeted() > category->getCurrentMonthTransacationTotal()) {
             wchar_t szBuff[1024] = { 0 };
-            swprintf(szBuff, 1024, L"Category '%s' has a budget of [%s] and monthly expenses of [%s]\n", category->getName(), budgeted.c_str(), actual.c_str());
+            swprintf(szBuff, 1024, L" has a budget of %s, a balance of %ls, and monthly expenses of %s\n", budgeted.c_str(), balance.c_str(), actual.c_str());
+            std::wstring prefix(L"\u2022 ");
+            prefix += category->getName();
+            appendText(prefix.c_str(), TEXT_COLOR_NEGATIVE, true, false, TEXT_SIZE);
             appendText(szBuff, TEXT_COLOR_NEGATIVE, false, false, TEXT_SIZE);
         }
     }
-    //SendMessageW(hRichText, WM_SETREDRAW, true, 0);
+
+    for (size_t i = 0; i < categories.size(); i++)
+    {
+        AccountCategory* category = dynamic_cast<AccountCategory*>(categories[i]);
+        if (category->getId() == ACCOUNT_ID_PAY_CC) {
+            continue;
+        }
+        std::wstring budgeted = Utils::penniesToDollarsString(abs(category->getBudgeted()));
+        std::wstring actual = Utils::penniesToDollarsString(abs(category->getCurrentMonthTransacationTotal()));
+        std::wstring balance = Utils::penniesToDollarsString(abs(category->getBalance()));
+        Transaction::getTransactionsForItem(category);
+        if (category->getBudgeted() <= category->getCurrentMonthTransacationTotal()) {
+            wchar_t szBuff[1024] = { 0 };
+            swprintf(szBuff, 1024, L" has a budget of %s, a balance of %ls, and monthly expenses of %s\n", budgeted.c_str(), balance.c_str(), actual.c_str());
+            std::wstring prefix(L"\u2022 ");
+            prefix += category->getName();
+            appendText(prefix.c_str(), TEXT_COLOR_NORMAL, true, false, TEXT_SIZE);
+            appendText(szBuff, TEXT_COLOR_NORMAL, false, false, TEXT_SIZE);
+        }
+    }
+
 }
 
 DWORD CALLBACK AccountInfoDlg::EditStreamCallbackOut(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG cb, LONG* pcb)

@@ -191,11 +191,13 @@
     <Image Include="..\..\..\..\Downloads\icons8-folder-16.png" />
     <Image Include="..\..\..\..\Downloads\icons8-open-category-16.ico" />
     <Image Include="..\..\..\..\Downloads\icons8-open-category-16.png" />
+    <Image Include="..\Website\assets\ScratchTrack.png" />
     <Image Include="account-16.ico" />
     <Image Include="addmoney.ico" />
     <Image Include="category-16.ico" />
     <Image Include="folder-16.ico" />
     <Image Include="icon1.ico" />
+    <Image Include="ScratchTrack.bmp" />
     <Image Include="SimpleBudget.ico" />
     <Image Include="small.ico" />
     <Image Include="subtractmoney.ico" />

@@ -36,8 +36,10 @@
 #define IDD_TRANSFER_DIALOG             159
 #define IDD_PAYCC_DIALOG                160
 #define IDD_FOLDER_DIALOG               161
-#define IDD_FILL_CATEGORIES_DIALOG       163
+#define IDD_FILL_CATEGORIES_DIALOG      163
 #define IDD_FUND_GROUP_DIALOG           165
+#define IDB_BITMAP1                     171
+#define IDB_BITMAP_SCRATCHTRACK         171
 #define IDC_ONE_INPUT_TEXT              1000
 #define IDC_EDIT_Transaction_AMOUNT     1001
 #define IDC_RADIO1                      1002
@@ -129,7 +131,7 @@
 #define ID_ROOT_PAYCREDITCARD           33022
 #define ID_ROOT_TRANSFER                33023
 #define ID_ROOT_DEPOSIT                 33024
-#define ID_ROOT_FUNDCATEGORIES           33025
+#define ID_ROOT_FUNDCATEGORIES          33025
 #define ID_ROOT_HIDECATEGORY            33026
 #define ID_ROOT_HIDEACCOUNT             33028
 #define ID_ROOT_HIDEACCOUNT33029        33029
@@ -140,7 +142,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        166
+#define _APS_NEXT_RESOURCE_VALUE        172
 #define _APS_NEXT_COMMAND_VALUE         33030
 #define _APS_NEXT_CONTROL_VALUE         1045
 #define _APS_NEXT_SYMED_VALUE           113

@@ -490,8 +490,9 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
     
     static const wchar_t* szEditCategory= L"\u270E";  // pencil
     //static const wchar_t* szAddCategory = L"\u271A"; // plus sign
-    static const wchar_t* szAddCategory = L"\U0001F95B"; // Category
+    //static const wchar_t* szAddCategory = L"\U0001F95B"; // Category
     //static const wchar_t* szAddCategory = L"\U0001F195"; // Category
+    static const wchar_t* szAddCategory = L"\U0001F7BC"; // Category
     
     static const wchar_t* szAddMoney = L"\U0001F4B2";
     //static const wchar_t* szHide = L"\U0001F576"; // sunglasses
@@ -576,7 +577,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             std::wstring allocated = Utils::penniesToDollarsString(iCategories);
 
             // Sum of all transactions for this item
-            int iTransactionSum = abs(pItem->getCurrentMonthTransacationTotal());
+            int iTransactionSum = pItem->getCurrentMonthTransacationTotal();
             std::wstring transactionSum = Utils::penniesToDollarsString(iTransactionSum);
 
             int iDiff = abs(iBudget) - abs(iTransactionSum);
@@ -791,7 +792,7 @@ void budgetTreeCreateTreeControl()
     item.cxy = g_columnSizes._budgeted;
     Header_InsertItem(g_hwndTreeHeader, 99, &item);
 
-    item.pszText = const_cast<wchar_t*>(L"Actual");
+    item.pszText = const_cast<wchar_t*>(L"Outflows");
     item.cxy = g_columnSizes._inCategories;
     Header_InsertItem(g_hwndTreeHeader, 99, &item);
 
@@ -799,7 +800,7 @@ void budgetTreeCreateTreeControl()
     item.cxy = g_columnSizes._balance;
     Header_InsertItem(g_hwndTreeHeader, 99, &item);
 
-    item.pszText = const_cast<wchar_t*>(L"Assigned");
+    item.pszText = const_cast<wchar_t*>(L"Balance");
     item.cxy = g_columnSizes._balance;
     Header_InsertItem(g_hwndTreeHeader, 99, &item);
 
