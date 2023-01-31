@@ -10,7 +10,7 @@ extern HWND g_hTopWindow;
 extern HWND g_hwndTV;
 extern HWND g_hwndTreeHeader;
 extern HWND g_hwndAccountLV;
-BUDGET_TREE_DRAG_DETAILS g_btDragDetails;;
+BUDGET_TREE_DRAG_DETAILS g_btDragDetails;
 
 void addAccount(Account* pAccount);
 int serializeState();
@@ -23,6 +23,7 @@ TTTOOLINFO g_toolTip = { 0 };
 bool g_isToolTipActive = false;
 static bool _trackingMouse = false;
 
+HIMAGELIST _il = nullptr;
 
 HTREEITEM hotLinkFromPoint(POINT pt)
 {
@@ -253,19 +254,13 @@ void budgetTreeHandleLButtonUp(LONG xCur, LONG yCur)
 // Adds an account item to the tree
 HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountBase* pAccount, HTREEITEM hInsertAfter /*= TVI_LAST*/)
 {
-    static const DWORD IMG_ACCOUNT = 0;
-    static const DWORD IMG_FOLDER = 1;
-    static const DWORD IMG_BUCKET = 2;
-    static const DWORD IMG_ADDMONEY = 3;
-    static const DWORD IMG_SUBTRACTMONEY = 4;
-
     if (pAccount->getHidden()) {
         return nullptr;
     }
 
 
     TVINSERTSTRUCT tvi = { 0 };
-    tvi.itemex.mask = TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
+    tvi.itemex.mask = TVIF_TEXT | TVIF_PARAM;
 
     // Note that setting the text here will invalidate the rectangle, but the name is rendered in POSTPAINT
     // This text can be anything.
@@ -274,30 +269,12 @@ HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountBase* pAccount, HTREEITEM hI
     tvi.itemex.lParam = (LPARAM)pAccount;
     tvi.hInsertAfter = hInsertAfter;
 
-    switch (pAccount->getType())
-    {
-    case AccountBase::ACCOUNT:
-        tvi.itemex.iSelectedImage = tvi.itemex.iImage = IMG_ACCOUNT;
-        break;
-    case AccountBase::GROUP:
-        tvi.itemex.iSelectedImage = tvi.itemex.iImage = IMG_FOLDER;
-        break;
-    case AccountBase::BUCKET:
-        if (((AccountBucket*)pAccount)->isExpense()) {
-            tvi.itemex.iSelectedImage = tvi.itemex.iImage = IMG_SUBTRACTMONEY;
-        }
-        else {
-            tvi.itemex.iSelectedImage = tvi.itemex.iImage = IMG_ADDMONEY;
-        }
-        break;
-    };
-
     HTREEITEM ret = TVI_ROOT;
     if (pAccount->getType() == AccountBase::ACCOUNT) {
         addAccount((Account*)pAccount);
     }
     else {
-        ret = (HTREEITEM)SendMessageW(g_hwndTV, TVM_INSERTITEM, 0, (LPARAM)&tvi);
+        ret = TreeView_InsertItem(g_hwndTV, &tvi);
     }
 
     // Add any children
@@ -639,20 +616,22 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             RECT rText = { 0 };
             rText.bottom = rcText.bottom; rText.top = rcText.top;
 
+            DWORD dwDrawTextFlags = DT_NOPREFIX | DT_END_ELLIPSIS;
+
             // Budgeted dollars
             setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iBudget, selected, false);
             rText.left = budgetedSpot; rText.right = inBucketsSpot;
-            DrawText(pCustomDrawItem->nmcd.hdc, budgeted.c_str(), (int)budgeted.length(), &rText, DT_END_ELLIPSIS);
+            DrawText(pCustomDrawItem->nmcd.hdc, budgeted.c_str(), (int)budgeted.length(), &rText, dwDrawTextFlags);
 
             // Monthly transaction sum
             setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iTransactionSum, selected, false);
             rText.left = inBucketsSpot; rText.right = diffSpot;
-            DrawText(pCustomDrawItem->nmcd.hdc, transactionSum.c_str(), (int)transactionSum.length(), &rText, DT_END_ELLIPSIS);
+            DrawText(pCustomDrawItem->nmcd.hdc, transactionSum.c_str(), (int)transactionSum.length(), &rText, dwDrawTextFlags);
 
             // Difference
             setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iDiff, selected, true);
             rText.left = diffSpot; rText.right = balanceSpot;
-            DrawText(pCustomDrawItem->nmcd.hdc, diff.c_str(), (int)diff.length(), &rText, DT_END_ELLIPSIS);
+            DrawText(pCustomDrawItem->nmcd.hdc, diff.c_str(), (int)diff.length(), &rText, dwDrawTextFlags);
 
             // Balance
             if (pItem->getType() == AccountBase::BUCKET)
@@ -661,7 +640,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
                 if (pBucket->isVirtualAccount()) {
                     setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iBalance, selected, true);
                     rText.left = balanceSpot; rText.right = infoSpot;
-                    DrawText(pCustomDrawItem->nmcd.hdc, balance.c_str(), (int)balance.length(), &rText, DT_END_ELLIPSIS);
+                    DrawText(pCustomDrawItem->nmcd.hdc, balance.c_str(), (int)balance.length(), &rText, dwDrawTextFlags);
                 }
             } 
             else if ( pItem->getType() == AccountBase::GROUP && !pItem->getReadOnly())
@@ -674,7 +653,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
                     wnsprintf(szInfotText, 1024, L"  %ls of %ls budgeted [%ls]", budgeted.c_str(), limit.c_str(), diff.c_str());
                     setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 0, selected, true);
                     rText.left = infoSpot; rText.right = infoSpot + g_columnSizes._info;
-                    DrawText(pCustomDrawItem->nmcd.hdc, szInfotText, (int)wcslen(szInfotText), &rText, DT_END_ELLIPSIS);
+                    DrawText(pCustomDrawItem->nmcd.hdc, szInfotText, (int)wcslen(szInfotText), &rText, dwDrawTextFlags);
                 }
             }
 
@@ -729,9 +708,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 1, selected, false);
             rText.left = nameSpot; rText.top = rcText.top;
             rText.bottom = rcText.bottom; rText.right = rightEdge;
-            DrawText(pCustomDrawItem->nmcd.hdc, name.c_str(), (int)name.length(), &rText, DT_END_ELLIPSIS);
-            //TextOut(pCustomDrawItem->nmcd.hdc, nameSpot /*rcText.left*/, rcText.top, name.c_str(), (int)name.length());
-
+            DrawText(pCustomDrawItem->nmcd.hdc, name.c_str(), (int)name.length(), &rText, dwDrawTextFlags);
 
             // Clean up
             SelectObject(pCustomDrawItem->nmcd.hdc, hOrigFont);
@@ -832,26 +809,13 @@ void budgetTreeCreateTreeControl()
 
     SendMessage(g_hwndTV, WM_CHANGEUISTATE, MAKEWPARAM(UIS_SET, UISF_HIDEFOCUS), 0);
 
-    HIMAGELIST il = ImageList_Create(16, 16, ILC_COLOR32 | ILC_MASK, 0, 3);
+    _il = ImageList_Create(1, 1, ILC_COLOR32 | ILC_MASK, 1, 0);
 
-    HICON h = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_ACCOUNT));
-    ImageList_AddIcon(il, h);
-
-    h = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_FOLDER));
-    ImageList_AddIcon(il, h);
-
-    h = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_BUCKET));
-    ImageList_AddIcon(il, h);
-
-    h = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_ADD_MONEYICON));
-    ImageList_AddIcon(il, h);
+    //HICON h = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_SIMPLEBUDGET));
+    //ImageList_AddIcon(_il, h);
 
 
-    h = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_SUBTRACT_MONEY_ICON));
-    ImageList_AddIcon(il, h);
-
-
-    //TreeView_SetImageList(g_hwndTV, il, TVSIL_NORMAL);
+    //TreeView_SetImageList(g_hwndTV, _il, TVSIL_NORMAL);
 
     // Create a tool tip
     g_hwndTreeToolTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,

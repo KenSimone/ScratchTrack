@@ -53,6 +53,8 @@ AccountInfoDlg g_accountInfoDlg;
 extern BUDGET_TREE_COLUMN_SIZES g_columnSizes;
 extern BUDGET_TREE_DRAG_DETAILS g_btDragDetails;
 
+extern HIMAGELIST _il;
+
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
@@ -149,7 +151,7 @@ int setupPaymentBucketForAccount(Account* pAccount)
             pFolder = new AccountGroup;
             pFolder->setName(folderName.c_str());
             pFolder->setReadOnly(true);
-            hItemFolder = addTreeItem(TVI_ROOT, pFolder);
+            hItemFolder = addTreeItem(TVI_ROOT, pFolder, TVI_LAST);
         }
         else if (pFolder->getHidden()) {
             pFolder->setHidden(false);
@@ -887,7 +889,7 @@ void doTreeDrag(LPNMTREEVIEW nmTreeItem)
     // Tell the tree-view control to create an image to use 
     // for dragging. 
     HIMAGELIST himl = TreeView_CreateDragImage(g_hwndTV, nmTreeItem->itemNew.hItem);
-//    HIMAGELIST himl = TreeView_GetImageList(g_hwndTV, TVSIL_NORMAL);
+
 
     // Start the drag operation. 
     ImageList_BeginDrag(himl, 0, 0, 0);
@@ -1642,8 +1644,11 @@ void populateTransactions()
 
         // Description
         ListView_SetItemText(g_hwndTransactionLV, 0, 3, const_cast<wchar_t*>((*itr)->getDescription()));
-
         ListView_SetItemText(g_hwndTransactionLV, 0, isIncome ? 5 : 4, const_cast<wchar_t*>(amount.c_str()));
+    }
+
+    for (size_t i = 0; i < 6; i++) {
+        ListView_SetColumnWidth(g_hwndTransactionLV, i, LVSCW_AUTOSIZE_USEHEADER);
     }
 
     SendMessage(g_hwndTransactionLV, WM_SETREDRAW, TRUE, 0);
@@ -1799,6 +1804,10 @@ void positionControls()
         ListView_SetColumnWidth(g_hwndAccountLV, i, LVSCW_AUTOSIZE_USEHEADER);
     }
 
+    for (size_t i = 0; i < 6; i++) {
+        ListView_SetColumnWidth(g_hwndTransactionLV, i, LVSCW_AUTOSIZE_USEHEADER);
+    }
+
     // Calc tree column spots and adjust the last header width to max
     calcColumnSpots();
     HDITEM hItem = { 0 };
@@ -1810,8 +1819,5 @@ void positionControls()
     ShowWindow(g_hwndTransactionLV, showTransactionList ? SW_SHOW : SW_HIDE);
     ShowWindow(g_accountInfoDlg, SW_SHOW);
 
-    for (size_t i = 0; i < 6; i++) {
-        ListView_SetColumnWidth(g_hwndTransactionLV, i, LVSCW_AUTOSIZE_USEHEADER);
-    }
 
 }
