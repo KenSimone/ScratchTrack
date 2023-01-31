@@ -1689,88 +1689,6 @@ void setGuiFont(HWND hCtrl)
     SendMessage(hCtrl, WM_SETFONT, (WPARAM)hNewFont, true);
 }
 
-void newPositionControls()
-{
-    static const float HORIZONTAL_SPLIT = .4F;
-
-    RECT rClient = { 0 };
-    HDLAYOUT headerLayout = { 0 };
-
-    // Get the area of our workspace
-    GetClientRect(g_hTopWindow, &rClient);
-
-    int leftEdge = rClient.left;
-    int leftWidth = (int)((rClient.right - rClient.left) * HORIZONTAL_SPLIT);
-    int middleEdge = leftEdge + leftWidth;
-    int rSideWidth = rClient.right - middleEdge;
-
-    int top = rClient.top;
-
-// Stuff on the left
-    static const float ACCOUNTLIST = 0.15F;
-    static const float BUDGETINFO = 0.33F;
-
-    int totalHeigth = rClient.bottom - rClient.top;
-
-    // Accounts listview
-    int accountListBottom = (int)(totalHeigth * ACCOUNTLIST);
-    int accountListHeight = accountListBottom - top;
-    SetWindowPos(g_hwndAccountLV, nullptr, leftEdge, top, leftWidth, accountListHeight, SWP_NOZORDER);
-
-    // Budget info pane (includes add account / add category / unhide / state of the budget)
-    int budgetInfoTop = accountListBottom + 1;
-    int budgetInfoHeight = (int)(totalHeigth * BUDGETINFO);
-    int budgetInfotBottom = budgetInfoTop + budgetInfoHeight;
-    SetWindowPos(g_accountInfoDlg, nullptr, leftEdge, budgetInfoTop, leftWidth, budgetInfoHeight, SWP_NOZORDER);
-
-    // Transaction filter
-    RECT rTransFilter = { 0 };
-    GetWindowRect(g_transactionFilterDlg, &rTransFilter);
-    int transactionFilterTop = budgetInfotBottom + 1;
-    int transactionFilterHeight = rTransFilter.bottom - rTransFilter.top;
-    int transactionFilterBottom = transactionFilterTop + transactionFilterHeight;
-    SetWindowPos(g_transactionFilterDlg, nullptr, leftEdge, transactionFilterTop, leftWidth, transactionFilterHeight, SWP_NOZORDER);
-
-    // Transaction list
-    int transactionListTop = transactionFilterBottom + 1;
-    int transactionListHeigth = rClient.bottom - transactionListTop;
-    SetWindowPos(g_hwndTransactionLV, nullptr, leftEdge, transactionListTop, leftWidth, transactionListHeigth, SWP_NOZORDER);
-
-
-// Stuff on the right
-    // Figure out the height of the tree header
-    HDLAYOUT treeHeaderLayout = { 0 };
-    WINDOWPOS wpTreeHeaderSize = { 0 };
-    RECT rTree = rClient;
-    treeHeaderLayout.prc = &rTree; // The top is adjusted to accomodate the header
-    treeHeaderLayout.pwpos = &wpTreeHeaderSize; // This is the suggested size of the header. We care about the height.
-
-    SendMessage(g_hwndTreeHeader, HDM_LAYOUT, 0, (LPARAM)&treeHeaderLayout);
-
-
-    // Bucket tree header
-    SetWindowPos(g_hwndTreeHeader, wpTreeHeaderSize.hwndInsertAfter, middleEdge, top, rSideWidth, wpTreeHeaderSize.cy, wpTreeHeaderSize.flags | SWP_SHOWWINDOW);
-
-    // Bucket tree control
-    int bucketTreeHeigth = rClient.bottom - rClient.top - wpTreeHeaderSize.cy;
-    SetWindowPos(g_hwndTV, nullptr, middleEdge, rTree.top, rSideWidth, bucketTreeHeigth, SWP_NOZORDER);
-
-
-    for (size_t i = 0; i < 3; i++) {
-        ListView_SetColumnWidth(g_hwndAccountLV, i, LVSCW_AUTOSIZE_USEHEADER);
-    }
-
-    for (size_t i = 0; i < 6; i++) {
-        ListView_SetColumnWidth(g_hwndTransactionLV, i, LVSCW_AUTOSIZE_USEHEADER);
-    }
-
-    ShowWindow(g_transactionFilterDlg, SW_SHOW);
-    ShowWindow(g_accountInfoDlg, SW_SHOW);
-
-
-}
-
-
 void positionControls()
 {
 #ifdef NEW_POS_CONTROLS
@@ -1861,6 +1779,13 @@ void positionControls()
     for (size_t i = 0; i < 3; i++) {
         ListView_SetColumnWidth(g_hwndAccountLV, i, LVSCW_AUTOSIZE_USEHEADER);
     }
+
+    // Calc tree column spots and adjust the last header width to max
+    calcColumnSpots();
+    HDITEM hItem = { 0 };
+    hItem.cxy = g_columnSizes._info;
+    hItem.mask = HDI_WIDTH;
+    Header_SetItem(g_hwndTreeHeader, 5, &hItem);
 
     ShowWindow(g_transactionFilterDlg, SW_SHOW);
     ShowWindow(g_hwndTransactionLV, showTransactionList ? SW_SHOW : SW_HIDE);

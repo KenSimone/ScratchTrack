@@ -321,13 +321,15 @@ void AccountInfoDlg::updateReport()
 
         std::wstring transTotal = Utils::penniesToDollarsString(abs(folder->getCurrentMonthTransacationTotal()));
         std::wstring budgeted = Utils::penniesToDollarsString(abs(folder->budgetedToSubAccounts()));
-        std::wstring limit = Utils::penniesToDollarsString(abs(folder->getExpenseLimit()));
+        std::wstring limit = folder->getExpenseLimit() ? Utils::penniesToDollarsString(abs(folder->getExpenseLimit())) : L"no set limit";
+        std::wstring diff = Utils::penniesToDollarsString(abs(folder->getExpenseLimit()) - abs(folder->budgetedToSubAccounts()));
+
         wchar_t szBuff[1024] = { 0 };
         if (!folder->getExpenseLimit()) {
-            swprintf(szBuff, 1024, L"Folder '%s' has %s budgeted and has monthly expenses totalling %s\n", folder->getName(), budgeted.c_str(), transTotal.c_str());
+            swprintf(szBuff, 1024, L"Folder '%s' has no set limit, %s budgeted and monthly expenses totalling %s\n", folder->getName(), budgeted.c_str(), transTotal.c_str());
         }
         else {
-            swprintf(szBuff, 1024, L"Folder '%s' has %s of %s budgeted and has monthly expenses totalling %s\n", folder->getName(), budgeted.c_str(), limit.c_str(), transTotal.c_str());
+            swprintf(szBuff, 1024, L"Folder '%s' [%s limit/%s budgeted/%s remaining] - monthly expenses totalling %s\n", folder->getName(), limit.c_str(), budgeted.c_str(), diff.c_str(), transTotal.c_str());
         }
         bool errorState = abs(folder->getExpenseLimit()) < abs(folder->budgetedToSubAccounts());
         COLORREF cr = errorState ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL;

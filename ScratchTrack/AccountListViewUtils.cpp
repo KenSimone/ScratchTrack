@@ -425,9 +425,6 @@ void createAccountListControl()
 
     GetClientRect(g_hwndAccountLV, &g_toolTip.rect);
     SendMessage(g_hwndListToolTip, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO)&g_toolTip);
-
-    positionControls();
-
 }
 
 void addAccount(Account* pAccount)

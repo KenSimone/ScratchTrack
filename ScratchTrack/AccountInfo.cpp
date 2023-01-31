@@ -385,5 +385,4 @@ int Account::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppS
 	pNewElement->SetAttribute("getContributesToBudget", _isBudgeted);
 	pNewElement->SetAttribute("paidFromBucketId", _paidFromBucketId);
 	return ERROR_SUCCESS;
-
 }

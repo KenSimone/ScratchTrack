@@ -17,15 +17,15 @@ struct BUDGET_TREE_COLUMN_SIZES
 {
     BUDGET_TREE_COLUMN_SIZES()
     {
-        _name = _budgeted = _inCategories = _balance = _available = _endSpot = 0;
+        _name = _budgeted = _inCategories = _balance = _info = _diff = 0;
     }
 
     int _name;
     int _budgeted;
     int _inCategories;
+    int _diff;
     int _balance;
-    int _available;
-    int _endSpot;
+    int _info;
 };
 
 enum BUDGET_TREE_LINK_ITEM_TYPE

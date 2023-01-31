@@ -51,7 +51,7 @@ LRESULT CALLBACK treeViewSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 // This function comes up with initial column sizes
 void calcColumnSpots()
 {
-    static const wchar_t* szMaxNameLength = L"THIS IS A LONG NAME-----------ADD TRANSACTION";
+    static const wchar_t* szMaxNameLength = L"THIS IS A LONG NAME-----------ADD TRANSACT";
     static const wchar_t* szMaxValueLength = L"$1,000,000,000";
 
     HDC dc = GetDC(g_hwndTV);
@@ -60,13 +60,23 @@ void calcColumnSpots()
     GetTextExtentPoint(dc, szMaxValueLength, (int)wcslen(szMaxValueLength), &textSizeB);
     ReleaseDC(g_hwndTV, dc);
 
-    //textSizeA.cx *= 2;
-    g_columnSizes._name = (int)(textSizeA.cx);
+    int totalSize = 0;
+    g_columnSizes._name = textSizeA.cx;
     g_columnSizes._budgeted = textSizeB.cx;
     g_columnSizes._inCategories = textSizeB.cx;
+    g_columnSizes._diff = textSizeB.cx;
     g_columnSizes._balance = textSizeB.cx;
-    g_columnSizes._available = textSizeB.cx;
-    g_columnSizes._endSpot = textSizeB.cx;;
+
+    totalSize = g_columnSizes._name + g_columnSizes._budgeted + g_columnSizes._inCategories + g_columnSizes._balance + g_columnSizes._diff;
+
+    // Info width is the remainder
+    RECT rHeader = { 0 };
+    GetClientRect(g_hwndTreeHeader, &rHeader);
+
+    int headerWidth = rHeader.right - rHeader.left;
+    headerWidth = headerWidth - totalSize;
+
+    g_columnSizes._info = headerWidth;
 }
 
 COLORREF setTextColorForAmount(HDC hDC, int iAmount, bool bSelected, bool colorizeNegative)
@@ -107,14 +117,13 @@ void getColumnSpots()
     g_columnSizes._inCategories = hdi.cxy;
 
     Header_GetItem(g_hwndTreeHeader, 3, &hdi);
-    g_columnSizes._balance = hdi.cxy;
+    g_columnSizes._diff = hdi.cxy;
 
     Header_GetItem(g_hwndTreeHeader, 4, &hdi);
-    g_columnSizes._available = hdi.cxy;
+    g_columnSizes._balance = hdi.cxy;
 
-    g_columnSizes._endSpot = hdi.cxy;
-
-
+    Header_GetItem(g_hwndTreeHeader, 5, &hdi);
+    g_columnSizes._info = hdi.cxy;
 }
 
 // Finds an AccountBase associated with a tree item
@@ -499,6 +508,8 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
     static const wchar_t* szEditBucket= L"\u270E";  // pencil
     //static const wchar_t* szAddBucket = L"\u271A"; // plus sign
     static const wchar_t* szAddBucket = L"\U0001F95B"; // Bucket
+    //static const wchar_t* szAddBucket = L"\U0001F195"; // Bucket
+    
     static const wchar_t* szAddMoney = L"\U0001F4B2";
     //static const wchar_t* szHide = L"\U0001F576"; // sunglasses
     static const wchar_t* szHide = L"\U0001F441"; // eye
@@ -511,6 +522,8 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
     static const COLORREF LINK_COLOR = GetSysColor(COLOR_HOTLIGHT);
     static const COLORREF SEL_LINK_COLOR = GetSysColor(COLOR_HIGHLIGHTTEXT);
     static const COLORREF SEL_TEXT_COLOR = GetSysColor(COLOR_HIGHLIGHTTEXT);
+
+    wchar_t szInfotText[1024] = { 0 };
 
     if (pItem)
     {
@@ -573,24 +586,29 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
 
             // Amount budgeted for this item
             int iBudget = pItem->getType() == AccountBase::BUCKET ? pItem->getBudgeted() : pItem->budgetedToSubAccounts();
-            std::wstring budgeted = Utils::penniesToDollarsString(iBudget);
+            std::wstring budgeted = Utils::penniesToDollarsString(abs(iBudget));
 
             // Money allocated to this item
             int iBuckets = pItem->getType() == AccountBase::BUCKET ? pItem->getBalance() : pItem->allocatedToSubAccounts();
             std::wstring allocated = Utils::penniesToDollarsString(iBuckets);
 
             // Sum of all transactions for this item
-            int iTransactionSum = pItem->getCurrentMonthTransacationTotal();
+            int iTransactionSum = abs(pItem->getCurrentMonthTransacationTotal());
             std::wstring transactionSum = Utils::penniesToDollarsString(iTransactionSum);
+
+            int iDiff = abs(iBudget) - abs(iTransactionSum);
+            std::wstring diff = Utils::penniesToDollarsString(iDiff);
 
             // Calculate column positions
             getColumnSpots();
 
             int nameSpot = rcText.left;
             int budgetedSpot = g_columnSizes._name;
-            int inBuckets = budgetedSpot + g_columnSizes._budgeted;
-            int balanceSpot = inBuckets + g_columnSizes._inCategories;
-            int availableBalanceSpot = balanceSpot + g_columnSizes._balance;
+            int inBucketsSpot = budgetedSpot + g_columnSizes._budgeted;
+            int diffSpot = inBucketsSpot + g_columnSizes._inCategories;
+            int balanceSpot = diffSpot + g_columnSizes._diff;
+            int infoSpot = balanceSpot + g_columnSizes._balance;
+            int endSpot = infoSpot + g_columnSizes._info;
 
             HPEN pen = CreatePen(PS_SOLID, 1, RGB(200, 200, 200));
             SelectObject(pCustomDrawItem->nmcd.hdc, GetStockObject(HOLLOW_BRUSH));
@@ -602,24 +620,33 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             const wchar_t* szFolderClosed = L"\U0001F5C0 ";
             const wchar_t* szBucket = L"\U0001F95B ";
             std::wstring name;
-            if (TreeView_GetItemState(g_hwndTV, hItem, TVIF_STATE) & TVIS_EXPANDED)
+            if (TreeView_GetItemState(g_hwndTV, hItem, TVIF_STATE) & TVIS_EXPANDED) {
                 name = szFolderOpen;
-            else if (pItem->getType() == AccountBase::BUCKET)
-                name = szBucket;
-            else
+            }
+            else if (pItem->getType() == AccountBase::BUCKET) {
+                //name = szBucket;
+            }
+            else {
                 name = szFolderClosed;
+            }
 
-            name += pItem->getName();
-            setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 1, selected, false);
-            TextOut(pCustomDrawItem->nmcd.hdc, nameSpot /*rcText.left*/, rcText.top, name.c_str(), (int)name.length());
+            RECT rText = { 0 };
+            rText.bottom = rcText.bottom; rText.top = rcText.top;
 
             // Budgeted dollars
             setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iBudget, selected, false);
-            TextOut(pCustomDrawItem->nmcd.hdc, budgetedSpot, pCustomDrawItem->nmcd.rc.top, budgeted.c_str(), (int)budgeted.length());
+            rText.left = budgetedSpot; rText.right = inBucketsSpot;
+            DrawText(pCustomDrawItem->nmcd.hdc, budgeted.c_str(), (int)budgeted.length(), &rText, DT_END_ELLIPSIS);
 
             // Monthly transaction sum
             setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iTransactionSum, selected, false);
-            TextOut(pCustomDrawItem->nmcd.hdc, inBuckets, pCustomDrawItem->nmcd.rc.top, transactionSum.c_str(), (int)transactionSum.length());
+            rText.left = inBucketsSpot; rText.right = diffSpot;
+            DrawText(pCustomDrawItem->nmcd.hdc, transactionSum.c_str(), (int)transactionSum.length(), &rText, DT_END_ELLIPSIS);
+
+            // Difference
+            setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iDiff, selected, true);
+            rText.left = diffSpot; rText.right = balanceSpot;
+            DrawText(pCustomDrawItem->nmcd.hdc, diff.c_str(), (int)diff.length(), &rText, DT_END_ELLIPSIS);
 
             // Balance
             if (pItem->getType() == AccountBase::BUCKET)
@@ -627,7 +654,21 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
                 AccountBucket* pBucket = (AccountBucket*)pItem;
                 if (pBucket->isVirtualAccount()) {
                     setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iBalance, selected, true);
-                    TextOut(pCustomDrawItem->nmcd.hdc, balanceSpot, pCustomDrawItem->nmcd.rc.top, balance.c_str(), (int)balance.length());
+                    rText.left = balanceSpot; rText.right = infoSpot;
+                    DrawText(pCustomDrawItem->nmcd.hdc, balance.c_str(), (int)balance.length(), &rText, DT_END_ELLIPSIS);
+                }
+            } 
+            else if ( pItem->getType() == AccountBase::GROUP && !pItem->getReadOnly())
+            {
+                AccountGroup* pGroup = dynamic_cast<AccountGroup*>(pItem);
+                if (pGroup->getExpenseLimit()) {
+                    std::wstring limit = Utils::penniesToDollarsString(pGroup->getExpenseLimit());
+                    std::wstring budgeted = Utils::penniesToDollarsString(abs(pGroup->budgetedToSubAccounts()));
+                    std::wstring diff = Utils::penniesToDollarsString(pGroup->getExpenseLimit() - abs(pGroup->budgetedToSubAccounts()));
+                    wnsprintf(szInfotText, 1024, L"  %ls of %ls budgeted [%ls]", budgeted.c_str(), limit.c_str(), diff.c_str());
+                    setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 0, selected, true);
+                    rText.left = infoSpot; rText.right = infoSpot + g_columnSizes._info;
+                    DrawText(pCustomDrawItem->nmcd.hdc, szInfotText, (int)wcslen(szInfotText), &rText, DT_END_ELLIPSIS);
                 }
             }
 
@@ -670,6 +711,15 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
 
             }
 
+            // Name
+            name += pItem->getName();
+            setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 1, selected, false);
+            rText.left = nameSpot; rText.top = rcText.top;
+            rText.bottom = rcText.bottom; rText.right = rightEdge;
+            DrawText(pCustomDrawItem->nmcd.hdc, name.c_str(), (int)name.length(), &rText, DT_END_ELLIPSIS);
+            //TextOut(pCustomDrawItem->nmcd.hdc, nameSpot /*rcText.left*/, rcText.top, name.c_str(), (int)name.length());
+
+
             // Clean up
             SelectObject(pCustomDrawItem->nmcd.hdc, hOrigFont);
             SetTextColor(pCustomDrawItem->nmcd.hdc, oldColor);
@@ -684,14 +734,21 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             MoveToEx(pCustomDrawItem->nmcd.hdc, budgetedSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
             LineTo(pCustomDrawItem->nmcd.hdc, budgetedSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
 
-            MoveToEx(pCustomDrawItem->nmcd.hdc, inBuckets - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
-            LineTo(pCustomDrawItem->nmcd.hdc, inBuckets - 2, pCustomDrawItem->nmcd.rc.bottom);
+            MoveToEx(pCustomDrawItem->nmcd.hdc, inBucketsSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
+            LineTo(pCustomDrawItem->nmcd.hdc, inBucketsSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
 
             MoveToEx(pCustomDrawItem->nmcd.hdc, balanceSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
             LineTo(pCustomDrawItem->nmcd.hdc, balanceSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
 
-            MoveToEx(pCustomDrawItem->nmcd.hdc, availableBalanceSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
-            LineTo(pCustomDrawItem->nmcd.hdc, availableBalanceSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
+            MoveToEx(pCustomDrawItem->nmcd.hdc, diffSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
+            LineTo(pCustomDrawItem->nmcd.hdc, diffSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
+
+            MoveToEx(pCustomDrawItem->nmcd.hdc, infoSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
+            LineTo(pCustomDrawItem->nmcd.hdc, infoSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
+
+            MoveToEx(pCustomDrawItem->nmcd.hdc, endSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
+            LineTo(pCustomDrawItem->nmcd.hdc, endSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
+
 
             RestoreDC(pCustomDrawItem->nmcd.hdc, oldDcState);
 
@@ -724,20 +781,14 @@ void budgetTreeCreateTreeControl()
     SetWindowPos(g_hwndTreeHeader, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, wp.flags | SWP_SHOWWINDOW);
 
     g_hwndTV = CreateWindowEx(0, WC_TREEVIEW, TEXT("Simple Budget Tree"), WS_VISIBLE | WS_CHILD | WS_BORDER | WS_VSCROLL | WS_HSCROLL | TVS_HASBUTTONS  | TVS_HASLINES | TVS_LINESATROOT,
-        rClient.left, rClient.top,
-        rClient.right,
-        rClient.bottom / 2,
-        g_hTopWindow,
-        (HMENU)IDC_SIMPLEBUDGET_TREE,
-        g_hInst,
-        NULL);
+        rClient.left, rClient.top, rClient.right, rClient.bottom / 2,
+        g_hTopWindow, (HMENU)IDC_SIMPLEBUDGET_TREE, g_hInst, NULL);
 
     // Adjust font
     setGuiFont(g_hwndTV);
     calcColumnSpots();
 
     SetWindowSubclass(g_hwndTV, treeViewSubclass, 1, 0);
-
 
     // Create tree
     HDITEM item = { 0 };
@@ -754,14 +805,17 @@ void budgetTreeCreateTreeControl()
     item.cxy = g_columnSizes._inCategories;
     Header_InsertItem(g_hwndTreeHeader, 99, &item);
 
-    item.pszText = const_cast<wchar_t*>(L"Balance");
+    item.pszText = const_cast<wchar_t*>(L"Difference");
     item.cxy = g_columnSizes._balance;
     Header_InsertItem(g_hwndTreeHeader, 99, &item);
 
-    //item.pszText = const_cast<wchar_t*>(L"Available balance");
-    ////item.cxy = d - c;
-    //item.mask = HDI_TEXT;
-    //Header_InsertItem(g_hwndTreeHeader, 99, &item);
+    item.pszText = const_cast<wchar_t*>(L"In bucket");
+    item.cxy = g_columnSizes._balance;
+    Header_InsertItem(g_hwndTreeHeader, 99, &item);
+
+    item.pszText = const_cast<wchar_t*>(L"Information");
+    item.cxy = g_columnSizes._info;
+    Header_InsertItem(g_hwndTreeHeader, 99, &item);
 
     SendMessage(g_hwndTV, WM_CHANGEUISTATE, MAKEWPARAM(UIS_SET, UISF_HIDEFOCUS), 0);
 
