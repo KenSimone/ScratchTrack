@@ -83,9 +83,9 @@ Account::ACTION_FLAG hitTestAccountList(POINT pt, Account** ppAccount /*= nullpt
             {
                 ret = Account::ACTION_FLAG::HIDE;
             }
-            else if (pAccount->paidFromBucketId() != INVALID_ACCOUNT_ID)
+            else if (pAccount->isCCAccount())
             {
-                if (pAccount->getActionFlags() & Account::ACTION_FLAG::PAY && PtInRect(&rPay, hitInfo.pt) && pAccount->paidFromBucketId() != INVALID_ACCOUNT_ID)
+                if (pAccount->getActionFlags() & Account::ACTION_FLAG::PAY && PtInRect(&rPay, hitInfo.pt))
                 {
                     ret = Account::ACTION_FLAG::PAY;
                 }
@@ -342,7 +342,7 @@ LRESULT accountListCustomDraw(LPNMLVCUSTOMDRAW  pCustomDraw)
             iR.left += sizeSpaces.cx + sizeHide.cx;
 #endif
 
-            if (pAccount->paidFromBucketId() != INVALID_ACCOUNT_ID)
+            if (pAccount->isCCAccount())
             {
                 // This is a credit card
                 SIZE sizePay = { 0 };
@@ -438,7 +438,7 @@ void addAccount(Account* pAccount)
     std::wstring timeStamp;
     //item.pszText = const_cast<wchar_t*>(pAccount->getName());
     item.lParam = (LPARAM)pAccount;
-    item.iItem = INVALID_ACCOUNT_ID;
+    item.iItem = ACCOUNT_ID_INVALID;
 
     // Account name
     std::wstring name = Utils::accountGuiName(pAccount);

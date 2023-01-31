@@ -52,7 +52,7 @@ INT_PTR CALLBACK PayCCDlg::PayCCDlgProc(HWND hDlg, UINT message, WPARAM wParam, 
             SetWindowTextW(hWnd, PTHIS->_pAccount->getName());
 
             hWnd = GetDlgItem(hDlg, IDC_EDIT_BUCKET);
-            int bucketId = PTHIS->_pAccount->paidFromBucketId();
+            int bucketId = PTHIS->_pAccount->isCCAccount() ? ACCOUNT_ID_PAY_CC : ACCOUNT_ID_INVALID;
             AccountBase* pBucket = AccountBase::lookupById(bucketId);
             SetWindowTextW(hWnd, pBucket->getName());
 

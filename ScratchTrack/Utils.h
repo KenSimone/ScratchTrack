@@ -20,8 +20,8 @@ public:
 
 // GUI stuff
 	static bool populatePayeeCombo(HWND hParent, int resourceId, const wchar_t* szDefaultPayee = nullptr);
-	static bool populateAccountCombo(HWND hParent, int resourceId, int defaultAcctId = INVALID_ACCOUNT_ID, bool noCCAccount = false, int avoidAccount = INVALID_ACCOUNT_ID);
-	static int getAccountIdFromAccountCombo(HWND hParent, int resourceId, int defaultAcctId = INVALID_ACCOUNT_ID);
+	static bool populateAccountCombo(HWND hParent, int resourceId, int defaultAcctId = ACCOUNT_ID_INVALID, bool noCCAccount = false, int avoidAccount = ACCOUNT_ID_INVALID);
+	static int getAccountIdFromAccountCombo(HWND hParent, int resourceId, int defaultAcctId = ACCOUNT_ID_INVALID);
 	static std::wstring accountGuiName(Account* pAccount); // Account name pre-pended w/ CC or bank icon
 	static std::wstring getDlgItemText(HWND hDlg, int resourceId); // Same as native API, but returns a std::string
 	static bool isDlgItemTextEmpty(HWND hDlg, int resourceId); // Returns true if dialog text is unset

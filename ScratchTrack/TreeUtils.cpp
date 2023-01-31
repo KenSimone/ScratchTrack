@@ -349,11 +349,17 @@ HTREEITEM treeViewHitTestLinks(LONG xCur, LONG yCur, BUDGET_TREE_LINK_ITEM_TYPE&
             rHitArea.bottom = r.bottom;
             if (PtInRect(&rHitArea, tvhi.pt))
             {
-                if (pAccountItem) {
-                    *pAccountItem = pItem;
-                }
+                // A bit hacky, but exclude new transaction from Pay CC envelope
                 itemType = itr->first;
-                return hItem;
+                if (itemType == ENV_TRANS_ADD && pItem->getId() == ACCOUNT_ID_PAY_CC) {
+                }
+                else 
+                {
+                    if (pAccountItem) {
+                        *pAccountItem = pItem;
+                    }
+                    return hItem;
+                }
             }
         }
     }
@@ -693,7 +699,10 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
 #endif
                     rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditBucket, ENV_BUCKET_EDIT, rightEdge, rcText.top);
                     rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddMoney, ENV_MONEY_ADD, rightEdge, rcText.top);
-                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddTransaction, ENV_TRANS_ADD, rightEdge, rcText.top);
+
+                    if (pBucket->getId() != ACCOUNT_ID_PAY_CC) {
+                        rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddTransaction, ENV_TRANS_ADD, rightEdge, rcText.top);
+                    }
 
                 }
                 break;
@@ -712,6 +721,10 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             }
 
             // Name
+            if (pItem->getId() == ACCOUNT_ID_PAY_CC) {
+                static const wchar_t* szCreditCard = (wchar_t*)(u"\U0001F4B3 ");
+                name = szCreditCard;
+            }
             name += pItem->getName();
             setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 1, selected, false);
             rText.left = nameSpot; rText.top = rcText.top;

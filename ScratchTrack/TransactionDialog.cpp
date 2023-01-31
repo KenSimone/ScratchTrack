@@ -11,7 +11,7 @@ extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 extern AccountInfoDlg g_accountInfoDlg;
 
-TransactionDialog::TransactionDialog() : _amount(0), _accountFromId(INVALID_ACCOUNT_ID), _bucketId(INVALID_ACCOUNT_ID)
+TransactionDialog::TransactionDialog() : _amount(0), _accountFromId(ACCOUNT_ID_INVALID), _bucketId(ACCOUNT_ID_INVALID)
 {
 }
 

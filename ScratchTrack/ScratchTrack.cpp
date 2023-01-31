@@ -120,24 +120,25 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 int setupPaymentBucketForAccount(Account* pAccount)
 {
-    std::wstring bucketName = L"Pay ";
-    bucketName += pAccount->getName();
+    std::wstring bucketName = L"Credit card payment";
 
-    AccountBucket* pBucket = dynamic_cast<AccountBucket*>(AccountBase::lookupById(pAccount->paidFromBucketId()));
+    AccountBucket* pBucket = dynamic_cast<AccountBucket*>(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
 
     if (!pBucket) {
 
+#define CC_IN_FOLDER
+#ifdef CC_IN_FOLDER
         auto folders = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
 
         // Ensure we have a folder for CC payment
         AccountGroup* pFolder = nullptr;
         HTREEITEM hItemFolder = nullptr;
-        std::wstring folderName = L"Credit cards";
+        std::wstring folderName = L"CC Payments";
 
         for (size_t i = 0; i < folders.size(); i++)
         {
             if (_wcsicmp(folderName.c_str(), folders[i]->getName()) == 0) {
-                pFolder = (AccountGroup * )folders[i];
+                pFolder = (AccountGroup*)folders[i];
                 pFolder->setReadOnly(true);
                 hItemFolder = treeItemFromAccount(pFolder);
             }
@@ -157,14 +158,13 @@ int setupPaymentBucketForAccount(Account* pAccount)
 
 
         // No existing bucket. Make one.
-        pBucket = new AccountBucket;
+        pBucket = AccountBucket::getOrCreateCCBucket();
         pBucket->setName(bucketName.c_str());
         pBucket->setDefaultTransactionPayToAccount(pAccount);
         pBucket->setIsExpense(true);
         pBucket->setIsVirtualAccount(true);
-        pBucket->setReadOnly(true);
 
-        pAccount->setPaidFromBucketId(pBucket->getId());
+        pAccount->setIsCCAccount(true);
 
         pFolder->addChild(pBucket);
         addTreeItem(hItemFolder, pBucket);
@@ -174,6 +174,18 @@ int setupPaymentBucketForAccount(Account* pAccount)
         // We do have a bucket, update it's name as appropriate
         pBucket->setName(bucketName.c_str());
     }
+#else
+        pBucket = AccountBucket::getOrCreateCCBucket();
+        pBucket->setName(bucketName.c_str());
+        pBucket->setDefaultTransactionPayToAccount(pAccount);
+        pBucket->setIsExpense(true);
+        pBucket->setIsVirtualAccount(true);
+
+        pAccount->setIsCCAccount(true);
+        addTreeItem(TVI_ROOT, pBucket);
+
+    }
+#endif
 
     return pBucket->getId();
 }
@@ -359,7 +371,7 @@ bool addTransaction(HTREEITEM hItem)
             transactionDlg.setAccountFromId(pBucket->getDefaultTransactionPayFromAccount()->getId());
         }
         else {
-            transactionDlg.setAccountFromId(INVALID_ACCOUNT_ID);
+            transactionDlg.setAccountFromId(ACCOUNT_ID_INVALID);
         }
 
         if (pBucket->getDefaultTransactionPayFromAccount()) {
@@ -369,7 +381,7 @@ bool addTransaction(HTREEITEM hItem)
 
     if (transactionDlg.ShowDialog())
     {
-        Transaction::addTransaction(Transaction::EXPENSE, transactionDlg.getAmount(), transactionDlg.getAccountFromId(), INVALID_ACCOUNT_ID, transactionDlg.getBucketId(), transactionDlg.getPayee(), transactionDlg.getDescription());
+        Transaction::addTransaction(Transaction::EXPENSE, transactionDlg.getAmount(), transactionDlg.getAccountFromId(), ACCOUNT_ID_INVALID, transactionDlg.getBucketId(), transactionDlg.getPayee(), transactionDlg.getDescription());
 
         // Apply the amount to the transaction bucket 
         pBucket->addBalance(transactionDlg.getAmount());
@@ -382,13 +394,15 @@ bool addTransaction(HTREEITEM hItem)
             pFromAccount->addBalance(transactionDlg.getAmount());
 
             // See if this is a payment from a CC account
-            AccountBucket* pToBucket = dynamic_cast<AccountBucket*>(AccountBase::lookupById(pFromAccount->paidFromBucketId()));
-            if (pToBucket)
-            {
-                pToBucket->addBalance(-transactionDlg.getAmount());
-                if (pBucket->getBalance() < 0)
+            if (pFromAccount->isCCAccount()) {
+                AccountBucket* pToBucket = dynamic_cast<AccountBucket*>(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
+                if (pToBucket)
                 {
-                    pBucket->addBalance(-pBucket->getBalance());
+                    pToBucket->addBalance(-transactionDlg.getAmount());
+                    if (pBucket->getBalance() < 0)
+                    {
+                        pBucket->addBalance(-pBucket->getBalance());
+                    }
                 }
             }
         } // if pFromAccount
@@ -582,7 +596,7 @@ void updateTransactionUiAndSave(Transaction* pTransaction, int listviewItemIndex
 
     // Payee
     std::wstring payee = pTransaction->getPayee();
-    if (pTransaction->getAccountToId() != INVALID_ACCOUNT_ID && pAccountTo) {
+    if (pTransaction->getAccountToId() != ACCOUNT_ID_INVALID && pAccountTo) {
         wchar_t szBuff[1024] = { 0 };
         if (pAccountFrom) {
             swprintf(szBuff, 1024, L"%s->%s", pAccountFrom->getName(), pAccountTo->getName());
@@ -620,8 +634,8 @@ void applyModifiedTransaction(Transaction* pTransaction, int listviewItemIndex)
     Account* pAccountTo = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountToId()));
 
     AccountBucket* pBucketTo = nullptr;
-    if (pAccountFrom) {
-        pBucketTo = dynamic_cast<AccountBucket*>(AccountBase::lookupById(pAccountFrom->paidFromBucketId()));
+    if (pAccountFrom && pAccountFrom->isCCAccount()) {
+        pBucketTo = dynamic_cast<AccountBucket*>(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
     }
 
     // Record the expense in the bucket
@@ -667,9 +681,12 @@ void doPayCC(Account* pAccount)
 
     PayCCDlg dlg(pAccount, 0, 0);
     if (dlg.ShowDialog()) {
-        Transaction::addTransaction(Transaction::CCPAYMENT, dlg.getAmount(), dlg.getPaidFromId(), pAccount->getId(), pAccount->paidFromBucketId(), pAccount->getName(), dlg.getDescription());
+        Transaction::addTransaction(Transaction::CCPAYMENT, dlg.getAmount(), dlg.getPaidFromId(), pAccount->getId(), pAccount->isCCAccount() ? ACCOUNT_ID_PAY_CC : ACCOUNT_ID_INVALID, pAccount->getName(), dlg.getDescription());
         pAccount->addBalance(-dlg.getAmount());
-        AccountBucket* pBucket = (AccountBucket*)Account::lookupById(pAccount->paidFromBucketId());
+        AccountBucket* pBucket = nullptr;
+        if (pAccount->isCCAccount()) {
+            pBucket = (AccountBucket*)Account::lookupById(ACCOUNT_ID_PAY_CC);
+        }
         pBucket->addBalance(dlg.getAmount());
         Account* pFrom = (Account*)Account::lookupById(dlg.getPaidFromId());
         pFrom->addBalance(dlg.getAmount());
@@ -698,12 +715,12 @@ void doTransfer(Account* pAccount)
         return;
     }
 
-    TransferDlg dlg(pAccount->getId(), INVALID_ACCOUNT_ID, 0, L"Transfer");
+    TransferDlg dlg(pAccount->getId(), ACCOUNT_ID_INVALID, 0, L"Transfer");
     if (dlg.ShowDialog()) {
         Account* pAccountFrom = (Account*)AccountBase::lookupById(dlg.getAccountFromId());
         Account* pAccountTo = (Account*)AccountBase::lookupById(dlg.getAccountToId());
         if (pAccountFrom && pAccountTo) {
-            Transaction::addTransaction(Transaction::TRANSFER, dlg.getAmount(), dlg.getAccountFromId(), dlg.getAccountToId(), INVALID_ACCOUNT_ID, L"Transfer", dlg.getDescription());
+            Transaction::addTransaction(Transaction::TRANSFER, dlg.getAmount(), dlg.getAccountFromId(), dlg.getAccountToId(), ACCOUNT_ID_INVALID, L"Transfer", dlg.getDescription());
             pAccountFrom->addBalance(-dlg.getAmount());
             pAccountTo->addBalance(dlg.getAmount());
             serializeState();
@@ -717,7 +734,7 @@ void addDeposit(Account* pAccount)
 {
     DepositDlg dlg(pAccount, 0, nullptr, L"Deposit");
     if (dlg.ShowDialog()) {
-        Transaction::addTransaction(Transaction::DEPOSIT, dlg.getAmount(), INVALID_ACCOUNT_ID, pAccount->getId(), INVALID_ACCOUNT_ID, dlg.getPayee(), dlg.getDescription());
+        Transaction::addTransaction(Transaction::DEPOSIT, dlg.getAmount(), ACCOUNT_ID_INVALID, pAccount->getId(), ACCOUNT_ID_INVALID, dlg.getPayee(), dlg.getDescription());
         pAccount->addBalance(dlg.getAmount());
         serializeState();
         updateGuiValues();
@@ -817,7 +834,9 @@ void editExpense(Transaction* pTransaction, int listviewItemIndex)
         Account* pAccountTo = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountToId()));
         AccountBucket* pBucketTo = nullptr;
 
-        pBucketTo = dynamic_cast<AccountBucket*>(AccountBase::lookupById(pAccountFrom->paidFromBucketId()));
+        if (pAccountFrom->isCCAccount()) {
+            pBucketTo = dynamic_cast<AccountBucket*>(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
+        }
 
         int origAmount = pTransaction->getAmount();
         if (pBucket) {
@@ -838,7 +857,7 @@ void editExpense(Transaction* pTransaction, int listviewItemIndex)
         }
 
         // Now this is basically the same as add
-        pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), dlg.getBucketId(), dlg.getAccountFromId(), INVALID_ACCOUNT_ID);
+        pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), dlg.getBucketId(), dlg.getAccountFromId(), ACCOUNT_ID_INVALID);
         applyModifiedTransaction(pTransaction, listviewItemIndex);
 
     }
@@ -889,7 +908,7 @@ void editAccount(Account* pAccount)
     dlg.setBalance(pAccount->getBalance());
     dlg.setBudgeted(pAccount->getContributesToBudget());
     dlg.setName(pAccount->getName());
-    dlg.setCreditCard(pAccount->paidFromBucketId() != INVALID_ACCOUNT_ID);
+    dlg.setCreditCard(pAccount->isCCAccount());
     if (dlg.ShowDialog())
     {
         // Did this change "types" (cc to non CC
@@ -904,10 +923,10 @@ void editAccount(Account* pAccount)
         else if (pAccount->isCCAccount())
         {
             // This was a CC account, but isn't any more. Hide the bucket, and return any balance
-            AccountBucket* pBucket = dynamic_cast<AccountBucket * >(AccountBase::lookupById(pAccount->paidFromBucketId()));
+            AccountBucket* pBucket = dynamic_cast<AccountBucket * >(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
             pBucket->addBalance(-pBucket->getBalance());
             pBucket->setHidden(true);
-            pAccount->setPaidFromBucketId(INVALID_ACCOUNT_ID);
+            pAccount->setIsCCAccount(false);
             HTREEITEM hBucket = treeItemFromAccount(pBucket);
             HTREEITEM hParent = TreeView_GetParent(g_hwndTV, hBucket);
 

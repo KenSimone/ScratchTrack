@@ -306,7 +306,7 @@ int AccountBucket::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 {
 	AccountBase::initItemFromXmlElement(pAccount);
 
-	unsigned int accountId = INVALID_ACCOUNT_ID, payToAccountId = INVALID_ACCOUNT_ID;
+	unsigned int accountId = ACCOUNT_ID_INVALID, payToAccountId = ACCOUNT_ID_INVALID;
 
 	pAccount->QueryUnsignedAttribute("defaultPayFromAccount", &accountId);
 	pAccount->QueryUnsignedAttribute("defaultPayToAccount", &payToAccountId);
@@ -367,7 +367,14 @@ int Account::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 {
 	AccountBase::initItemFromXmlElement(pAccount);
 	pAccount->QueryBoolAttribute("getContributesToBudget", &_isBudgeted);
-	pAccount->QueryUnsignedAttribute("paidFromBucketId", &_paidFromBucketId);
+	pAccount->QueryBoolAttribute("isCCAccount", &_isCCAccount);
+
+	unsigned int temp = ACCOUNT_ID_INVALID;
+	pAccount->QueryUnsignedAttribute("paidFromBucketId", &temp);
+	if (temp != ACCOUNT_ID_INVALID) {
+		_isCCAccount = true;
+	}
+
 	return ERROR_SUCCESS;
 }
 
@@ -383,6 +390,17 @@ int Account::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppS
 
 	// Add our own attributes
 	pNewElement->SetAttribute("getContributesToBudget", _isBudgeted);
-	pNewElement->SetAttribute("paidFromBucketId", _paidFromBucketId);
+	pNewElement->SetAttribute("isCCAccount", _isCCAccount);
 	return ERROR_SUCCESS;
+}
+
+AccountBucket* AccountBucket::getOrCreateCCBucket()
+{
+	AccountBucket* pBucket = dynamic_cast<AccountBucket*>(lookupById(ACCOUNT_ID_PAY_CC));
+	if (!pBucket) {
+		pBucket = new AccountBucket;
+		pBucket->_id = ACCOUNT_ID_PAY_CC;
+		_idToItem[ACCOUNT_ID_PAY_CC] = pBucket;
+	}
+	return pBucket;
 }

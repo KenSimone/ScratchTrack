@@ -219,7 +219,7 @@ void AccountInfoDlg::appendText(const wchar_t* szText, COLORREF cr, bool bold, b
     cf.crTextColor = cr;
 
     // Move selection to the end
-    SendMessage(hRichText, EM_SETSEL, INVALID_ACCOUNT_ID, INVALID_ACCOUNT_ID);
+    SendMessage(hRichText, EM_SETSEL, ACCOUNT_ID_INVALID, ACCOUNT_ID_INVALID);
 
     SendMessageW(hRichText, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
     SendMessage(hRichText, EM_REPLACESEL, 0, (LPARAM)szText);

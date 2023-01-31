@@ -1,6 +1,7 @@
 #pragma once
 
-#define INVALID_ACCOUNT_ID		MAXINT
+#define ACCOUNT_ID_INVALID		MAXINT
+#define ACCOUNT_ID_PAY_CC		ACCOUNT_ID_INVALID-1
 
 #include <string>
 #include <vector>
@@ -233,7 +234,7 @@ protected:
 class Account : public AccountBase
 {
 public:
-	Account() : AccountBase(ACCOUNT), _isBudgeted(true), _paidFromBucketId(INVALID_ACCOUNT_ID) {};
+	Account() : AccountBase(ACCOUNT), _isBudgeted(true), _isCCAccount(false) {};
 
 	bool getContributesToBudget() { return _isBudgeted;  }
 	void setContributesToBudget(bool budgeted) { _isBudgeted = budgeted; }
@@ -252,10 +253,8 @@ public:
 	//
 	// Later, when the credit card is paid, record an expense transaction against that 
 	// bucket.
-	unsigned int paidFromBucketId() { return _paidFromBucketId; }
-	void setPaidFromBucketId(unsigned int paidFromBucketId) { _paidFromBucketId = paidFromBucketId; }
-
-	bool isCCAccount() { return paidFromBucketId() != INVALID_ACCOUNT_ID; }
+	unsigned int isCCAccount() { return _isCCAccount; }
+	void setIsCCAccount(bool isCC) { _isCCAccount = isCC; }
 
 	// The item-type (account/group/bucket)
 	virtual accountItemType getType() { return AccountBase::ACCOUNT; }
@@ -276,7 +275,7 @@ public:
 	// Returns a mask of the actions that apply to this account
 	int getActionFlags()
 	{
-		return getActionFlags(this->paidFromBucketId() != INVALID_ACCOUNT_ID);
+		return getActionFlags(isCCAccount());
 	}
 
 	static int getActionFlags(bool forCC)
@@ -291,7 +290,7 @@ public:
 
 protected:
 	bool _isBudgeted;
-	unsigned int _paidFromBucketId;
+	bool _isCCAccount;
 
 }; // class Account
 
@@ -333,6 +332,8 @@ public:
 
 	virtual int initItemFromXmlElement(tinyxml2::XMLElement* pAccount);
 	virtual int serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement);
+
+	static AccountBucket* getOrCreateCCBucket();
 
 protected:
 	std::wstring _defaultTransactionPayee;

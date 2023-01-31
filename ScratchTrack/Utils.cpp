@@ -219,7 +219,7 @@ int Utils::dollarsStringToPennies(const wchar_t* szCurrency)
 }
 
 // Returns true if default account ID was found
-bool Utils::populateAccountCombo(HWND hParent, int resourceId, int defaultAcctId /*= INVALID_ACCOUNT_ID*/, bool noCCAccount /* = false */, int avoidAccount /*= INVALID_ACCOUNT_ID*/)
+bool Utils::populateAccountCombo(HWND hParent, int resourceId, int defaultAcctId /*= ACCOUNT_ID_INVALID*/, bool noCCAccount /* = false */, int avoidAccount /*= ACCOUNT_ID_INVALID*/)
 {
 	HWND hCombo = GetDlgItem(hParent, resourceId);
 	bool selSet = false;
@@ -261,7 +261,7 @@ bool Utils::populateAccountCombo(HWND hParent, int resourceId, int defaultAcctId
 	return selSet;
 }
 
-int Utils::getAccountIdFromAccountCombo(HWND hParent, int resourceId, int defaultAcctId /*= INVALID_ACCOUNT_ID*/)
+int Utils::getAccountIdFromAccountCombo(HWND hParent, int resourceId, int defaultAcctId /*= ACCOUNT_ID_INVALID*/)
 {
 	HWND hCombo = GetDlgItem(hParent, resourceId);
 	int iRet = defaultAcctId;
@@ -282,7 +282,7 @@ std::wstring Utils::accountGuiName(Account* pAccount)
 {
 	static const wchar_t* szCreditCard = (wchar_t*)(u"\U0001F4B3 ");
 	static const wchar_t* szBank = (wchar_t*)u"\U0001F3E6 ";
-	std::wstring name = (pAccount->paidFromBucketId() == INVALID_ACCOUNT_ID) ? szBank : szCreditCard;
+	std::wstring name = (!pAccount->isCCAccount()) ? szBank : szCreditCard;
 	name += pAccount->getName();
 
 	return name;

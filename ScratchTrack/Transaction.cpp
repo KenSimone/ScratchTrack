@@ -77,7 +77,7 @@ int Transaction::deserialize(tinyxml2::XMLElement* pRoot)
 		tinyxml2::XMLElement* pTransaction = pTransactions->FirstChildElement("transaction");
 		while (pTransaction) {
 			// deserialize
-			int bucketId = 0, fromAccountId = 0, toAccountId = INVALID_ACCOUNT_ID;
+			int bucketId = 0, fromAccountId = 0, toAccountId = ACCOUNT_ID_INVALID;
 			pTransaction->QueryIntAttribute("bucket", &bucketId);
 			pTransaction->QueryIntAttribute("accountFrom", &fromAccountId);
 			pTransaction->QueryIntAttribute("accountTo", &toAccountId);
