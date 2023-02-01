@@ -51,7 +51,7 @@ INT_PTR CALLBACK FolderDlg::FolderDlgProc(HWND hDlg, UINT message, WPARAM wParam
     {
     case WM_INITDIALOG:
         if (FolderDlg::PTHIS) {
-            Utils::setDlgItemDollarText(hDlg, IDC_EDIT_EXPENSE_LIMIT, PTHIS->_limit);
+            Utils::setDlgItemDollarText(hDlg, IDC_EDIT_EXPENSE_LIMIT, abs(PTHIS->_limit));
             SetDlgItemText(hDlg, IDC_EDIT_FOLDER_NAME, PTHIS->_name.c_str());
         }
 
@@ -67,7 +67,7 @@ INT_PTR CALLBACK FolderDlg::FolderDlgProc(HWND hDlg, UINT message, WPARAM wParam
         {
             if (LOWORD(wParam) == IDOK)
             {
-                PTHIS->_limit = Utils::getDlgItemDollarText(hDlg, IDC_EDIT_EXPENSE_LIMIT);
+                PTHIS->_limit = -Utils::getDlgItemDollarText(hDlg, IDC_EDIT_EXPENSE_LIMIT);
                 PTHIS->_name = Utils::getDlgItemText(hDlg, IDC_EDIT_FOLDER_NAME);
             }
 

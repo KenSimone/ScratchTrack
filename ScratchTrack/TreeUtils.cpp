@@ -52,13 +52,17 @@ LRESULT CALLBACK treeViewSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 // This function comes up with initial column sizes
 void calcColumnSpots()
 {
-    static const wchar_t* szMaxNameLength = L"THIS IS A LONG NAME-----------ADD TRANSACT";
-    static const wchar_t* szMaxValueLength = L"$1,000,000,000";
+    HFONT hFont = (HFONT)SendMessage(g_hwndTV, WM_GETFONT, 0, 0);
+    static const wchar_t* szMaxNameLength = L"INDENT__BIG FOLDER NAME__ICONS";
+    static const wchar_t* szMaxValueLength = L"DIFFERENCE";
 
     HDC dc = GetDC(g_hwndTV);
+    int iDc = SaveDC(dc);
+    SelectObject(dc, hFont);
     SIZE textSizeA = { 0 }, textSizeB = { 0 };
-    GetTextExtentPoint(dc, szMaxNameLength, (int)wcslen(szMaxNameLength), &textSizeA);
-    GetTextExtentPoint(dc, szMaxValueLength, (int)wcslen(szMaxValueLength), &textSizeB);
+    GetTextExtentPoint32(dc, szMaxNameLength, (int)wcslen(szMaxNameLength), &textSizeA);
+    GetTextExtentPoint32(dc, szMaxValueLength, (int)wcslen(szMaxValueLength), &textSizeB);
+    RestoreDC(dc, iDc);
     ReleaseDC(g_hwndTV, dc);
 
     int totalSize = 0;
@@ -648,9 +652,9 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             {
                 AccountGroup* pGroup = dynamic_cast<AccountGroup*>(pItem);
                 if (pGroup->getExpenseLimit()) {
-                    std::wstring limit = Utils::penniesToDollarsString(pGroup->getExpenseLimit());
+                    std::wstring limit = Utils::penniesToDollarsString(-pGroup->getExpenseLimit());
                     std::wstring budgeted = Utils::penniesToDollarsString(abs(pGroup->budgetedToSubAccounts()));
-                    std::wstring diff = Utils::penniesToDollarsString(pGroup->getExpenseLimit() - abs(pGroup->budgetedToSubAccounts()));
+                    std::wstring diff = Utils::penniesToDollarsString(-(pGroup->getExpenseLimit() - pGroup->budgetedToSubAccounts()));
                     wnsprintf(szInfotText, 1024, L"  %ls of %ls budgeted [%ls]", budgeted.c_str(), limit.c_str(), diff.c_str());
                     setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 0, selected, true);
                     rText.left = infoSpot; rText.right = infoSpot + g_columnSizes._info;

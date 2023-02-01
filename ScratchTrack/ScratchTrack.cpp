@@ -37,8 +37,8 @@
 #define MAX_LOADSTRING 100
 
 // Global settings
-static const double FONT_SCALE_FACTOR = 1.4;
-
+static const float FONT_SCALE_FACTOR = 1.4;
+static const float FONT_SCALE_FACTOR_LOWRES = 1.1;
 
 // Global Variables:
 HINSTANCE g_hInst = nullptr;                                // current instance
@@ -1703,22 +1703,22 @@ int serializeState()
 
 void setGuiFont(HWND hCtrl)
 {
+    int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+    bool lowRes = screenWidth < 1920;
+
     // Adjust font
+    float scaleFactor = lowRes ? FONT_SCALE_FACTOR_LOWRES : FONT_SCALE_FACTOR;
+
     HFONT hFont = (HFONT)SendMessage(hCtrl, WM_GETFONT, NULL, NULL);
     LOGFONT lf = { 0 };
     GetObject(hFont, sizeof(lf), &lf);
-    lf.lfHeight = (LONG)(lf.lfHeight * FONT_SCALE_FACTOR);
+    lf.lfHeight = (LONG)(lf.lfHeight * scaleFactor);
     HFONT hNewFont = CreateFontIndirect(&lf);
     SendMessage(hCtrl, WM_SETFONT, (WPARAM)hNewFont, true);
 }
 
 void positionControls()
 {
-#ifdef NEW_POS_CONTROLS
-    newPositionControls();
-    return;
-#endif
-
     bool showTransactionList = g_transactionFilterDlg.showTransactionList();
 
     static const float HORIZONTAL_SPLIT = .4F;

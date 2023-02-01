@@ -211,7 +211,7 @@ void AccountInfoDlg::appendText(const wchar_t* szText, COLORREF cr, bool bold, b
     int screenWidth = GetSystemMetrics(SM_CXSCREEN);
     
     static const LONG FONT_POINT_SCALE = 20;
-    static const LONG FONT_POINT_SCALE_LOW_RES = 18;
+    static const LONG FONT_POINT_SCALE_LOW_RES = 16;
 
     LONG size = (screenWidth < 1920) ? FONT_POINT_SCALE_LOW_RES * sizeInPoints : FONT_POINT_SCALE * sizeInPoints;
     cf.yHeight = size;
@@ -223,8 +223,6 @@ void AccountInfoDlg::appendText(const wchar_t* szText, COLORREF cr, bool bold, b
 
     SendMessageW(hRichText, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
     SendMessage(hRichText, EM_REPLACESEL, 0, (LPARAM)szText);
-    
-
 }
 
 void AccountInfoDlg::getMasterSummary(std::wstring& summary, bool& isError)
@@ -319,6 +317,13 @@ void AccountInfoDlg::updateReport()
             continue;
         }
 
+        int iMonthlySpend = folder->getCurrentMonthTransacationTotal();
+        int iMonthlyBudget = folder->budgetedToSubAccounts();
+        int iMonthlyLimit = folder->getExpenseLimit();
+
+        int iSpendVBudget = -(iMonthlyBudget - iMonthlySpend);
+        int iSpendVLimit = -(iMonthlyLimit - iMonthlySpend);
+
         std::wstring transTotal = Utils::penniesToDollarsString(abs(folder->getCurrentMonthTransacationTotal()));
         std::wstring budgeted = Utils::penniesToDollarsString(abs(folder->budgetedToSubAccounts()));
         std::wstring limit = folder->getExpenseLimit() ? Utils::penniesToDollarsString(abs(folder->getExpenseLimit())) : L"no set limit";
@@ -326,10 +331,10 @@ void AccountInfoDlg::updateReport()
 
         wchar_t szBuff[1024] = { 0 };
         if (folder->getExpenseLimit()) {
-            swprintf(szBuff, 1024, L" has a budget of %ls, expenses totalling %ls, and a limit of %ls\n", budgeted.c_str(), transTotal.c_str(), limit.c_str());
+            swprintf(szBuff, 1024, L" - budget:%ls expenses:%ls limit:%ls\n", budgeted.c_str(), transTotal.c_str(), limit.c_str());
         }
         else{
-            swprintf(szBuff, 1024, L" has a budget of %ls and expenses totalling %ls\n", budgeted.c_str(), transTotal.c_str());
+            swprintf(szBuff, 1024, L" - budget:%ls expenses:%ls\n", budgeted.c_str(), transTotal.c_str());
         }
 
         int monthTotal = folder->getCurrentMonthTransacationTotal();
@@ -357,7 +362,7 @@ void AccountInfoDlg::updateReport()
         Transaction::getTransactionsForItem(category);
         if (category->getBudgeted() > category->getCurrentMonthTransacationTotal()) {
             wchar_t szBuff[1024] = { 0 };
-            swprintf(szBuff, 1024, L" has a budget of %s, a balance of %ls, and monthly expenses of %s\n", budgeted.c_str(), balance.c_str(), actual.c_str());
+            swprintf(szBuff, 1024, L": budget of % s, a balance of % ls, and monthly expenses of % s\n", budgeted.c_str(), balance.c_str(), actual.c_str());
             std::wstring prefix(L"\u2022 ");
             prefix += category->getName();
             appendText(prefix.c_str(), TEXT_COLOR_NEGATIVE, true, false, TEXT_SIZE);
@@ -377,7 +382,7 @@ void AccountInfoDlg::updateReport()
         Transaction::getTransactionsForItem(category);
         if (category->getBudgeted() <= category->getCurrentMonthTransacationTotal()) {
             wchar_t szBuff[1024] = { 0 };
-            swprintf(szBuff, 1024, L" has a budget of %s, a balance of %ls, and monthly expenses of %s\n", budgeted.c_str(), balance.c_str(), actual.c_str());
+            swprintf(szBuff, 1024, L": budget of %s, a balance of %ls, and monthly expenses of %s\n", budgeted.c_str(), balance.c_str(), actual.c_str());
             std::wstring prefix(L"\u2022 ");
             prefix += category->getName();
             appendText(prefix.c_str(), TEXT_COLOR_NORMAL, true, false, TEXT_SIZE);
