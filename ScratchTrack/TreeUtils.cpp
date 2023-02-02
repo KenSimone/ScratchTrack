@@ -5,6 +5,10 @@
 #include <map>
 void setGuiFont(HWND hCtrl);
 
+const wchar_t* szFolderOpen = L"\U0001F5C1 ";
+const wchar_t* szFolderClosed = L"\U0001F5C0 ";
+const wchar_t* szCategory = L"\U0001F95B ";
+
 extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 extern HWND g_hwndTV;
@@ -604,9 +608,6 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             SetBkMode(pCustomDrawItem->nmcd.hdc, TRANSPARENT);
 
             // Name
-            const wchar_t* szFolderOpen = L"\U0001F5C1 ";
-            const wchar_t* szFolderClosed = L"\U0001F5C0 ";
-            const wchar_t* szCategory = L"\U0001F95B ";
             std::wstring name;
             if (TreeView_GetItemState(g_hwndTV, hItem, TVIF_STATE) & TVIS_EXPANDED) {
                 name = szFolderOpen;
@@ -655,7 +656,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
                     std::wstring limit = Utils::penniesToDollarsString(-pGroup->getExpenseLimit());
                     std::wstring budgeted = Utils::penniesToDollarsString(abs(pGroup->budgetedToSubAccounts()));
                     std::wstring diff = Utils::penniesToDollarsString(-(pGroup->getExpenseLimit() - pGroup->budgetedToSubAccounts()));
-                    wnsprintf(szInfotText, 1024, L"  %ls of %ls budgeted [%ls]", budgeted.c_str(), limit.c_str(), diff.c_str());
+                    wnsprintf(szInfotText, 1024, L"  %ls of %ls budgeted [%ls unbudgeted]", budgeted.c_str(), limit.c_str(), diff.c_str());
                     setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 0, selected, true);
                     rText.left = infoSpot; rText.right = infoSpot + g_columnSizes._info;
                     DrawText(pCustomDrawItem->nmcd.hdc, szInfotText, (int)wcslen(szInfotText), &rText, dwDrawTextFlags);

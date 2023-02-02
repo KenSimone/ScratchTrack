@@ -37,8 +37,8 @@
 #define MAX_LOADSTRING 100
 
 // Global settings
-static const float FONT_SCALE_FACTOR = 1.4;
-static const float FONT_SCALE_FACTOR_LOWRES = 1.1;
+static const float FONT_SCALE_FACTOR = 1.4f;
+static const float FONT_SCALE_FACTOR_LOWRES = 1.1f;
 
 // Global Variables:
 HINSTANCE g_hInst = nullptr;                                // current instance
@@ -716,7 +716,7 @@ void doTransfer(Account* pAccount)
         return;
     }
 
-    TransferDlg dlg(pAccount->getId(), ACCOUNT_ID_INVALID, 0, L"Transfer");
+    TransferDlg dlg(pAccount->getId(), ACCOUNT_ID_INVALID, 0, nullptr);
     if (dlg.ShowDialog()) {
         Account* pAccountFrom = (Account*)AccountBase::lookupById(dlg.getAccountFromId());
         Account* pAccountTo = (Account*)AccountBase::lookupById(dlg.getAccountToId());
@@ -733,7 +733,7 @@ void doTransfer(Account* pAccount)
 }
 void addDeposit(Account* pAccount)
 {
-    DepositDlg dlg(pAccount, 0, nullptr, L"Deposit");
+    DepositDlg dlg(pAccount, 0, nullptr, nullptr);
     if (dlg.ShowDialog()) {
         Transaction::addTransaction(Transaction::DEPOSIT, dlg.getAmount(), ACCOUNT_ID_INVALID, pAccount->getId(), ACCOUNT_ID_INVALID, dlg.getPayee(), dlg.getDescription());
         pAccount->addBalance(dlg.getAmount());
@@ -1551,45 +1551,36 @@ void populateTransactions()
 
     HTREEITEM hItem = (HTREEITEM)TreeView_GetSelection(g_hwndTV);
     AccountBase* pItem = accountFromTreeItem(hItem);
+    Account* pSelectedAccount = getSelectedAccount();
 
-    // Get Transactions for item
+    // Filter to category if selected, otherwise all
     std::vector<Transaction*> Transactions = g_transactionFilterDlg.filterToCategorySelection() ? Transaction::getTransactionsForItem(pItem) : Transaction::getAllTransactions();
-
-    // Filter to account, if requested
-    if (g_transactionFilterDlg.filterToAccount()) {
-        std::vector<Transaction*> temp;
-        int iCurAccountSel = ListView_GetNextItem(g_hwndAccountLV, -1, LVNI_SELECTED);
-        if (iCurAccountSel >= 0) {
-            LVITEM item = { 0 };
-            item.iItem = iCurAccountSel;
-            item.mask = LVIF_PARAM;
-            ListView_GetItem(g_hwndAccountLV, &item);
-
-            Account* pAccount = (Account*)item.lParam;
-            for (size_t i = 0; i < Transactions.size(); i++) {
-                Transaction* pCurTrans = Transactions[i];
-                if (pCurTrans->getAccountToId() == pAccount->getId() || pCurTrans->getAccountFromId() == pAccount->getId())
-                {
-                    temp.push_back(pCurTrans);
-                }
-            }
-        }
-        Transactions = temp;
-    }
 
     // Add them to the list view
     SendMessage(g_hwndTransactionLV, WM_SETREDRAW, FALSE, 0);
 
     for (auto itr = Transactions.begin(); itr != Transactions.end(); itr++ )
     {
+        Transaction* pTransaction = *itr;
+        // Filter to account of requested
+        if (g_transactionFilterDlg.filterToAccount()) {
+            if (g_transactionFilterDlg.filterToAccount() && !pSelectedAccount) {
+                break;
+            }
+            if (pSelectedAccount->getId() != pTransaction->getAccountToId() &&
+                pSelectedAccount->getId() != pTransaction->getAccountFromId()) {
+                continue;
+            }
+        }
+
         LVITEM item = { 0 };
         item.mask = LVIF_TEXT | LVIF_PARAM;
         std::wstring timeStamp;
-        (*itr)->getLocalTimeStamp(timeStamp);
+        pTransaction->getLocalTimeStamp(timeStamp);
 
         Transaction* pCurTransaction = *itr;
 
-        int iAmount = (*itr)->getAmount();
+        int iAmount = pTransaction->getAmount();
         bool isIncome = iAmount > 0;
         iAmount = abs(iAmount);
         std::wstring amount = Utils::penniesToDollarsString(iAmount);
@@ -1618,7 +1609,6 @@ void populateTransactions()
         ListView_InsertItem(g_hwndTransactionLV, &item);
 
         // Payee
-        Transaction* pTransaction = *itr;
         std::wstring payee = pTransaction->getPayee();
         AccountBase* pAccountTo = AccountBase::lookupById(pTransaction->getAccountToId());
         if (pAccountTo) {
@@ -1627,22 +1617,44 @@ void populateTransactions()
             if (pAccountFrom) {
                 swprintf(szBuff, 1024, L"%s->%s", pAccountFrom->getName(), pAccountTo->getName());
             }
+            else if (wcslen(pTransaction->getPayee())) {
+                swprintf(szBuff, 1024, L"%s->%s", pTransaction->getPayee(), pAccountTo->getName());
+            }
             else {
                 swprintf(szBuff, 1024, L"%s", pAccountTo->getName());
             }
+
             payee = szBuff;
         }
 
         ListView_SetItemText(g_hwndTransactionLV, 0, 1, const_cast<wchar_t*>(payee.c_str()));
 
         // Category
-        AccountBase* ati = AccountBase::lookupById((*itr)->getCategoryId());
+        AccountBase* ati = AccountBase::lookupById(pTransaction->getCategoryId());
         if (ati) {
             ListView_SetItemText(g_hwndTransactionLV, 0, 2, const_cast<wchar_t*>(ati->getName()));
         }
+        else
+        {
+            switch (pTransaction->getType())
+            {
+            case Transaction::EXPENSE:
+                ListView_SetItemText(g_hwndTransactionLV, 0, 2, const_cast<wchar_t*>(L"--expense--"));
+                break;
+            case Transaction::DEPOSIT:
+                ListView_SetItemText(g_hwndTransactionLV, 0, 2, const_cast<wchar_t*>(L"--deposit--"));
+                break;
+            case Transaction::TRANSFER:
+                ListView_SetItemText(g_hwndTransactionLV, 0, 2, const_cast<wchar_t*>(L"--transfer--"));
+                break;
+            case Transaction::CCPAYMENT:
+                ListView_SetItemText(g_hwndTransactionLV, 0, 2, const_cast<wchar_t*>(L"--CC Payment--"));
+                break;
+            }
+        }
 
         // Description
-        ListView_SetItemText(g_hwndTransactionLV, 0, 3, const_cast<wchar_t*>((*itr)->getDescription()));
+        ListView_SetItemText(g_hwndTransactionLV, 0, 3, const_cast<wchar_t*>(pTransaction->getDescription()));
         ListView_SetItemText(g_hwndTransactionLV, 0, isIncome ? 5 : 4, const_cast<wchar_t*>(amount.c_str()));
     }
 
@@ -1817,6 +1829,4 @@ void positionControls()
     ShowWindow(g_transactionFilterDlg, SW_SHOW);
     ShowWindow(g_hwndTransactionLV, showTransactionList ? SW_SHOW : SW_HIDE);
     ShowWindow(g_accountInfoDlg, SW_SHOW);
-
-
 }

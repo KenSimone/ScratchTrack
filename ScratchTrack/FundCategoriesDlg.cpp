@@ -17,12 +17,12 @@ bool FundCategoriesDlg::ShowDialog()
     g_accountInfoDlg.saveText();
     g_accountInfoDlg.appendText(L"About Category Funding\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
 
-    g_accountInfoDlg.appendText(L"ScratchTrack follows the 'Category Budgeting' philosophy. The idea is that money is assigned to separate categories for different spending categories. Expenses are paid from the categories. "
-        L"When a category is empty, spending in that category stops until more funds are added.\n\n",
+    g_accountInfoDlg.appendText(L"In ScratchTrack funds are assigned to spending categories. When expenses are recorded in a category, funds in that category are reduced by the epxense amount. "
+        L"When a category is out of money, spending in that category should stop until more funds are added.\n\n",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
     g_accountInfoDlg.appendText(L"This dialog box allows you to assign money to all categories in a folder. It's important to note that money stays in its account when assigned to categories. "
-        L"When money is assigned, you'll have less budgetable dollars available to place in other categories, but no money actually moves. Think of categories as a way to organize "
+        L"When money is assigned, you'll have less budgetable dollars available to place in other categories, but no money actually moves. Think of categories as a way to view and organize "
         L"the money in your account(s).",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 

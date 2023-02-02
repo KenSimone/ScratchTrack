@@ -31,7 +31,7 @@ void DepositDlg::enableDisableUi(HWND hDlg)
 {
 
     bool enableOk = true;
-    if (Utils::isDlgItemTextEmpty(hDlg, IDC_COMBO_PAYEE)) {
+    if (Utils::isDlgItemTextEmpty(hDlg, IDC_COMBO_ACCOUNT)) {
         enableOk = false;
     }
 

@@ -11,3 +11,4 @@ void createAccountListControl();
 void addAccount(Account* pAccount);
 Account::ACTION_FLAG hitTestAccountList(POINT pt, Account** ppAccount = nullptr, int* pIndex = nullptr);
 void killAccountListToolTips();
+Account* getSelectedAccount();

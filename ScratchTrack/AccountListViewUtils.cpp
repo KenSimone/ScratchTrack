@@ -463,3 +463,19 @@ void killAccountListToolTips()
         g_isToolTipActive = false;
     }
 }
+
+Account* getSelectedAccount()
+{
+    Account* pRet = nullptr;
+
+    int iCurAccountSel = ListView_GetNextItem(g_hwndAccountLV, -1, LVNI_SELECTED);
+    if (iCurAccountSel >= 0) {
+        LVITEM item = { 0 };
+        item.iItem = iCurAccountSel;
+        item.mask = LVIF_PARAM;
+        ListView_GetItem(g_hwndAccountLV, &item);
+
+        pRet = (Account*)item.lParam;
+    }
+    return pRet;
+}

@@ -29,17 +29,17 @@ bool CategoryDialog::ShowDialog()
     g_accountInfoDlg.saveText();
     g_accountInfoDlg.appendText(L"About Categories\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
 
-    g_accountInfoDlg.appendText(L"ScratchTrack follows the 'Category Budgeting' philosophy. The idea is that money is assigned to separate categories for different spending categories. Expenses are paid from the categories. "
-        L"When a category is empty, spending in that category stops until more funds are added.\n\n",
+    g_accountInfoDlg.appendText(L"In ScratchTrack funds are assigned to spending categories. When expenses are recorded in a category, funds in that category are reduced by the epxense amount. "
+        L"When a category is out of money, spending in that category should stop until more funds are added.\n\n",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
-    g_accountInfoDlg.appendText(L"Examples of typical categories include 'Dining out', 'Utilities', and 'Car payment'. "
-        L"Categories have a budget. This is a best guess of how much you'll spend in a month. Don't worry if you're not sure. You can adjust this value as needed at a later time.\n\n",
+    g_accountInfoDlg.appendText(L"Examples of categories include 'Dining out', 'Utilities', and 'Car payment'. "
+        L"Categories have a budget. This is a best guess of how much you'll spend in a month. Don't worry if you're not sure. You can adjust this value later as needed.\n\n",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
-    g_accountInfoDlg.appendText(L"Expenses are paid from categories through the category's action icon or right click menu. If a category "
-        L"is paid from the same account, to the same payee, or is the same amount each time, you can set those values here. When you "
-        L"create a transaction in this category, those settings will be filled in for you.",
+    g_accountInfoDlg.appendText(L"Expenses are paid from categories through the category's action icon or right click menu. If a category's "
+        L"expense is the same ever time (i.e. a car payment), you can set those values here. When you "
+        L"create a transaction in this category, the settings will be filled in for you (but you can change them as needed).",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
 
