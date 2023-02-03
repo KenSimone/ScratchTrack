@@ -655,8 +655,14 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
                 if (pGroup->getExpenseLimit()) {
                     std::wstring limit = Utils::penniesToDollarsString(-pGroup->getExpenseLimit());
                     std::wstring budgeted = Utils::penniesToDollarsString(abs(pGroup->budgetedToSubAccounts()));
-                    std::wstring diff = Utils::penniesToDollarsString(-(pGroup->getExpenseLimit() - pGroup->budgetedToSubAccounts()));
-                    wnsprintf(szInfotText, 1024, L"  %ls of %ls budgeted [%ls unbudgeted]", budgeted.c_str(), limit.c_str(), diff.c_str());
+                    int idiff = -(pGroup->getExpenseLimit() - pGroup->budgetedToSubAccounts());
+                    std::wstring diff = Utils::penniesToDollarsString(abs(idiff));
+                    if (idiff < 0) {
+                        wnsprintf(szInfotText, 1024, L"  %ls of %ls budgeted [%ls over limit!]", budgeted.c_str(), limit.c_str(), diff.c_str());
+                    }
+                    else {
+                        wnsprintf(szInfotText, 1024, L"  %ls of %ls budgeted [%ls unbudgeted]", budgeted.c_str(), limit.c_str(), diff.c_str());
+                    }
                     setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 0, selected, true);
                     rText.left = infoSpot; rText.right = infoSpot + g_columnSizes._info;
                     DrawText(pCustomDrawItem->nmcd.hdc, szInfotText, (int)wcslen(szInfotText), &rText, dwDrawTextFlags);

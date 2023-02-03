@@ -1733,7 +1733,7 @@ void positionControls()
 {
     bool showTransactionList = g_transactionFilterDlg.showTransactionList();
 
-    static const float HORIZONTAL_SPLIT = .4F;
+    static const float HORIZONTAL_SPLIT = .35F;
 
     RECT rClient = { 0 };
     HDLAYOUT headerLayout = { 0 };

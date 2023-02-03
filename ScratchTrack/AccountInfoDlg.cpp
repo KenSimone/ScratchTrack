@@ -281,13 +281,13 @@ void AccountInfoDlg::getMasterSummary(std::wstring& summary, bool& isError)
         isError = (iBalance - iReservedDollars) < 0;
 
         if (isError) {
-            swprintf(szCaption, 1024, L"You have %ls reserved in categories but only %ls in on-budget accounts. "
-                L"Deposit at least %ls or remove %ls from categories to correct.\n",
+            swprintf(szCaption, 1024, L"You have %ls assigned to categories and %ls in accounts. "
+                L"Deposit at least %ls or remove %ls from categories to correct.\n\n",
                 reservedDollars.c_str(), totalDollars.c_str(), difference.c_str(), difference.c_str());
         }
         else
         {
-            swprintf(szCaption, 1024, L"You have %s of %s available for budgeting\n", difference.c_str(), totalDollars.c_str());
+            swprintf(szCaption, 1024, L"You have %s of %s available for budgeting\n\n", difference.c_str(), totalDollars.c_str());
         }
     }
 
@@ -309,11 +309,11 @@ void AccountInfoDlg::updateReport()
     getMasterSummary(summary, isErrorState);
     appendText(summary.c_str(), isErrorState ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL, false, false, TEXT_SIZE);
 
-    appendText(L"\nFolder Status\n", TEXT_COLOR_NORMAL, true, true, HEADER_SIZE);
+    //appendText(L"\nFolder Status\n", TEXT_COLOR_NORMAL, true, true, HEADER_SIZE);
     auto folders = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
     for (size_t i = 0; i < folders.size(); i++) {
-        AccountGroup* folder = dynamic_cast<AccountGroup* >(folders[i]);
-        if (folder->getReadOnly()){
+        AccountGroup* folder = dynamic_cast<AccountGroup*>(folders[i]);
+        if (folder->getReadOnly()) {
             continue;
         }
 
@@ -321,73 +321,63 @@ void AccountInfoDlg::updateReport()
         int iMonthlyBudget = folder->budgetedToSubAccounts();
         int iMonthlyLimit = folder->getExpenseLimit();
 
-        int iSpendVBudget = -(iMonthlyBudget - iMonthlySpend);
-        int iSpendVLimit = -(iMonthlyLimit - iMonthlySpend);
-
-        std::wstring transTotal = Utils::penniesToDollarsString(abs(folder->getCurrentMonthTransacationTotal()));
-        std::wstring budgeted = Utils::penniesToDollarsString(abs(folder->budgetedToSubAccounts()));
-        std::wstring limit = folder->getExpenseLimit() ? Utils::penniesToDollarsString(abs(folder->getExpenseLimit())) : L"no set limit";
-        std::wstring diff = Utils::penniesToDollarsString(abs(folder->getExpenseLimit()) - abs(folder->budgetedToSubAccounts()));
-
         wchar_t szBuff[1024] = { 0 };
-        if (folder->getExpenseLimit()) {
-            swprintf(szBuff, 1024, L" - budget:%ls expenses:%ls limit:%ls\n", budgeted.c_str(), transTotal.c_str(), limit.c_str());
-        }
-        else{
-            swprintf(szBuff, 1024, L" - budget:%ls expenses:%ls\n", budgeted.c_str(), transTotal.c_str());
+
+        isErrorState = iMonthlyBudget > iMonthlySpend;
+        const wchar_t* szPreposition = isErrorState ? L"over" : L"under";
+        COLORREF cr = isErrorState ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL;
+
+        if (isErrorState) {
+            swprintf(szBuff, 1024, L"Folder '%ls' - Monthly expenses are currently %ls budget by %ls\n\n", folder->getName(), szPreposition,
+                Utils::penniesToDollarsString(iMonthlyBudget - iMonthlySpend).c_str());
+            appendText(szBuff, cr, false, false, TEXT_SIZE);
         }
 
-        int monthTotal = folder->getCurrentMonthTransacationTotal();
-        int budgetedTotal = folder->budgetedToSubAccounts();
-        bool errorState =  budgetedTotal > monthTotal;
-        COLORREF cr = errorState ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL;
-        std::wstring prefix(L"\u2022 ");
-        prefix += folder->getName();
-        appendText(prefix.c_str(), cr, true, false, TEXT_SIZE);
-        appendText(szBuff, cr, false, false, TEXT_SIZE);
+
+        if (iMonthlyLimit) {
+            isErrorState = iMonthlyLimit > iMonthlySpend;
+            szPreposition = isErrorState ? L"over" : L"under";
+            cr = isErrorState ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL;
+
+            if (isErrorState) {
+                swprintf(szBuff, 1024, L"Folder '%ls' - Monthly expenses are currently %ls limit by %ls\n\n", folder->getName(), szPreposition,
+                    Utils::penniesToDollarsString(iMonthlyLimit - iMonthlySpend).c_str());
+                appendText(szBuff, cr, false, false, TEXT_SIZE);
+            }
+
+            isErrorState = iMonthlyLimit > iMonthlyBudget;
+            szPreposition = isErrorState ? L"over" : L"under";
+            cr = isErrorState ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL;
+
+            if (isErrorState) {
+                swprintf(szBuff, 1024, L"Folder '%ls' - Monthly budget is %ls limit by %ls\n\n", folder->getName(), szPreposition,
+                    Utils::penniesToDollarsString(iMonthlyLimit - iMonthlyBudget).c_str());
+                appendText(szBuff, cr, false, false, TEXT_SIZE);
+            }
+        }
     }
 
-    appendText(L"\nCategory Status\n", TEXT_COLOR_NORMAL, true, true, HEADER_SIZE);
+    //appendText(L"\nCategory Status\n", TEXT_COLOR_NORMAL, true, true, HEADER_SIZE);
     auto categories = AccountBase::getAllAccountsOfType(AccountBase::CATEGORY);
-    bool overBudget = false;
-    for (size_t i = 0; i < categories.size(); i++)
-    {
-        AccountCategory* category = dynamic_cast<AccountCategory *>(categories[i]);
-        if (category->getId() == ACCOUNT_ID_PAY_CC) {
-            continue;
-        }
-        std::wstring budgeted = Utils::penniesToDollarsString(abs(category->getBudgeted()));
-        std::wstring actual = Utils::penniesToDollarsString(abs(category->getCurrentMonthTransacationTotal()));
-        std::wstring balance = Utils::penniesToDollarsString(abs(category->getBalance()));
-        Transaction::getTransactionsForItem(category);
-        if (category->getBudgeted() > category->getCurrentMonthTransacationTotal()) {
-            wchar_t szBuff[1024] = { 0 };
-            swprintf(szBuff, 1024, L": budget of % s, a balance of % ls, and monthly expenses of % s\n", budgeted.c_str(), balance.c_str(), actual.c_str());
-            std::wstring prefix(L"\u2022 ");
-            prefix += category->getName();
-            appendText(prefix.c_str(), TEXT_COLOR_NEGATIVE, true, false, TEXT_SIZE);
-            appendText(szBuff, TEXT_COLOR_NEGATIVE, false, false, TEXT_SIZE);
-        }
-    }
-
     for (size_t i = 0; i < categories.size(); i++)
     {
         AccountCategory* category = dynamic_cast<AccountCategory*>(categories[i]);
         if (category->getId() == ACCOUNT_ID_PAY_CC) {
             continue;
         }
-        std::wstring budgeted = Utils::penniesToDollarsString(abs(category->getBudgeted()));
-        std::wstring actual = Utils::penniesToDollarsString(abs(category->getCurrentMonthTransacationTotal()));
-        std::wstring balance = Utils::penniesToDollarsString(abs(category->getBalance()));
-        Transaction::getTransactionsForItem(category);
-        if (category->getBudgeted() <= category->getCurrentMonthTransacationTotal()) {
-            wchar_t szBuff[1024] = { 0 };
-            swprintf(szBuff, 1024, L": budget of %s, a balance of %ls, and monthly expenses of %s\n", budgeted.c_str(), balance.c_str(), actual.c_str());
-            std::wstring prefix(L"\u2022 ");
-            prefix += category->getName();
-            appendText(prefix.c_str(), TEXT_COLOR_NORMAL, true, false, TEXT_SIZE);
-            appendText(szBuff, TEXT_COLOR_NORMAL, false, false, TEXT_SIZE);
+
+        int ibudgeted = category->getBudgeted();
+        int spent = category->getCurrentMonthTransacationTotal();
+        std::wstring diff = Utils::penniesToDollarsString (abs(ibudgeted - spent));
+        bool error = ibudgeted > spent;
+        wchar_t szBuff[1024] = { 0 };
+        if (error) {
+            swprintf(szBuff, 1024, L"Category '%ls' - Monthly expenses are currently over budget by %ls\n\n", category->getName(), diff.c_str());
+            appendText(szBuff, error ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL, false, false, TEXT_SIZE);
         }
+        //else {
+        //    swprintf(szBuff, 1024, L"%ls - Monthly expenses are currently under budget by %ls\n", category->getName(), diff.c_str());
+        //}
     }
 
 }
