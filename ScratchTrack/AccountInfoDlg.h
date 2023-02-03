@@ -36,7 +36,7 @@ protected:
 	static DWORD CALLBACK EditStreamCallbackOut(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG cb, LONG* pcb);
 	static DWORD CALLBACK EditStreamCallbackIn(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG cb, LONG* pcb);
 	static INT_PTR CALLBACK AccountInfoDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
-	void getMasterSummary(std::wstring& summary, bool& isError);
+	void printMasterSummary();
 	void doUnhidePopup();
 
 protected:

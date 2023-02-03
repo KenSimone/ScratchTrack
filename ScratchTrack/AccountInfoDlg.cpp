@@ -225,11 +225,11 @@ void AccountInfoDlg::appendText(const wchar_t* szText, COLORREF cr, bool bold, b
     SendMessage(hRichText, EM_REPLACESEL, 0, (LPARAM)szText);
 }
 
-void AccountInfoDlg::getMasterSummary(std::wstring& summary, bool& isError)
+void AccountInfoDlg::printMasterSummary()
 {
     // Calc new window caption;
     int iReservedDollars = 0, iBalance = 0;
-    isError = false;
+    bool isError = false;
     std::vector<AccountBase*> accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
     std::vector<AccountBase*> folders = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
     std::vector<AccountBase*> categories = AccountBase::getAllAccountsOfType(AccountBase::CATEGORY);
@@ -259,6 +259,14 @@ void AccountInfoDlg::getMasterSummary(std::wstring& summary, bool& isError)
         // Get the balance of all accounts that contribute to the budget
         for (size_t i = 0; i < accounts.size(); i++) {
             Account* pAccount = (Account*)accounts[i];
+            if (pAccount->getBalance() < 0 && !pAccount->isCCAccount() ) {
+                swprintf(szCaption, 1024, L"Account '%ls' has a negative balance %ls\n\n",
+                    pAccount->getName(),
+                    Utils::penniesToDollarsString(pAccount->getBalance()).c_str());
+                appendText(szCaption, TEXT_COLOR_NEGATIVE, false, false, TEXT_SIZE);
+                szCaption[0] = 0;
+            }
+
             if (pAccount->getContributesToBudget()) {
                 iBalance += accounts[i]->getBalance();
             }
@@ -281,18 +289,18 @@ void AccountInfoDlg::getMasterSummary(std::wstring& summary, bool& isError)
         isError = (iBalance - iReservedDollars) < 0;
 
         if (isError) {
-            swprintf(szCaption, 1024, L"You have %ls assigned to categories and %ls in accounts. "
-                L"Deposit at least %ls or remove %ls from categories to correct.\n\n",
-                reservedDollars.c_str(), totalDollars.c_str(), difference.c_str(), difference.c_str());
+            if (iReservedDollars != 0) {
+                swprintf(szCaption, 1024, L"You have %ls assigned to categories but only %ls in in-budget accounts. "
+                    L"Deposit %ls or remove funds from categories to correct this issue.\n\n",
+                    reservedDollars.c_str(), totalDollars.c_str(), difference.c_str());
+            }
         }
         else
         {
             swprintf(szCaption, 1024, L"You have %s of %s available for budgeting\n\n", difference.c_str(), totalDollars.c_str());
         }
     }
-
-
-    summary = szCaption;
+    appendText(szCaption, isError ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL, false, false, TEXT_SIZE);
 }
 
 
@@ -304,10 +312,7 @@ void AccountInfoDlg::updateReport()
 
     appendText(L"State of the Budget\n", TEXT_COLOR_NORMAL, true, true, HEADER_SIZE);
 
-    std::wstring summary;
-    bool isErrorState = false;
-    getMasterSummary(summary, isErrorState);
-    appendText(summary.c_str(), isErrorState ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL, false, false, TEXT_SIZE);
+    printMasterSummary();
 
     //appendText(L"\nFolder Status\n", TEXT_COLOR_NORMAL, true, true, HEADER_SIZE);
     auto folders = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
@@ -323,33 +328,33 @@ void AccountInfoDlg::updateReport()
 
         wchar_t szBuff[1024] = { 0 };
 
-        isErrorState = iMonthlyBudget > iMonthlySpend;
-        const wchar_t* szPreposition = isErrorState ? L"over" : L"under";
-        COLORREF cr = isErrorState ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL;
+        bool isError = iMonthlyBudget > iMonthlySpend;
+        const wchar_t* szPreposition = isError ? L"over" : L"under";
+        COLORREF cr = isError ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL;
 
-        if (isErrorState) {
-            swprintf(szBuff, 1024, L"Folder '%ls' - Monthly expenses are currently %ls budget by %ls\n\n", folder->getName(), szPreposition,
+        if (isError) {
+            swprintf(szBuff, 1024, L"Folder '%ls' - Monthly expenses are %ls budget by %ls\n\n", folder->getName(), szPreposition,
                 Utils::penniesToDollarsString(iMonthlyBudget - iMonthlySpend).c_str());
             appendText(szBuff, cr, false, false, TEXT_SIZE);
         }
 
 
         if (iMonthlyLimit) {
-            isErrorState = iMonthlyLimit > iMonthlySpend;
-            szPreposition = isErrorState ? L"over" : L"under";
-            cr = isErrorState ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL;
+            isError = iMonthlyLimit > iMonthlySpend;
+            szPreposition = isError ? L"over" : L"under";
+            cr = isError ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL;
 
-            if (isErrorState) {
-                swprintf(szBuff, 1024, L"Folder '%ls' - Monthly expenses are currently %ls limit by %ls\n\n", folder->getName(), szPreposition,
+            if (isError) {
+                swprintf(szBuff, 1024, L"Folder '%ls' - Monthly expenses are %ls limit by %ls\n\n", folder->getName(), szPreposition,
                     Utils::penniesToDollarsString(iMonthlyLimit - iMonthlySpend).c_str());
                 appendText(szBuff, cr, false, false, TEXT_SIZE);
             }
 
-            isErrorState = iMonthlyLimit > iMonthlyBudget;
-            szPreposition = isErrorState ? L"over" : L"under";
-            cr = isErrorState ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL;
+            isError = iMonthlyLimit > iMonthlyBudget;
+            szPreposition = isError ? L"over" : L"under";
+            cr = isError ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL;
 
-            if (isErrorState) {
+            if (isError) {
                 swprintf(szBuff, 1024, L"Folder '%ls' - Monthly budget is %ls limit by %ls\n\n", folder->getName(), szPreposition,
                     Utils::penniesToDollarsString(iMonthlyLimit - iMonthlyBudget).c_str());
                 appendText(szBuff, cr, false, false, TEXT_SIZE);
@@ -372,7 +377,7 @@ void AccountInfoDlg::updateReport()
         bool error = ibudgeted > spent;
         wchar_t szBuff[1024] = { 0 };
         if (error) {
-            swprintf(szBuff, 1024, L"Category '%ls' - Monthly expenses are currently over budget by %ls\n\n", category->getName(), diff.c_str());
+            swprintf(szBuff, 1024, L"Category '%ls' - Monthly expenses are over budget by %ls\n\n", category->getName(), diff.c_str());
             appendText(szBuff, error ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL, false, false, TEXT_SIZE);
         }
         //else {

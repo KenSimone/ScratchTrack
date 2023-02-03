@@ -912,8 +912,7 @@ void editAccount(Account* pAccount)
     dlg.setCreditCard(pAccount->isCCAccount());
     if (dlg.ShowDialog())
     {
-        // Did this change "types" (cc to non CC
-
+        // Did this change "types" (cc to non CC)
         pAccount->addBalance(-pAccount->getBalance());
         pAccount->addBalance(dlg.getBalance());
         pAccount->setName(dlg.getName());
@@ -957,6 +956,8 @@ void editAccount(Account* pAccount)
         }
         InvalidateRect(g_hwndAccountLV, nullptr, true);
         updateGuiValues();
+        positionControls();
+
         serializeState();
     }
 }
