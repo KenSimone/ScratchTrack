@@ -237,18 +237,18 @@ void AccountInfoDlg::printMasterSummary()
     wchar_t szCaption[1024] = { 0 };
 
     if (accounts.empty()) {
-        swprintf(szCaption, 1024, L"It looks like you don't have any accounts. Accounts represent money (or debt).\n\n"
+        swprintf(szCaption, 1024, L"You don't have any accounts. Accounts represent money (or debt).\n\n"
         L"Examples of common account types are checking, savings, and credit card.\n\n"
         L"Click 'Add Account...' to add an account to ScratchTrack.\n\n");
     }
     else if (folders.empty()) {
-        swprintf(szCaption, 1024, L"It looks like you don't have any folders. Folders help organize expenses.\n\n"
+        swprintf(szCaption, 1024, L"You don't have any folders. Folders help organize expenses.\n\n"
             L"A common strategy is to create a folder for each pay peried. For example, if you're paid on the 15th and 31st "
             L"you might create folders titled '15th' and '31st'.\n\n"
             L"Click 'Add Folder...' to add a folder to ScratchTrack.\n\n");
     }
     else if (categories.empty()) {
-        swprintf(szCaption, 1024, L"It looks like you don't have any expense categories. Categories are used to reserve money "
+        swprintf(szCaption, 1024, L"You don't have any expense categories. Categories are used to reserve money "
             L"for expenses. Categories have a name and a monthly budget.\n\n"
             L"You'll add money to your categories and then pay expenses from those categories as needed. If your "
             L"category runs out of money you'll need to replenish that category.\n\n"
