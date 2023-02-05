@@ -23,6 +23,13 @@ bool TransactionDialog::ShowDialog()
 {
     THIS_PTR = this;
 
+    // Quick exit if no eaccounts
+    if (AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT).empty())
+    {
+        MessageBox(g_hTopWindow, L"There are no accounts. Transactions can't be added.", L"No Accounts", MB_OK | MB_ICONWARNING);
+        return false;
+    }
+
     g_accountInfoDlg.saveText();
     g_accountInfoDlg.appendText(L"About Transactions\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
 

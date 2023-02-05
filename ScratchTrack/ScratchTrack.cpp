@@ -12,6 +12,7 @@
 #include "Utils.h"
 #include "TreeUtils.h"
 #include "AccountListViewUtils.h"
+#include "Version.h"
 
 // Dialogs
 #include "TransactionFilterDlg.h"
@@ -1457,6 +1458,7 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message)
     {
     case WM_INITDIALOG:
+        SetDlgItemTextA(hDlg, IDC_VERSION, "ScratchTrack " VER_STRING);
         return (INT_PTR)TRUE;
 
     case WM_COMMAND:

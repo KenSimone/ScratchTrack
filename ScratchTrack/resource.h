@@ -94,6 +94,7 @@
 #define IDC_RADIO_SET_BALANCE_TO_BUDGETED 1041
 #define IDC_STATIC_NOTES                1043
 #define IDC_STATIC_WARN                 1044
+#define IDC_VERSION                     1045
 #define ID_ROOT_ADD_GROUP               32771
 #define IDM_EDIT_FOLDER                 32772
 #define ID_ROOT_SETBALANCE              32773
@@ -144,7 +145,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        172
 #define _APS_NEXT_COMMAND_VALUE         33030
-#define _APS_NEXT_CONTROL_VALUE         1045
+#define _APS_NEXT_CONTROL_VALUE         1046
 #define _APS_NEXT_SYMED_VALUE           113
 #endif
 #endif
