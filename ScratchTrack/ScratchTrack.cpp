@@ -925,6 +925,7 @@ void editAccount(Account* pAccount)
         pAccount->setName(dlg.getName());
         pAccount->setContributesToBudget(dlg.getBudgeted());
         if (dlg.getCreditCard()) {
+            pAccount->setIsCCAccount(true);
             setupPaymentCategoryForAccount(pAccount);
         }
         else if (pAccount->isCCAccount())
