@@ -1459,6 +1459,8 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_INITDIALOG:
         SetDlgItemTextA(hDlg, IDC_VERSION, "ScratchTrack " VER_STRING);
+        SetDlgItemTextA(hDlg, IDC_STATIC_COPYRIGHT, COPYRIGHT_STRING);
+        
         return (INT_PTR)TRUE;
 
     case WM_COMMAND:
