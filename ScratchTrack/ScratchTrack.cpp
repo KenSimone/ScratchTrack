@@ -1698,7 +1698,7 @@ int serializeState()
         topItems.push_back(pAccount);
     }
 
-    // Collect Categories and subcategories from the UI
+    // Collect folders from the UI
     HTREEITEM hItem = TreeView_GetChild(g_hwndTV, TVI_ROOT);
     while (hItem){
         AccountBase* item = accountFromTreeItem(hItem);

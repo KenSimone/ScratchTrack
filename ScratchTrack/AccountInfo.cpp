@@ -13,15 +13,23 @@ using namespace tinyxml2;
 AccountBase* AccountItemFromXmlElement(tinyxml2::XMLElement* pAccount);
 
 
-AccountBase::AccountBase(accountItemType type) : _balance(0), _budgeted(0), _hidden(false), _readOnly(false)
+AccountBase::AccountBase(accountItemType type) : _balance(0), _budgeted(0), _hidden(false), _readOnly(false), _id(ACCOUNT_ID_INVALID)
 {
-	if (_curId != UINT_MAX) {
+	if (_curId != ACCOUNT_ID_INVALID) {
 		_id = _curId;
 		_curId++;
 
 		_idToItem[_id] = this;
 	}
 };
+
+AccountBase::~AccountBase()
+{
+	auto itr = _idToItem.find(getId());
+	if (itr != _idToItem.end()) {
+		_idToItem.erase(itr);
+	}
+}
 
 // Look up the tree item by ID
 AccountBase* AccountBase::lookupById(unsigned int id)
@@ -165,7 +173,7 @@ int deserialize(const char* szFilename, std::vector<AccountBase*>& topLevelItems
 		return -1;
 	}
 
-	_curId = UINT_MAX;
+	_curId = ACCOUNT_ID_INVALID;
 
 	Transaction::deserialize(pRoot);
 

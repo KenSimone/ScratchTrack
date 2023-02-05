@@ -24,7 +24,7 @@ public:
 
 	// Construction / destruction
 	AccountBase(accountItemType type);
-	virtual ~AccountBase() {};
+	virtual ~AccountBase();
 
 	// The item-type (account/group/category)
 	virtual accountItemType getType() = 0;

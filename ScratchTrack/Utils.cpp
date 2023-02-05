@@ -376,6 +376,7 @@ bool Utils::confirmHide(AccountBase* pAccount)
 	wchar_t szBuff[1024] = { 0 };
 	swprintf(szBuff, 1024, L"Are you sure you want to hide '%ls'?", pAccount->getName());
 
+#ifndef SCRATCHTRACK_TESTS
 	g_accountInfoDlg.saveText();
 	g_accountInfoDlg.appendText(L"About hiding things\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
 
@@ -383,13 +384,14 @@ bool Utils::confirmHide(AccountBase* pAccount)
 		L"can hide it. As of now, hidden items are simply not displayed. No money moves, nothing is assigned or unassigned. If you hide an "
 		L"category with money in it, those funds will be hidden as well. You can always unhide things with the unhide button.",
 		RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
-
 	if (IDYES == MessageBox(g_hTopWindow, szBuff, L"Confirm Hide", MB_YESNO)) {
 		return true;
 	}
+#endif
 
+#ifndef SCRATCHTRACK_TESTS
 	g_accountInfoDlg.restoreText();
-
+#endif
 	return false;
 }
 
@@ -459,7 +461,10 @@ unsigned __stdcall Utils::monitorFileChangeThreadFunc(void* parg)
 
 			if (memcmp(&lastModifieAfter, &lastModifiedBefore, sizeof(FILETIME)) != 0) {
 				// The file changed
+
+#ifndef SCRATCHTRACK_TESTS
 				MessageBox(g_hTopWindow, L"The budget file has been modified outside of this instance of ScratchTrack. This instance of ScratchTrack will exit.", L"External file modification", MB_OK);
+#endif
 				exit(0);
 			}
 

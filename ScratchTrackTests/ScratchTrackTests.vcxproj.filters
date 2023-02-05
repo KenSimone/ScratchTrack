@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="test.cpp" />
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="..\ScratchTrack\AccountInfo.cpp">
+      <Filter>ScratchTrackFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ScratchTrack\Utils.cpp">
+      <Filter>ScratchTrackFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ScratchTrack\Transaction.cpp">
+      <Filter>ScratchTrackFiles</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="ScratchTrackFiles">
+      <UniqueIdentifier>{fe4b7e34-1f44-48e6-b308-ebca911e2ad0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
