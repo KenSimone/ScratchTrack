@@ -167,8 +167,6 @@ int setupPaymentCategoryForAccount(Account* pAccount)
         pCategory->setIsExpense(true);
         pCategory->setIsVirtualAccount(true);
 
-        pAccount->setIsCCAccount(true);
-
         pFolder->addChild(pCategory);
         addTreeItem(hItemFolder, pCategory);
     }
@@ -176,6 +174,22 @@ int setupPaymentCategoryForAccount(Account* pAccount)
     {
         // We do have a category, update it's name as appropriate
         pCategory->setName(categoryName.c_str());
+
+        // Ensure we're not hidden
+        AccountBase* pFolder = pCategory->getParent();
+        pFolder->setHidden(false);
+        pCategory->setHidden(false);
+
+        HTREEITEM hFolder = treeItemFromAccount(pFolder);
+        if (!hFolder) {
+            hFolder = addTreeItem(TVI_ROOT, pFolder);
+        }
+
+        HTREEITEM hCategory = treeItemFromAccount(pCategory);
+        if (!hCategory) {
+            addTreeItem(hFolder, pCategory);
+        }
+
     }
 #else
         pCategory = AccountCategory::getOrCreateCCCategory();
@@ -930,35 +944,32 @@ void editAccount(Account* pAccount)
         }
         else if (pAccount->isCCAccount())
         {
-            // This was a CC account, but isn't any more. Hide the category, and return any balance
-            AccountCategory* pCategory = dynamic_cast<AccountCategory * >(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
-            pCategory->addBalance(-pCategory->getBalance());
-            pCategory->setHidden(true);
+            // This account isn't a CC account anymore
             pAccount->setIsCCAccount(false);
-            HTREEITEM hCategory = treeItemFromAccount(pCategory);
-            HTREEITEM hParent = TreeView_GetParent(g_hwndTV, hCategory);
 
-            if (hCategory) {
-                TreeView_DeleteItem(g_hwndTV, hCategory);
+            // Find the CC payment category
+            AccountCategory* pCategory = dynamic_cast<AccountCategory * >(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
+
+            // If there aren't any other CC accounts, hide the payment folders
+            auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
+            bool allHidden = true;
+            for (size_t i = 0; i < accounts.size(); i++) {
+                Account* pAccount = dynamic_cast<Account*>(accounts[i]);
+                if (pAccount->isCCAccount() && !pAccount->getHidden()) {
+                    allHidden = false;
+                    break;
+                }
             }
 
-            if (!TreeView_GetChild(g_hwndTV, hParent)) {
-                AccountGroup* pFolder = dynamic_cast<AccountGroup * >(accountFromTreeItem(hParent));
-                if (pFolder) {
-
-                    bool allhidden = true;
-                    auto children = pFolder->getChildren();
-                    for (size_t i = 0; i < children.size() && allhidden; i++)
-                    {
-                        if (!children[i]->getHidden()) {
-                            allhidden = false;
-                        }
-                    }
-
-                    if (allhidden) {
-                        pFolder->setHidden(true);
-                        TreeView_DeleteItem(g_hwndTV, hParent);
-                    }
+            if (allHidden) {
+                pCategory->addBalance(-pCategory->getBalance());
+                pCategory->setHidden(true);
+                HTREEITEM hCategory = treeItemFromAccount(pCategory);
+                HTREEITEM hParent = TreeView_GetParent(g_hwndTV, hCategory);
+                if (hParent) {
+                    AccountBase* pParent = accountFromTreeItem(hParent);
+                    pParent->setHidden(true);
+                    TreeView_DeleteItem(g_hwndTV, hParent);
                 }
             }
         }
@@ -980,6 +991,7 @@ void doAddAccountDlg()
         pAccount->addBalance(dlg.getBalance());
         pAccount->setContributesToBudget(dlg.getBudgeted());
         if (dlg.getCreditCard()) {
+            pAccount->setIsCCAccount(true);
             setupPaymentCategoryForAccount(pAccount);
         }
         addTreeItem(TVI_ROOT, pAccount);
