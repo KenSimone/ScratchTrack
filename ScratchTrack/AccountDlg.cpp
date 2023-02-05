@@ -51,7 +51,7 @@ bool AccountDlg::validateParams(HWND hDlg)
         GetWindowText(GetDlgItem(hDlg, IDC_EDIT_ACCOUNT_BALANCE), szBuff, 1024);
         int balance = Utils::dollarsStringToPennies(szBuff);
         if (balance > 0) {
-            ret = MessageBox(hDlg, L"Balances on credit cards are usually zero or negative. The balance for this credit card is positive. Is that intended?", L"Confirm Balance", MB_YESNO | MB_ICONWARNING) == IDYES;
+            ret = MessageBox(hDlg, L"Balances on credit cards are usually zero or   negative. The balance for this credit card is positive. Is that intended?", L"Confirm Balance", MB_YESNO | MB_ICONWARNING) == IDYES;
         }
     }
     return ret;

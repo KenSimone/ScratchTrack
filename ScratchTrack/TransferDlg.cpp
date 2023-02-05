@@ -42,6 +42,28 @@ bool TransferDlg::ShowDialog()
     return result == IDOK;
 }
 
+bool TransferDlg::confirmUnusualSettings(HWND hDlg)
+{
+    bool ret = true;
+    // Make sure we have money in the from account
+    int fromId = Utils::getAccountIdFromAccountCombo(hDlg, IDC_COMBO_ACCOUNT);
+    int toId = Utils::getAccountIdFromAccountCombo(hDlg, IDC_COMBO_ACCOUNT_TO);
+
+    AccountBase* pFrom = AccountBase::lookupById(fromId);
+    AccountBase* pTo = AccountBase::lookupById(toId);
+
+    int amount = Utils::getDlgItemDollarText(hDlg, IDC_EDIT_AMOUNT);
+
+    if (pFrom->getBalance() < amount) {
+        wchar_t szBuff[1024] = { 0 };
+        swprintf(szBuff, 1024, L"Account '%ls' has a balance of %ls and the transfer amount is %ls. This original account's resulting balance will be negative. Proceed?", 
+            pFrom->getName(), Utils::penniesToDollarsString(pFrom->getBalance()).c_str(), Utils::penniesToDollarsString(amount).c_str());
+
+        ret = MessageBox(hDlg, szBuff, L"Negative Transfer", MB_YESNO | MB_ICONWARNING) == IDYES;
+    }
+    return ret;
+}
+
 void TransferDlg::validateSelections(HWND hDlg)
 {
     // Ensure the two accounts are not the same. If they are, disable OK.
@@ -73,16 +95,22 @@ INT_PTR CALLBACK TransferDlg::TransferDlgProc(HWND hDlg, UINT message, WPARAM wP
         }
         else if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
         {
+            bool closeIt = true;
             if (LOWORD(wParam) == IDOK)
             {
-                PTHIS->_amount = Utils::getDlgItemDollarText(hDlg, IDC_EDIT_AMOUNT);
-                PTHIS->_description = Utils::getDlgItemText(hDlg, IDC_EDIT_DESCRIPTION);
-                PTHIS->_accountFromId = Utils::getAccountIdFromAccountCombo(hDlg, IDC_COMBO_ACCOUNT);
-                PTHIS->_accountToId = Utils::getAccountIdFromAccountCombo(hDlg, IDC_COMBO_ACCOUNT_TO);
+                closeIt = PTHIS->confirmUnusualSettings(hDlg);
+                if (closeIt) {
+                    PTHIS->_amount = Utils::getDlgItemDollarText(hDlg, IDC_EDIT_AMOUNT);
+                    PTHIS->_description = Utils::getDlgItemText(hDlg, IDC_EDIT_DESCRIPTION);
+                    PTHIS->_accountFromId = Utils::getAccountIdFromAccountCombo(hDlg, IDC_COMBO_ACCOUNT);
+                    PTHIS->_accountToId = Utils::getAccountIdFromAccountCombo(hDlg, IDC_COMBO_ACCOUNT_TO);
+                }
             }
 
-            EndDialog(hDlg, LOWORD(wParam));
-            return (INT_PTR)TRUE;
+            if (closeIt) {
+                EndDialog(hDlg, LOWORD(wParam));
+                return (INT_PTR)TRUE;
+            }
         }
         break;
     }

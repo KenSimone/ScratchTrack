@@ -11,7 +11,7 @@ extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 extern AccountInfoDlg g_accountInfoDlg;
 
-TransactionDialog::TransactionDialog() : _amount(0), _accountFromId(ACCOUNT_ID_INVALID), _categoryId(ACCOUNT_ID_INVALID)
+TransactionDialog::TransactionDialog(bool validate) : _amount(0), _accountFromId(ACCOUNT_ID_INVALID), _categoryId(ACCOUNT_ID_INVALID), _doValidate(validate)
 {
 }
 
@@ -45,6 +45,10 @@ void TransactionDialog::updateUi(HWND hDlg)
 
 bool TransactionDialog::validateParams(HWND hDlg)
 {
+    if (!_doValidate) {
+        return true;
+    }
+
     bool ret = true;
     HWND hAccountsFrom = GetDlgItem(hDlg, IDC_COMBO_ACCOUNT);
     HWND hCategories = GetDlgItem(hDlg, IDC_COMBO_CATEGORY);
@@ -68,11 +72,24 @@ bool TransactionDialog::validateParams(HWND hDlg)
             swprintf(szBuff, 1024, L"The '%ls' category has a balance of %ls, which is less than the transaction amount of %ls. Record anyway?",
                 pCategory->getName(), Utils::penniesToDollarsString(catBalance).c_str(), Utils::penniesToDollarsString(abs(amount)).c_str());
             ret = MessageBox(hDlg, szBuff, L"Over Spent", MB_YESNO | MB_ICONWARNING) == IDYES;
+        }
 
-            if (ret && !pAccountFrom->isCCAccount() && (amount+acctBalance) < 0 ) {
-                swprintf(szBuff, 1024, L"The '%ls' account has a balance of %ls, which is less than the transaction amount of %ls. Record anyway?",
-                    pAccountFrom->getName(), Utils::penniesToDollarsString(acctBalance).c_str(), Utils::penniesToDollarsString(abs(amount)).c_str());
-                ret = MessageBox(hDlg, szBuff, L"Over Spent", MB_YESNO | MB_ICONWARNING) == IDYES;
+        if (ret && !pAccountFrom->isCCAccount() && (amount + acctBalance) < 0) {
+            swprintf(szBuff, 1024, L"The '%ls' account has a balance of %ls, which is less than the transaction amount of %ls. Record anyway?",
+                pAccountFrom->getName(), Utils::penniesToDollarsString(acctBalance).c_str(), Utils::penniesToDollarsString(abs(amount)).c_str());
+            ret = MessageBox(hDlg, szBuff, L"Over Spent", MB_YESNO | MB_ICONWARNING) == IDYES;
+        }
+
+        if (ret && !amount) {
+            swprintf(szBuff, 1024, L"The transaction amount is zero. Record anyway?");
+            ret = MessageBox(hDlg, szBuff, L"Zero Sum Transaction", MB_YESNO | MB_ICONWARNING) == IDYES;
+        }
+
+        if (ret) {
+            GetDlgItemText(hDlg, IDC_COMBO_PAYEE, szBuff, 1024);
+            if (*szBuff == 0) {
+                swprintf(szBuff, 1024, L"This transaction has no payee. This is valid but weird. Record anyway?");
+                ret = MessageBox(hDlg, szBuff, L"Zero Sum Transaction", MB_YESNO | MB_ICONWARNING) == IDYES;
             }
         }
     }

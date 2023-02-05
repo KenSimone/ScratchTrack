@@ -10,7 +10,7 @@ class AccountBase;
 class TransactionDialog
 {
 public:
-	TransactionDialog();
+	TransactionDialog(bool validate);
 	~TransactionDialog();
 
 	bool ShowDialog();
@@ -40,6 +40,7 @@ protected:
 
 	unsigned int _accountFromId;
 	unsigned int _categoryId;
+	bool _doValidate;
 
 	static INT_PTR CALLBACK TransactionDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 

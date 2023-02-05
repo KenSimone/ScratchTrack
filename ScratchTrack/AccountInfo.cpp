@@ -189,7 +189,10 @@ int deserialize(const char* szFilename, std::vector<AccountBase*>& topLevelItems
 	// Find our biggest ID and set the seed to that +1
 	unsigned int biggestId = 0;
 	for (auto itr = _idToItem.begin(); itr != _idToItem.end(); itr++) {
-		biggestId = max(biggestId, itr->second->getId());
+		int itemId = itr->second->getId();
+		if (itemId != ACCOUNT_ID_PAY_CC && itemId != ACCOUNT_ID_INVALID) {
+			biggestId = itemId;
+		}
 	}
 
 	_curId = biggestId + 1;

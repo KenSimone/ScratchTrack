@@ -361,7 +361,7 @@ bool addTransaction(HTREEITEM hItem)
 {
     bool didSimonthing = false;
     AccountBase* pItem = accountFromTreeItem(hItem);
-    TransactionDialog transactionDlg;
+    TransactionDialog transactionDlg(true);
     transactionDlg.setCategoryId(pItem->getId());
     AccountCategory* pCategory = nullptr;
     if (pItem->getType() == AccountBase::CATEGORY) {
@@ -819,7 +819,8 @@ void editPayCC(Transaction* pTransaction, int listviewItemIndex)
 
 void editExpense(Transaction* pTransaction, int listviewItemIndex)
 {
-    TransactionDialog dlg;
+    TransactionDialog dlg(false /* turn off validation in edit. Undo logic needs to be considered */);
+
     dlg.setAmount(pTransaction->getAmount());
     dlg.setPayee(pTransaction->getPayee());
     dlg.setDescription(pTransaction->getDescription());
@@ -885,6 +886,11 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
 
 void doTreeDrag(LPNMTREEVIEW nmTreeItem)
 {
+    AccountBase* pItem = accountFromTreeItem(nmTreeItem->itemNew.hItem);
+    if (pItem && pItem->getId() == ACCOUNT_ID_PAY_CC) {
+        return;
+    }
+
     // Tell the tree-view control to create an image to use 
     // for dragging. 
     HIMAGELIST himl = TreeView_CreateDragImage(g_hwndTV, nmTreeItem->itemNew.hItem);
@@ -957,7 +963,7 @@ void editAccount(Account* pAccount)
         InvalidateRect(g_hwndAccountLV, nullptr, true);
         updateGuiValues();
         positionControls();
-
+        populateTransactions();
         serializeState();
     }
 }
@@ -1341,39 +1347,44 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         hSubMenu = GetSubMenu(hMenu, 0);
                     }
                     else if (pItem->getType() == AccountBase::CATEGORY) {
+
+                        bool addMove = !pItem->getReadOnly() && pItem->getId() != ACCOUNT_ID_PAY_CC;
+
                         if (!pItem->getReadOnly()) {
                             hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_CATEGORY_MENU));
                             hSubMenu = GetSubMenu(hMenu, 0);
                         }
 
                         // Add the "move to group" option
-                        bool added = false;
-                        std::vector<AccountBase*> groups = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
-                        HMENU groupMenu = CreatePopupMenu();
-                        for (size_t i = 0; i < groups.size(); i++) {
-                            if (pParentItem && groups[i]->getId() != pParentItem->getId() && !groups[i]->getReadOnly()) {
-                                AppendMenu(groupMenu, MF_STRING, ID_ROOT_CATEGORY_MOVE_TO_START + groups[i]->getId(), groups[i]->getName());
-                                added = true;
+                        if (addMove) {
+                            bool added = false;
+                            std::vector<AccountBase*> groups = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
+                            HMENU groupMenu = CreatePopupMenu();
+                            for (size_t i = 0; i < groups.size(); i++) {
+                                if (pParentItem && groups[i]->getId() != pParentItem->getId() && !groups[i]->getReadOnly()) {
+                                    AppendMenu(groupMenu, MF_STRING, ID_ROOT_CATEGORY_MOVE_TO_START + groups[i]->getId(), groups[i]->getName());
+                                    added = true;
+                                }
                             }
-                        }
 
-                        if (added) {
-                            AppendMenu(hSubMenu, MF_MENUBREAK, 0, 0);
-                            AppendMenu(hSubMenu, MF_POPUP, (UINT_PTR)groupMenu, L"Move to group...");
-                        }
+                            if (added) {
+                                AppendMenu(hSubMenu, MF_MENUBREAK, 0, 0);
+                                AppendMenu(hSubMenu, MF_POPUP, (UINT_PTR)groupMenu, L"Move to group...");
+                            }
+                            //// Add the "move to account" option
+                            //groups = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
+                            //HMENU accountMenu = CreatePopupMenu();
+                            //for (size_t i = 0; i < groups.size(); i++) {
+                            //    if (pParentItem && groups[i]->getId() != pParentItem->getId()) {
+                            //        added = true;
+                            //        AppendMenu(accountMenu, MF_STRING, ID_ROOT_CATEGORY_MOVE_TO_START + groups[i]->getId(), groups[i]->getName());
+                            //    }
+                            //}
+                            //if (added) {
+                            //    AppendMenu(hMenu, MF_POPUP, (UINT_PTR)accountMenu, L"Move to account...");
+                            //}
+                        } // if adding move options
 
-                        //// Add the "move to account" option
-                        //groups = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
-                        //HMENU accountMenu = CreatePopupMenu();
-                        //for (size_t i = 0; i < groups.size(); i++) {
-                        //    if (pParentItem && groups[i]->getId() != pParentItem->getId()) {
-                        //        added = true;
-                        //        AppendMenu(accountMenu, MF_STRING, ID_ROOT_CATEGORY_MOVE_TO_START + groups[i]->getId(), groups[i]->getName());
-                        //    }
-                        //}
-                        //if (added) {
-                        //    AppendMenu(hMenu, MF_POPUP, (UINT_PTR)accountMenu, L"Move to account...");
-                        //}
                     }
 
                     if (hSubMenu) {
@@ -1612,7 +1623,8 @@ void populateTransactions()
         // Payee
         std::wstring payee = pTransaction->getPayee();
         AccountBase* pAccountTo = AccountBase::lookupById(pTransaction->getAccountToId());
-        if (pAccountTo) {
+
+        if (pTransaction->getType() != Transaction::EXPENSE) {
             AccountBase* pAccountFrom = AccountBase::lookupById(pTransaction->getAccountFromId());
             wchar_t szBuff[1024] = { 0 };
             if (pAccountFrom) {
