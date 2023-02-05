@@ -41,6 +41,22 @@ bool AccountDlg::ShowDialog()
 
 }
 
+bool AccountDlg::validateParams(HWND hDlg)
+{
+    bool ret = true;
+    wchar_t szBuff[1024] = { 0 };
+    bool isCC = SendDlgItemMessage(hDlg, IDC_CHECK_CREDIT_CARD, BM_GETCHECK, 0, 0);
+    if (isCC) {
+        // Warn if positive balance on CC
+        GetWindowText(GetDlgItem(hDlg, IDC_EDIT_ACCOUNT_BALANCE), szBuff, 1024);
+        int balance = Utils::dollarsStringToPennies(szBuff);
+        if (balance > 0) {
+            ret = MessageBox(hDlg, L"Balances on credit cards are usually zero or negative. The balance for this credit card is positive. Is that intended?", L"Confirm Balance", MB_YESNO | MB_ICONWARNING) == IDYES;
+        }
+    }
+    return ret;
+}
+
 void AccountDlg::enableDisableUi(HWND hDlg)
 {
     bool isCC = SendDlgItemMessage(hDlg, IDC_CHECK_CREDIT_CARD, BM_GETCHECK, 0, 0);
@@ -99,29 +115,35 @@ INT_PTR CALLBACK AccountDlg::AccountDlgProc(HWND hDlg, UINT message, WPARAM wPar
 
         if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
         {
+            bool closeIt = true;
             if (LOWORD(wParam) == IDOK)
             {
-                wchar_t szBuff[1024] = { 0 };
-                // Save name
-                HWND hWndCtrl = GetDlgItem(hDlg, IDC_EDIT_ACCOUNT_NAME);
-                GetWindowText(hWndCtrl, szBuff, 1024);
-                PTHIS->setName(szBuff);
+                closeIt = PTHIS->validateParams(hDlg);
+                if (closeIt) {
+                    wchar_t szBuff[1024] = { 0 };
+                    // Save name
+                    HWND hWndCtrl = GetDlgItem(hDlg, IDC_EDIT_ACCOUNT_NAME);
+                    GetWindowText(hWndCtrl, szBuff, 1024);
+                    PTHIS->setName(szBuff);
 
-                // Save balance
-                hWndCtrl = GetDlgItem(hDlg, IDC_EDIT_ACCOUNT_BALANCE);
-                GetWindowText(hWndCtrl, szBuff, 1024);
-                PTHIS->setBalance(Utils::dollarsStringToPennies(szBuff));
+                    // Save balance
+                    hWndCtrl = GetDlgItem(hDlg, IDC_EDIT_ACCOUNT_BALANCE);
+                    GetWindowText(hWndCtrl, szBuff, 1024);
+                    PTHIS->setBalance(Utils::dollarsStringToPennies(szBuff));
 
-                // Save budgetd checkbox
-                hWndCtrl = GetDlgItem(hDlg, IDC_CHECK_BUDGETED);
-                PTHIS->setBudgeted(Button_GetCheck(hWndCtrl) == BST_CHECKED);
+                    // Save budgetd checkbox
+                    hWndCtrl = GetDlgItem(hDlg, IDC_CHECK_BUDGETED);
+                    PTHIS->setBudgeted(Button_GetCheck(hWndCtrl) == BST_CHECKED);
 
-                // Save credit card checkbox
-                hWndCtrl = GetDlgItem(hDlg, IDC_CHECK_CREDIT_CARD);
-                PTHIS->setCreditCard(Button_GetCheck(hWndCtrl) == BST_CHECKED);
+                    // Save credit card checkbox
+                    hWndCtrl = GetDlgItem(hDlg, IDC_CHECK_CREDIT_CARD);
+                    PTHIS->setCreditCard(Button_GetCheck(hWndCtrl) == BST_CHECKED);
+                }
             }
-            EndDialog(hDlg, LOWORD(wParam));
-            return (INT_PTR)TRUE;
+            if (closeIt) {
+                EndDialog(hDlg, LOWORD(wParam));
+                return (INT_PTR)TRUE;
+            }
         }
     }
     return (INT_PTR)FALSE;

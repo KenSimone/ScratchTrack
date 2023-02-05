@@ -31,6 +31,7 @@ public:
 
 protected:
 	static void updateUi(HWND hDlg);
+	bool validateParams(HWND hDlg);
 
 protected:
 	int _amount;

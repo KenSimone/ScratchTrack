@@ -34,6 +34,7 @@ protected:
 
 	static INT_PTR CALLBACK AccountDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 	void enableDisableUi(HWND hDlg);
+	bool validateParams(HWND hDlg);
 
 	static AccountDlg* PTHIS;
 

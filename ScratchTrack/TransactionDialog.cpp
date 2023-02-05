@@ -43,6 +43,44 @@ void TransactionDialog::updateUi(HWND hDlg)
 {
 }
 
+bool TransactionDialog::validateParams(HWND hDlg)
+{
+    bool ret = true;
+    HWND hAccountsFrom = GetDlgItem(hDlg, IDC_COMBO_ACCOUNT);
+    HWND hCategories = GetDlgItem(hDlg, IDC_COMBO_CATEGORY);
+
+    wchar_t szBuff[1024] = { 0 };
+    GetDlgItemText(hDlg, IDC_EDIT_Transaction_AMOUNT, szBuff, 1024);
+    int amount = Utils::dollarsStringToPennies(szBuff) * -1;
+
+    int iSel = ComboBox_GetCurSel(hCategories);
+    AccountCategory* pCategory = iSel >= 0 ? (AccountCategory*)ComboBox_GetItemData(hCategories, iSel) : nullptr;
+
+    // Set account from
+    Account* pAccountFrom = dynamic_cast<Account*>(Account::lookupById(Utils::getAccountIdFromAccountCombo(hDlg, IDC_COMBO_ACCOUNT)));
+
+    if (pAccountFrom && pCategory) {
+
+        int catBalance =pCategory->getBalance();
+        int acctBalance = pAccountFrom->getBalance();
+
+        if ( (amount+catBalance) < 0 ) {
+            swprintf(szBuff, 1024, L"The '%ls' category has a balance of %ls, which is less than the transaction amount of %ls. Record anyway?",
+                pCategory->getName(), Utils::penniesToDollarsString(catBalance).c_str(), Utils::penniesToDollarsString(abs(amount)).c_str());
+            ret = MessageBox(hDlg, szBuff, L"Over Spent", MB_YESNO | MB_ICONWARNING) == IDYES;
+
+            if (ret && !pAccountFrom->isCCAccount() && (amount+acctBalance) < 0 ) {
+                swprintf(szBuff, 1024, L"The '%ls' account has a balance of %ls, which is less than the transaction amount of %ls. Record anyway?",
+                    pAccountFrom->getName(), Utils::penniesToDollarsString(acctBalance).c_str(), Utils::penniesToDollarsString(abs(amount)).c_str());
+                ret = MessageBox(hDlg, szBuff, L"Over Spent", MB_YESNO | MB_ICONWARNING) == IDYES;
+            }
+        }
+    }
+
+    return ret;
+
+}
+
 INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     UNREFERENCED_PARAMETER(lParam);
@@ -88,41 +126,46 @@ INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT messag
     case WM_COMMAND:
         if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
         {
+            bool closeIt = true;
             if (LOWORD(wParam) == IDOK)
             {
 
                 if (THIS_PTR) {
+                    closeIt = THIS_PTR->validateParams(hDlg);
+                    if (closeIt) {
+                        HWND hAccountsFrom = GetDlgItem(hDlg, IDC_COMBO_ACCOUNT);
+                        HWND hCategories = GetDlgItem(hDlg, IDC_COMBO_CATEGORY);
 
-                    HWND hAccountsFrom = GetDlgItem(hDlg, IDC_COMBO_ACCOUNT);
-                    HWND hCategories = GetDlgItem(hDlg, IDC_COMBO_CATEGORY);
+                        // Set amount
+                        wchar_t szBuff[1024] = { 0 };
+                        GetDlgItemText(hDlg, IDC_EDIT_Transaction_AMOUNT, szBuff, 1024);
+                        THIS_PTR->_amount = Utils::dollarsStringToPennies(szBuff) * -1;
 
-                    // Set amount
-                    wchar_t szBuff[1024] = { 0 };
-                    GetDlgItemText(hDlg, IDC_EDIT_Transaction_AMOUNT, szBuff, 1024);
-                    THIS_PTR->_amount = Utils::dollarsStringToPennies(szBuff) * -1;
+                        // Set payee
+                        GetDlgItemText(hDlg, IDC_COMBO_PAYEE, szBuff, 1024);
+                        THIS_PTR->_payee = szBuff;
 
-                    // Set payee
-                    GetDlgItemText(hDlg, IDC_COMBO_PAYEE, szBuff, 1024);
-                    THIS_PTR->_payee = szBuff;
+                        // Set category
+                        int iSel = ComboBox_GetCurSel(hCategories);
+                        if (iSel >= 0) {
+                            AccountCategory* pCategory = (AccountCategory*)ComboBox_GetItemData(hCategories, iSel);
+                            THIS_PTR->setCategoryId(pCategory->getId());
+                        }
 
-                    // Set category
-                    int iSel = ComboBox_GetCurSel(hCategories);
-                    if (iSel >= 0) {
-                        AccountCategory* pCategory = (AccountCategory*)ComboBox_GetItemData(hCategories, iSel);
-                        THIS_PTR->setCategoryId(pCategory->getId());
+                        // Set description
+                        GetDlgItemText(hDlg, IDC_EDIT_Transaction_DESCRIPTION, szBuff, 1024);
+                        THIS_PTR->_description = szBuff;
+
+                        // Set account from
+                        THIS_PTR->setAccountFromId(Utils::getAccountIdFromAccountCombo(hDlg, IDC_COMBO_ACCOUNT));
                     }
-
-                    // Set description
-                    GetDlgItemText(hDlg, IDC_EDIT_Transaction_DESCRIPTION, szBuff, 1024);
-                    THIS_PTR->_description = szBuff;
-
-                    // Set account from
-                    THIS_PTR->setAccountFromId(Utils::getAccountIdFromAccountCombo(hDlg, IDC_COMBO_ACCOUNT));
                 }
             }
 
-            EndDialog(hDlg, LOWORD(wParam));
-            return (INT_PTR)TRUE;
+            if (closeIt) {
+                EndDialog(hDlg, LOWORD(wParam));
+                return (INT_PTR)TRUE;
+            }
         }
         break;
     }
