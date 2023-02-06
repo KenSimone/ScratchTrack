@@ -1,0 +1,41 @@
+#include "Version.h"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION VER_MAJOR, VER_MINOR, VER_SUBMINOR, VER_BUILD
+PRODUCTVERSION VER_MAJOR, VER_MINOR, VER_SUBMINOR, VER_BUILD
+FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+FILEFLAGS 0x1L
+#else
+FILEFLAGS 0x0L
+#endif
+FILEOS 0x40004L
+FILETYPE 0x1L
+FILESUBTYPE 0x0L
+BEGIN
+BLOCK "StringFileInfo"
+BEGIN
+BLOCK "040904b0"
+BEGIN
+VALUE "CompanyName", "Ken Simone"
+VALUE "FileDescription", "ScratchTrack budget and cashflow tracker"
+VALUE "FileVersion", VER_STRING
+VALUE "InternalName", "ScratchT.exe"
+VALUE "LegalCopyright", COPYRIGHT_STRING
+VALUE "OriginalFilename", "ScratchT.exe"
+VALUE "ProductName", "ScratchTrack"
+VALUE "ProductVersion", VER_STRING
+END
+END
+BLOCK "VarFileInfo"
+BEGIN
+VALUE "Translation", 0x409, 1200
+END
+END
+
+

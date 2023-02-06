@@ -217,6 +217,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="cursor1.cur" />
+    <None Include="Version.rc2" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
