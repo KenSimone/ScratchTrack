@@ -2,12 +2,8 @@
 // Microsoft Visual C++ generated include file.
 // Used by SimpleBudget.rc
 //
-#define VER_MAJOR                       0
 #define IDC_MYICON                      2
-#define VER_MINOR                       5
 #define IDD_ONE_INPUT                   9
-#define VER_SUBMINOR                    23
-#define VER_BUILD                       36
 #define IDD_SIMPLEBUDGET_DIALOG         102
 #define IDS_APP_TITLE                   103
 #define IDD_ABOUTBOX                    103
