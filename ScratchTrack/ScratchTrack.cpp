@@ -680,7 +680,7 @@ void doPayCC(Account* pAccount)
         return;
     }
 
-    PayCCDlg dlg(pAccount, 0, 0);
+    PayCCDlg dlg(pAccount, abs(pAccount->getBalance()), 0);
     if (dlg.ShowDialog()) {
         Transaction* pTransaction = Transaction::addTransaction(Transaction::CCPAYMENT, dlg.getAmount(), dlg.getPaidFromId(), pAccount->getId(), pAccount->isCCAccount() ? ACCOUNT_ID_PAY_CC : ACCOUNT_ID_INVALID, pAccount->getName(), dlg.getDescription());
         pTransaction->apply();
