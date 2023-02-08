@@ -148,3 +148,77 @@ int Transaction::deserialize(tinyxml2::XMLElement* pRoot)
 	return ERROR_SUCCESS;
 
 }
+
+void Transaction::apply()
+{
+	AccountBase* pFrom = AccountBase::lookupById(_payFromAccountId);
+	AccountBase* pTo = AccountBase::lookupById(_payToAccountId);
+	AccountBase* pCategory = AccountBase::lookupById(_categoryId);
+
+	int fromAmount = getAmount();
+	if (getType() == Transaction::TRANSFER) {
+		fromAmount *= -1;
+	}
+
+	if (pFrom) {
+		pFrom->addBalance(fromAmount);
+	}
+
+	Account* pFromAccount = dynamic_cast<Account*>(pFrom);
+	if (pFromAccount && pFromAccount->isCCAccount()) {
+		AccountBase* pCCPayCat = AccountBase::lookupById(ACCOUNT_ID_PAY_CC);
+		if (pCCPayCat) {
+			pCCPayCat->addBalance(-getAmount());
+		}
+	}
+
+	int toAmount = getAmount();
+	if (getType() == Transaction::CCPAYMENT) {
+		toAmount *= -1;
+	}
+
+	if (pTo) {
+		pTo->addBalance(toAmount);
+	}
+
+	if (pCategory) {
+		pCategory->addBalance(getAmount());
+	}
+}
+
+void Transaction::undo()
+{
+	AccountBase* pFrom = AccountBase::lookupById(_payFromAccountId);
+	AccountBase* pTo = AccountBase::lookupById(_payToAccountId);
+	AccountBase* pCategory = AccountBase::lookupById(_categoryId);
+
+	int fromAmount = getAmount();
+	if (getType() == Transaction::TRANSFER) {
+		fromAmount *= -1;
+	}
+
+	if (pFrom) {
+		pFrom->addBalance(-fromAmount);
+	}
+
+	Account* pFromAccount = dynamic_cast<Account*>(pFrom);
+	if (pFromAccount && pFromAccount->isCCAccount()) {
+		AccountBase* pCCPayCat = AccountBase::lookupById(ACCOUNT_ID_PAY_CC);
+		if (pCCPayCat) {
+			pCCPayCat->addBalance(getAmount());
+		}
+	}
+
+	int toAmount = getAmount();
+	if (getType() == Transaction::CCPAYMENT) {
+		toAmount *= -1;
+	}
+
+	if (pTo) {
+		pTo->addBalance(-toAmount);
+	}
+
+	if (pCategory) {
+		pCategory->addBalance(-getAmount());
+	}
+}

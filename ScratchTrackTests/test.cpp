@@ -124,3 +124,113 @@ TEST(TestAccounts, TestDeserializeAccounts) {
 	EXPECT_TRUE(accounts.empty());
 }
 
+TEST(TestAccounts, TestDeposit) {
+	deleteAllAccounts();
+	Account* pAccount = new Account;
+	Transaction* pTrans = Transaction::addTransaction(Transaction::DEPOSIT, 500, ACCOUNT_ID_INVALID, pAccount->getId(), ACCOUNT_ID_INVALID, nullptr, nullptr);
+
+	EXPECT_EQ(0, pAccount->getBalance());
+
+	pTrans->apply();
+	EXPECT_EQ(500, pAccount->getBalance());
+	pTrans->undo();
+	EXPECT_EQ(0, pAccount->getBalance());
+}
+
+TEST(TestAccounts, TestTransfer) {
+	deleteAllAccounts();
+	Account* pAccount = new Account;
+	Account* pAccountB = new Account;
+	pAccount->addBalance(500);
+	pAccountB->addBalance(100);
+
+	Transaction* pTrans = Transaction::addTransaction(Transaction::TRANSFER, 400, pAccount->getId(), pAccountB->getId(), ACCOUNT_ID_INVALID, nullptr, nullptr);
+
+	EXPECT_EQ(500, pAccount->getBalance());
+	EXPECT_EQ(100, pAccountB->getBalance());
+
+	pTrans->apply();
+	EXPECT_EQ(100, pAccount->getBalance());
+	EXPECT_EQ(500, pAccountB->getBalance());
+	pTrans->undo();
+
+	EXPECT_EQ(500, pAccount->getBalance());
+	EXPECT_EQ(100, pAccountB->getBalance());
+}
+
+TEST(TestAccounts, TestExpense) {
+	deleteAllAccounts();
+	Account* pAccount = new Account;
+	AccountGroup* pFolder = new AccountGroup;
+	AccountCategory* pCategory = new AccountCategory;
+	pCategory->addBalance(100);
+	pFolder->addChild(pCategory);
+
+	pAccount->addBalance(500);
+
+	Transaction* pTrans = Transaction::addTransaction(Transaction::EXPENSE, -99, pAccount->getId(), ACCOUNT_ID_INVALID, pCategory->getId(), nullptr, nullptr);
+
+	EXPECT_EQ(500, pAccount->getBalance());
+	EXPECT_EQ(100, pCategory->getBalance());
+
+	pTrans->apply();
+	EXPECT_EQ(401, pAccount->getBalance());
+	EXPECT_EQ(1, pCategory->getBalance());
+	pTrans->undo();
+
+	EXPECT_EQ(500, pAccount->getBalance());
+	EXPECT_EQ(100, pCategory->getBalance());
+}
+
+TEST(TestAccounts, TestExpenseCC) {
+	deleteAllAccounts();
+	Account* pAccount = new Account;
+	Account* pAccountCC = new Account;
+	AccountGroup* pFolder = new AccountGroup;
+	AccountCategory* pCategory = new AccountCategory;
+	pCategory->addBalance(100);
+	pFolder->addChild(pCategory);
+
+	pAccount->addBalance(500);
+	pAccountCC->setIsCCAccount(true);
+	pAccountCC->setName(L"CC Account");
+
+	Transaction* pTrans = Transaction::addTransaction(Transaction::EXPENSE, -99, pAccountCC->getId(), ACCOUNT_ID_INVALID, pCategory->getId(), nullptr, nullptr);
+
+	EXPECT_EQ(500, pAccount->getBalance());
+	EXPECT_EQ(0, pAccountCC->getBalance());
+	EXPECT_EQ(100, pCategory->getBalance());
+
+	pTrans->apply();
+	EXPECT_EQ(500, pAccount->getBalance());
+	EXPECT_EQ(-99, pAccountCC->getBalance());
+	EXPECT_EQ(1, pCategory->getBalance());
+	pTrans->undo();
+
+	EXPECT_EQ(500, pAccount->getBalance());
+	EXPECT_EQ(0, pAccountCC->getBalance());
+	EXPECT_EQ(100, pCategory->getBalance());
+
+	pTrans->apply();
+	EXPECT_EQ(500, pAccount->getBalance());
+	EXPECT_EQ(-99, pAccountCC->getBalance());
+	EXPECT_EQ(1, pCategory->getBalance());
+
+	// Now test paying the CC
+	Transaction* pPayCCTrans = Transaction::addTransaction(Transaction::CCPAYMENT, -99, pAccount->getId(), pAccountCC->getId(), ACCOUNT_ID_PAY_CC, pAccount->getName(), L"Pay CC");
+	EXPECT_EQ(500, pAccount->getBalance());
+	EXPECT_EQ(-99, pAccountCC->getBalance());
+	EXPECT_EQ(1, pCategory->getBalance());
+
+	pPayCCTrans->apply();
+	EXPECT_EQ(401, pAccount->getBalance());
+	EXPECT_EQ(0, pAccountCC->getBalance());
+	EXPECT_EQ(1, pCategory->getBalance());
+
+	pPayCCTrans->undo();
+	EXPECT_EQ(500, pAccount->getBalance());
+	EXPECT_EQ(-99, pAccountCC->getBalance());
+	EXPECT_EQ(1, pCategory->getBalance());
+
+}
+

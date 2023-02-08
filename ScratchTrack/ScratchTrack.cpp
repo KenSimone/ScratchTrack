@@ -70,6 +70,7 @@ void calcColumnSpots();
 void addAccount(Account* pAccount);
 void setGuiFont(HWND hCtrl);
 bool doFundCategories(AccountGroup* pGroup);
+bool addExpense(HTREEITEM hItem);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -372,64 +373,6 @@ INT_PTR CALLBACK OneInputProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
     return (INT_PTR)FALSE;
 }
 
-bool addTransaction(HTREEITEM hItem)
-{
-    bool didSimonthing = false;
-    AccountBase* pItem = accountFromTreeItem(hItem);
-    TransactionDialog transactionDlg(true);
-    transactionDlg.setCategoryId(pItem->getId());
-    AccountCategory* pCategory = nullptr;
-    if (pItem->getType() == AccountBase::CATEGORY) {
-        pCategory = (AccountCategory*)pItem;
-        transactionDlg.setPayee(pCategory->getDefaultTransactionPayee());
-        transactionDlg.setAmount(pCategory->getDefaultTransactionAmount());
-
-        if (pCategory->getDefaultTransactionPayFromAccount()) {
-            transactionDlg.setAccountFromId(pCategory->getDefaultTransactionPayFromAccount()->getId());
-        }
-        else {
-            transactionDlg.setAccountFromId(ACCOUNT_ID_INVALID);
-        }
-
-        if (pCategory->getDefaultTransactionPayFromAccount()) {
-            transactionDlg.setAccountFromId(pCategory->getDefaultTransactionPayFromAccount()->getId());
-        }
-    }
-
-    if (transactionDlg.ShowDialog())
-    {
-        Transaction::addTransaction(Transaction::EXPENSE, transactionDlg.getAmount(), transactionDlg.getAccountFromId(), ACCOUNT_ID_INVALID, transactionDlg.getCategoryId(), transactionDlg.getPayee(), transactionDlg.getDescription());
-
-        // Apply the amount to the transaction category 
-        pCategory->addBalance(transactionDlg.getAmount());
-
-        // Apply the amount to the account
-        Account* pFromAccount = dynamic_cast<Account*>(AccountBase::lookupById(transactionDlg.getAccountFromId()));
-        if (pFromAccount)
-        {
-            // We have the "from" account. Add the transaction amount.
-            pFromAccount->addBalance(transactionDlg.getAmount());
-
-            // See if this is a payment from a CC account
-            if (pFromAccount->isCCAccount()) {
-                AccountCategory* pToCategory = dynamic_cast<AccountCategory*>(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
-                if (pToCategory)
-                {
-                    pToCategory->addBalance(-transactionDlg.getAmount());
-                    if (pCategory->getBalance() < 0)
-                    {
-                        pCategory->addBalance(-pCategory->getBalance());
-                    }
-                }
-            }
-        } // if pFromAccount
-
-        updateGuiValues();
-        populateTransactions();
-        didSimonthing = true;
-    }
-    return didSimonthing;
-}
 bool getOneText(std::wstring& result)
 {
     szOneInputText[0] = 0;
@@ -592,7 +535,7 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
     }
     case ID_ROOT_ADDTransaction:
     {
-        didSomething = addTransaction(hItem);
+        didSomething = addExpense(hItem);
         break;
     }
     }
@@ -643,76 +586,6 @@ void updateTransactionUiAndSave(Transaction* pTransaction, int listviewItemIndex
 
 }
 
-void applyModifiedTransaction(Transaction* pTransaction, int listviewItemIndex)
-{
-    AccountCategory* pCategory = dynamic_cast<AccountCategory*>(AccountBase::lookupById(pTransaction->getCategoryId()));
-    Account* pAccountFrom = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountFromId()));
-    Account* pAccountTo = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountToId()));
-
-    AccountCategory* pCategoryTo = nullptr;
-    if (pAccountFrom && pAccountFrom->isCCAccount()) {
-        pCategoryTo = dynamic_cast<AccountCategory*>(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
-    }
-
-    // Record the expense in the category
-    if (pCategory) {
-        pCategory->addBalance(pTransaction->getAmount());
-    }
-
-    // Record the expense in the account
-    if (pAccountFrom) {
-        pAccountFrom->addBalance(pTransaction->getAmount());
-    }
-
-    // If this is a transfer to a category, record the reverse of the expense in the target account 
-    if (pAccountTo) {
-        pAccountTo->addBalance(-pTransaction->getAmount());
-    }
-
-    // If this is a transfer to a category, record the reverse of the expense in the target category
-    if (pCategoryTo) {
-        pCategoryTo->addBalance(-pTransaction->getAmount());
-    }
-
-    updateTransactionUiAndSave(pTransaction, listviewItemIndex);
-}
-
-void doPayCC(Account* pAccount)
-{
-    // Ensure we have enough accounts
-    auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
-    size_t accts = 0;
-    for (size_t i = 0; i < accounts.size() && !accts; i++) {
-        Account* pAccount = dynamic_cast<Account*>(accounts[i]);
-        if (!pAccount || pAccount->isCCAccount()) {
-            continue;
-        }
-        accts++;
-    }
-
-    if (!accts) {
-        MessageBox(g_hTopWindow, L"You must have at least one non-credit card account to make this payment", L"Cedit Card Payment", MB_OK);
-        return;
-    }
-
-    PayCCDlg dlg(pAccount, 0, 0);
-    if (dlg.ShowDialog()) {
-        Transaction::addTransaction(Transaction::CCPAYMENT, dlg.getAmount(), dlg.getPaidFromId(), pAccount->getId(), pAccount->isCCAccount() ? ACCOUNT_ID_PAY_CC : ACCOUNT_ID_INVALID, pAccount->getName(), dlg.getDescription());
-        pAccount->addBalance(-dlg.getAmount());
-        AccountCategory* pCategory = nullptr;
-        if (pAccount->isCCAccount()) {
-            pCategory = (AccountCategory*)Account::lookupById(ACCOUNT_ID_PAY_CC);
-        }
-        pCategory->addBalance(dlg.getAmount());
-        Account* pFrom = (Account*)Account::lookupById(dlg.getPaidFromId());
-        pFrom->addBalance(dlg.getAmount());
-        serializeState();
-        updateGuiValues();
-        populateTransactions();
-
-    }
-}
-
 void doTransfer(Account* pAccount)
 {
     // Ensure we have enough accounts
@@ -736,46 +609,12 @@ void doTransfer(Account* pAccount)
         Account* pAccountFrom = (Account*)AccountBase::lookupById(dlg.getAccountFromId());
         Account* pAccountTo = (Account*)AccountBase::lookupById(dlg.getAccountToId());
         if (pAccountFrom && pAccountTo) {
-            Transaction::addTransaction(Transaction::TRANSFER, dlg.getAmount(), dlg.getAccountFromId(), dlg.getAccountToId(), ACCOUNT_ID_INVALID, L"Transfer", dlg.getDescription());
-            pAccountFrom->addBalance(-dlg.getAmount());
-            pAccountTo->addBalance(dlg.getAmount());
+            Transaction* pTransaction = Transaction::addTransaction(Transaction::TRANSFER, dlg.getAmount(), dlg.getAccountFromId(), dlg.getAccountToId(), ACCOUNT_ID_INVALID, L"Transfer", dlg.getDescription());
+            pTransaction->apply();
             serializeState();
             updateGuiValues();
             populateTransactions();
 
-        }
-    }
-}
-void addDeposit(Account* pAccount)
-{
-    DepositDlg dlg(pAccount, 0, nullptr, nullptr);
-    if (dlg.ShowDialog()) {
-        Transaction::addTransaction(Transaction::DEPOSIT, dlg.getAmount(), ACCOUNT_ID_INVALID, pAccount->getId(), ACCOUNT_ID_INVALID, dlg.getPayee(), dlg.getDescription());
-        pAccount->addBalance(dlg.getAmount());
-        serializeState();
-        updateGuiValues();
-        populateTransactions();
-    }
-}
-
-void editDeposit(Transaction* pTransaction, int listviewItemIndex)
-{
-    Account* pAcct = (Account*)AccountBase::lookupById(pTransaction->getAccountToId());
-    if (pAcct) {
-        DepositDlg dlg(pAcct, pTransaction->getAmount(), pTransaction->getPayee(), pTransaction->getDescription());
-        if (dlg.ShowDialog()) {
-            // Undo original deposit
-            Account* pOrigAcct = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountToId()));
-            int origAmnt = pTransaction->getAmount();
-            pOrigAcct->addBalance(-origAmnt);
-
-            // Apply new version
-            Account* pNewAcct = dlg.getAccount();
-            pNewAcct->addBalance(dlg.getAmount());
-
-            // Apply new balance to the category
-            pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), pTransaction->getCategoryId(), pTransaction->getAccountFromId(), dlg.getAccount()->getId());
-            updateTransactionUiAndSave(pTransaction, listviewItemIndex);
         }
     }
 }
@@ -788,21 +627,66 @@ void editTransfer(Transaction* pTransaction, int listviewItemIndex)
         TransferDlg dlg(pAcctFrom->getId(), pAcctTo->getId(), pTransaction->getAmount(), pTransaction->getDescription());
         if (dlg.ShowDialog()) {
 
-            // Put money back in the "from account"
-            int origAmount = pTransaction->getAmount();
-            pAcctFrom->addBalance(origAmount);
-
-            // Take money away from the 'to' account
-            pAcctTo->addBalance(-origAmount);
-
-            // Apply new balance to the category
-            pAcctTo = (Account*)AccountBase::lookupById(dlg.getAccountToId());
-            pAcctFrom = (Account*)AccountBase::lookupById(dlg.getAccountFromId());
-            pAcctFrom->addBalance(-dlg.getAmount());
-            pAcctTo->addBalance(dlg.getAmount());
+            pTransaction->undo();
             pTransaction->setDetails(dlg.getAmount(), pTransaction->getPayee(), dlg.getDescription(), pTransaction->getCategoryId(), dlg.getAccountFromId(), dlg.getAccountToId());
+            pTransaction->apply();
+
             updateTransactionUiAndSave(pTransaction, listviewItemIndex);
         }
+    }
+}
+
+void addDeposit(Account* pAccount)
+{
+    DepositDlg dlg(pAccount, 0, nullptr, nullptr);
+    if (dlg.ShowDialog()) {
+        Transaction* pTransaction = Transaction::addTransaction(Transaction::DEPOSIT, dlg.getAmount(), ACCOUNT_ID_INVALID, pAccount->getId(), ACCOUNT_ID_INVALID, dlg.getPayee(), dlg.getDescription());
+        pTransaction->apply();
+        serializeState();
+        updateGuiValues();
+        populateTransactions();
+    }
+}
+
+void editDeposit(Transaction* pTransaction, int listviewItemIndex)
+{
+    Account* pAcct = (Account*)AccountBase::lookupById(pTransaction->getAccountToId());
+    if (pAcct) {
+        DepositDlg dlg(pAcct, pTransaction->getAmount(), pTransaction->getPayee(), pTransaction->getDescription());
+        if (dlg.ShowDialog()) {
+            pTransaction->undo();
+            pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), pTransaction->getCategoryId(), pTransaction->getAccountFromId(), dlg.getAccount()->getId());
+            pTransaction->apply();
+            updateTransactionUiAndSave(pTransaction, listviewItemIndex);
+        }
+    }
+}
+
+void doPayCC(Account* pAccount)
+{
+    // Ensure we have enough accounts
+    auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
+    size_t accts = 0;
+    for (size_t i = 0; i < accounts.size() && !accts; i++) {
+        Account* pAccount = dynamic_cast<Account*>(accounts[i]);
+        if (!pAccount || pAccount->isCCAccount()) {
+            continue;
+        }
+        accts++;
+    }
+
+    if (!accts) {
+        MessageBox(g_hTopWindow, L"You must have at least one non-credit card account to make this payment", L"Cedit Card Payment", MB_OK);
+        return;
+    }
+
+    PayCCDlg dlg(pAccount, 0, 0);
+    if (dlg.ShowDialog()) {
+        Transaction* pTransaction = Transaction::addTransaction(Transaction::CCPAYMENT, dlg.getAmount(), dlg.getPaidFromId(), pAccount->getId(), pAccount->isCCAccount() ? ACCOUNT_ID_PAY_CC : ACCOUNT_ID_INVALID, pAccount->getName(), dlg.getDescription());
+        pTransaction->apply();
+        serializeState();
+        updateGuiValues();
+        populateTransactions();
     }
 }
 
@@ -812,24 +696,49 @@ void editPayCC(Transaction* pTransaction, int listviewItemIndex)
     if (pAcct) {
         PayCCDlg dlg(pAcct, pTransaction->getAmount(), pTransaction->getAccountFromId(), pTransaction->getDescription());
         if (dlg.ShowDialog()) {
-            AccountCategory* pCategory = dynamic_cast<AccountCategory*>(AccountBase::lookupById(pTransaction->getCategoryId()));
-            Account* pAccountTo = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountToId()));
-            Account* pAccountFrom = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountFromId()));
-
-            // Put money back in the category and "from account"
-            int origAmount = pTransaction->getAmount();
-            pCategory->addBalance(-origAmount);
-            pAccountFrom->addBalance(-origAmount);
-
-            // Take money away from the CC account
-            pAccountTo->addBalance(origAmount);
-
+            pTransaction->undo();
             // Apply new balance to the category
             pTransaction->setDetails(dlg.getAmount(), pTransaction->getPayee(), dlg.getDescription(), pTransaction->getCategoryId(), pTransaction->getAccountFromId(), pTransaction->getAccountToId());
-            applyModifiedTransaction(pTransaction, listviewItemIndex);
-
+            pTransaction->apply();
+            updateTransactionUiAndSave(pTransaction, listviewItemIndex);
         }
     }
+}
+
+bool addExpense(HTREEITEM hItem)
+{
+    bool didSimonthing = false;
+    AccountBase* pItem = accountFromTreeItem(hItem);
+    TransactionDialog transactionDlg(true);
+    transactionDlg.setCategoryId(pItem->getId());
+    AccountCategory* pCategory = nullptr;
+    if (pItem->getType() == AccountBase::CATEGORY) {
+        pCategory = (AccountCategory*)pItem;
+        transactionDlg.setPayee(pCategory->getDefaultTransactionPayee());
+        transactionDlg.setAmount(pCategory->getDefaultTransactionAmount());
+
+        if (pCategory->getDefaultTransactionPayFromAccount()) {
+            transactionDlg.setAccountFromId(pCategory->getDefaultTransactionPayFromAccount()->getId());
+        }
+        else {
+            transactionDlg.setAccountFromId(ACCOUNT_ID_INVALID);
+        }
+
+        if (pCategory->getDefaultTransactionPayFromAccount()) {
+            transactionDlg.setAccountFromId(pCategory->getDefaultTransactionPayFromAccount()->getId());
+        }
+    }
+
+    if (transactionDlg.ShowDialog())
+    {
+        Transaction* pTransaction = Transaction::addTransaction(Transaction::EXPENSE, transactionDlg.getAmount(), transactionDlg.getAccountFromId(), ACCOUNT_ID_INVALID, transactionDlg.getCategoryId(), transactionDlg.getPayee(), transactionDlg.getDescription());
+        pTransaction->apply();
+
+        updateGuiValues();
+        populateTransactions();
+        didSimonthing = true;
+    }
+    return didSimonthing;
 }
 
 void editExpense(Transaction* pTransaction, int listviewItemIndex)
@@ -844,39 +753,10 @@ void editExpense(Transaction* pTransaction, int listviewItemIndex)
 
     if (dlg.ShowDialog())
     {
-        // This is actually kind of complicated. 
-        // We need to undo the original transacation first.
-        AccountCategory* pCategory = dynamic_cast<AccountCategory*>(AccountBase::lookupById(pTransaction->getCategoryId()));
-        Account* pAccountFrom = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountFromId()));
-        Account* pAccountTo = dynamic_cast<Account*>(AccountBase::lookupById(pTransaction->getAccountToId()));
-        AccountCategory* pCategoryTo = nullptr;
-
-        if (pAccountFrom->isCCAccount()) {
-            pCategoryTo = dynamic_cast<AccountCategory*>(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
-        }
-
-        int origAmount = pTransaction->getAmount();
-        if (pCategory) {
-            pCategory->addBalance(-origAmount);
-        }
-
-        // Put the money back in the original account
-        pAccountFrom->addBalance(-origAmount);
-
-        // Take it out of the target account (if any)
-        if (pAccountTo) {
-            pAccountTo->addBalance(origAmount);
-        }
-
-        // Take it out of the target category (if any)
-        if (pCategoryTo) {
-            pCategoryTo->addBalance(origAmount);
-        }
-
-        // Now this is basically the same as add
+        pTransaction->undo();
         pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), dlg.getCategoryId(), dlg.getAccountFromId(), ACCOUNT_ID_INVALID);
-        applyModifiedTransaction(pTransaction, listviewItemIndex);
-
+        pTransaction->apply();
+        updateTransactionUiAndSave(pTransaction, listviewItemIndex);
     }
 }
 
@@ -1610,7 +1490,7 @@ void populateTransactions()
         Transaction* pCurTransaction = *itr;
 
         int iAmount = pTransaction->getAmount();
-        bool isIncome = iAmount > 0;
+        bool isIncome = pTransaction->getAccountToId() != ACCOUNT_ID_INVALID;
         iAmount = abs(iAmount);
         std::wstring amount = Utils::penniesToDollarsString(iAmount);
 
