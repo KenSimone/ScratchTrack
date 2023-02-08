@@ -1490,7 +1490,7 @@ void populateTransactions()
         Transaction* pCurTransaction = *itr;
 
         int iAmount = pTransaction->getAmount();
-        bool isIncome = pTransaction->getAccountToId() != ACCOUNT_ID_INVALID;
+        bool isIncome = pTransaction->getAccountToId() != ACCOUNT_ID_INVALID && pTransaction->getType() != Transaction::CCPAYMENT;
         iAmount = abs(iAmount);
         std::wstring amount = Utils::penniesToDollarsString(iAmount);
 
