@@ -20,9 +20,13 @@ public:
 		CCPAYMENT
 	};
 
-	void apply();
+	// Applies the transaction to the accounts in the system
+	void apply(bool undo = false);
+
+	// Unapplies the transaction to the accounts in the system
 	void undo();	
 
+	// This creates a transaction, but doesn't actually apply it. Call apply on the resulting transaction to add it to the system
 	static Transaction* addTransaction(TRANSACTION_TYPE type, int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int categoryId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp = nullptr);
 	static int deserialize(tinyxml2::XMLElement* pRoot);
 
