@@ -43,6 +43,7 @@ AccountBase* AccountBase::lookupById(unsigned int id)
 
 void AccountBase::setId(unsigned int id) 
 { 
+	_idToItem.erase(_id);
 	_id = id;
 	_idToItem[_id] = this;
 }
@@ -410,8 +411,7 @@ AccountCategory* AccountCategory::getOrCreateCCCategory()
 	AccountCategory* pCategory = dynamic_cast<AccountCategory*>(lookupById(ACCOUNT_ID_PAY_CC));
 	if (!pCategory) {
 		pCategory = new AccountCategory;
-		pCategory->_id = ACCOUNT_ID_PAY_CC;
-		_idToItem[ACCOUNT_ID_PAY_CC] = pCategory;
+		pCategory->setId(ACCOUNT_ID_PAY_CC);
 	}
 	return pCategory;
 }

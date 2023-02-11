@@ -9,6 +9,16 @@ void deleteAllAccounts()
 	for (size_t i = 0; i < accounts.size(); i++) {
 		delete accounts[i];
 	}
+
+	accounts = AccountBase::getAllAccountsOfType(AccountBase::CATEGORY);
+	for (size_t i = 0; i < accounts.size(); i++) {
+		delete accounts[i];
+	}
+
+	accounts = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
+	for (size_t i = 0; i < accounts.size(); i++) {
+		delete accounts[i];
+	}
 }
 
 void doCreateAccounts()
@@ -234,3 +244,11 @@ TEST(TestAccounts, TestExpenseCC) {
 
 }
 
+TEST(TestAccounts, TestIDManipulations) {
+	deleteAllAccounts();
+
+	AccountCategory* pCat = AccountCategory::getOrCreateCCCategory();
+	std::vector<AccountBase*> accounts = AccountBase::getAllAccountsOfType(AccountBase::CATEGORY);
+
+	EXPECT_EQ(1, accounts.size());
+}
