@@ -15,6 +15,7 @@
 
 
 
+
   
   <style>
 body {
@@ -153,12 +154,15 @@ you are to the limit. This helps avoid over budgeting and over spending.<br>
           </tr><tr>
             <td style="vertical-align: middle; background-color: rgb(230, 230, 230); text-align: left;"><span style="font-weight: bold;">Credit Card Account</span><br>
             </td>
-            <td style="vertical-align: top; background-color: rgb(230, 230, 230);">ScratchTrack supports "buy now, pay later" credit card spending.
+            <td style="vertical-align: top; background-color: rgb(230, 230, 230);">ScratchTrack
+supports "buy now, pay later" credit card spending.
 This is done through credit card accounts. When a credit card account
 is created, a matching "pay credit card" expense category is
 automatically created. This is a special category and money isn't
 directly assigned to it. Instead, when an expense is paid with a credit
-card, ScratchTrack un-assigns funds from the original expensecategory and assigns it to the "pay credit card" category. When the credit card is paid, it's paid from the "pay credit card" category. <br>
+card, ScratchTrack un-assigns funds from the original expensecategory
+and assigns it to the "pay credit card" category. When the credit card
+is paid, it's paid from the "pay credit card" category. <br>
             </td>
           </tr>
 
@@ -186,140 +190,122 @@ options are available by right clicking. <br>
       <table style="text-align: left; width: 100%;" border="0" cellpadding="6" cellspacing="1">
         <tbody>
           <tr>
-            <td style="vertical-align: top; background-color: rgb(230, 230, 230);"><span style="font-weight: bold;">Walk-through one:</span> Fred sets up
-ScratchTrack<br>
-<ul>
-              
-              <li>Fred adds a checking account. He pays for things
-from this account so he leaves it marked as 'in-budget'</li>
-              <li>Fred is paid $1500 twice a month, so he creates two
-folders called '15th paycheck' and '31st paycheck'</li>
-              <li>Fred sets the expense limit of each folder to $1500
-since he knows he can't spend more than that</li>
-            </ul>
-            <img id="createaccounts" style="width: 1356px; height: 767px;" alt="Create Accounts" src="assets/CreateAccounts_static.gif" onmouseover="document.getElementById('createaccounts').src='assets/CreateAccounts.gif'" onmouseout="document.getElementById('createaccounts').src='assets/CreateAccounts_static.gif'"><br><br>
-</td></tr></tbody></table><table style="text-align: left; width: 100%;" border="0" cellpadding="6" cellspacing="1"><tbody><tr><td style="vertical-align: top; background-color: rgb(230, 230, 230);"><span style="font-weight: bold;">Walk-through two:</span> Fred gets paid<br>
-            <ul>
-              <li>It's the 15th and Fred receives his $1500 paycheck</li>
-              <li>Fred deposits it into his <span style="font-weight: bold;">in-budget</span>
-checking account by clicking the deposit icon in the account list. <br>
-</li>
-              <li>Note the entry in the tre transaction list after the deposit. All transactions are placed in this list and can be edited<br>
-              </li>
-
-            </ul>
-            <img style="width: 1356px; height: 767px;" id="deposit" alt="Deposit" src="assets/Deposit_static.gif" onmouseover="document.getElementById('deposit').src='assets/Deposit.gif'" onmouseout="document.getElementById('deposit').src='assets/Deposit_static.gif'"><br>
+            <td style="vertical-align: top; background-color: rgb(230, 230, 230);"><span style="font-weight: bold;">Setting up accounts</span><br><br>
+First we'll add some acounts. In this screen shot we're adding a
+checking account. We want to assign money in this account to expense
+categories so we'll leave "In-budget account" cheked.<br>
+            <img style="width: 457px; height: 441px;" alt="add checking" src="assets/1_add_account.png">&nbsp; <br>
+            <hr style="width: 100%; height: 2px;"><br>
+Next we'll add a savings account. We don't want to spend money from
+this account unless we have to so we'll uncheck "In-budget account". We
+can still pay bills from this account as needed.<br>
+            <img style="width: 469px; height: 447px;" alt="add savings" src="assets/2_add_account.png"><br>
+            <hr style="width: 100%; height: 2px;"><br>
+Lastly we'll add our credit card account. We'll check 'Credit card
+account' so that ScratchTrack knows how to manage expenses paid with
+this card.<br>
+            <img style="width: 456px; height: 453px;" alt="CC account" src="assets/3_add_account.png"><br>
+            <hr style="width: 100%; height: 2px;"><br>
+Next we'll create folders. Folders help organize expenses. Creating
+folders that align with monthly income events makes for a good
+workflow. In this example we're paid twice a month so we'll create
+folders for each paycheck. The folder's optional 'expense limit' tells
+ScratchTrack how much money typically flows into a folder each month.
+We'll set it to our usual paycheck amount. ScratchTrack will warn us if expenses in this folder exceed the limit.<br>
+            <img style="width: 610px; height: 326px;" alt="folders" src="assets/4_add_folders.png"><br>
+            <hr style="width: 100%; height: 2px;"><br>
+Now it's time to add expense categories. Add a category by clicking the
+asterisk next to the folder that will contain the new category. You can
+also right click the folder and select 'Add Category...'. <br>
             <br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <br>
-      <table style="text-align: left; width: 100%;" border="0" cellpadding="6" cellspacing="1">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top; background-color: rgb(230, 230, 230);"><span style="font-weight: bold;">Walk-through three:</span> Fred creates categories<br>
-            <ul>
-              <li>Fred has accounts and folders but he doesn't have a budget. Fred makes a best guess at dividing up his paycheck</li>
-              <li>The informtion column shows much room there is in the folder for additonal categories<br>
-              </li>
-              <li>When Fred over-budgets the '15th paycheck' folder ScratchTrack displays a warning</li>
-              <li><span style="font-weight: bold;">Pro tip:</span> When
-you create or edit a category you can set transaction defaults. These
-defaults will be pre-populated when you add a new transaction in that
+You can optionally set default transactation settings for the category.
+In this example, the payee, the amount, and the account we pay from
+will be the same for every transaction, so we'll set all three values.<br>
+            <img style="width: 408px; height: 416px;" alt="categories" src="assets/5_add_categories.png"><br>
+            <hr style="width: 100%; height: 2px;"><br>
+We've added our expenses to our folders, and we've got a problem. Our
+expenses exceed our income in the '31st paycheck' folder. ScratchTrack
+tells us in two spots:<br>
+            <img style="width: 861px; height: 202px;" alt="overbudget7" src="assets/7_over_budget.png"><br>
+            <br>
+            <img style="width: 406px; height: 124px;" alt="8overbudget" src="assets/8_over_budget.png"><br>
+            <br>
+The '15th' folder is almost $500 below its expense limit, so we'll move
+some expenses from the 31st folder to the 15th. We can do this via drag
+and drop or right click.<br>
+            <img style="width: 527px; height: 258px;" alt="9overbudget" src="assets/9_over_budget.png"><br>
+            <br>
+After moving cell, water, and internet to the 15th, our budget is
+fairly balanced. Both folders have almost $200 of buffer for unexpected
+expenses.<br>
+            <img style="width: 848px; height: 315px;" alt="On budget" src="assets/10_on_budget.png"><br>
+            <hr style="width: 100%; height: 2px;"><br>
+It's the 15th and we've been paid. We'll record the deposit by clicking
+the dollar sign icon next to the account that has received the money.
+We could've also right clicked and selected 'Deposit...'. <br>
+            <img style="width: 561px; height: 314px;" alt="Deposit" src="assets/11_deposit.png"><br>
+            <br>
+Here's our status after the deposit We've got money for funding our budget.<br>
+            <img style="width: 408px; height: 244px;" alt="Fund" src="assets/12_fund.png"><br>
+            <hr style="width: 100%; height: 2px;"><br>
+Let's fund our expense categories. You can fund all the categories in a
+folder at once by clicking the dollar sign icon next to the folder. You
+can also fund individual categories by clicking their dollar sign icon.
+In this example we'll fully fund all categories.<br>
+            <img style="width: 515px; height: 331px;" alt="Fund" src="assets/13_fund.png"><br>
+            <br>
+Note the balance of our checking accont is unchanged, but the amount of
+money available for budgeting is decreased. This is because we've
+assigned money to the categories in our folder. Remember, assigning
+money to categories doesn't actually move any money. It's just a way to
+plan and view.<br>
+            <img style="width: 764px; height: 352px;" alt="Funded" src="assets/14_fund.png"><br>
+            <br>
+            <hr style="width: 100%; height: 2px;">Now we're ready to
+pay some bills. Click the receipt icon next to a category (or right
+click a category and select 'Record expense...') to record an expense.
+In this example we're recording payment of our auto loan. Since we set
+default transacation values for this category, the dialog box is
+pre-filled, and we just need to click OK to create the transaction.<br>
+            <img style="width: 481px; height: 372px;" alt="Expense" src="assets/15_expense.png"><br>
+            <br>
+Here we can see that the expense is record as having been paid. You can double click (or right click) a transaction to edit it.<br>
+            <img style="width: 772px; height: 461px;" alt="Expense paid" src="assets/16_expense.png"><br>
+            <hr style="width: 100%; height: 2px;"><br>
+Our last topic is credit card transactions. The flow is the same as
+above, except when you pay for something a credit card, funds move from
+the expense category to the 'Pay Credit Card' category. When the credit
+card bill is due, payment is tracked through the 'Pay Credit Card'
 category.<br>
-              </li>
-
-            </ul>
-
-            
-            <span style="text-decoration: underline;"></span><img id="categories" style="width: 1356px; height: 767px;" alt="Categories" src="assets/categories_static.gif" onmouseover="document.getElementById('categories').src='assets/categories.gif'" onmouseout="document.getElementById('categories').src='assets/categories_static.gif'"><br><span style="text-decoration: underline;"><span style="font-weight: bold;"></span></span><span style="text-decoration: underline;"><span style="font-weight: bold;"><br>
-            </span></span></td>
-          </tr>
-        </tbody>
-      </table>
-      <br>
-      <table style="text-align: left; width: 100%;" border="0" cellpadding="6" cellspacing="1">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top; background-color: rgb(230, 230, 230);"><span style="font-weight: bold;">Walk-through four:</span> Fred assigns funds to categories<br>
-            <ul>
-              <li>Fred has accounts and categories and is now ready to fund his monthly expenses</li>
-              <li>Fred can apply funds to individual categories or to all categories in a folder</li>
-              <li>Fred can choose to 'top off' categories to their budgeted amount</li>
-              <ul>
-                <li>This option funds categories to their budgeted amount</li>
-                <li>If the 'Dining' category has a budget of $200 and has $100 in it, this options adds $100, funding the category to $200<br>
-                </li>
-              </ul>
-              <li>Fred can choose to assign the fully budgeted amount to categories</li>
-              <ul>
-                <li>This option adds the full budget amount to a category regrdless of funds already in it</li>
-                <li>This option is useful for long term savings goals</li>
-                <li>If the 'Dining' category has a budget of $200 and has $100 in it, this options adds $200, funding the category to $300</li>
-              </ul>
-              <li>Fred can choose to assign arbitrary amounts to indiidual categories<br>
-              </li>
-            </ul>
-
-            <img id="fundcats" style="width: 1356px; height: 767px;" alt="Fund categories" src="assets/fundCategories_static.gif" onmouseover="document.getElementById('fundcats').src='assets/fundCategories.gif'" onmouseout="document.getElementById('fundcats').src='assets/fundCategories_static.gif'"><br>
             <br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <br>
-      <table style="text-align: left; width: 100%;" border="0" cellpadding="6" cellspacing="1">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top; background-color: rgb(230, 230, 230);"><span style="font-weight: bold;">Walk-through&nbsp; five:</span> Fred Spends<br>
-            <ul>
-              <li>Now that Fred's categories are funded, he can track expenses against them</li>
-              <li>Expenses are paid from accounts, and tracked against categories</li>
-              <li>When an expense is recorded, the account balance and the category balance is deducted by the expense amount</li>
-              <ul>
-                <li>Remember: Categories are just views of the funds in accounts<br>
-                </li>
-              </ul>
-            </ul>
-
-            
-            <img id="spend" style="width: 1362px; height: 771px;" alt="Spend" src="assets/spend_static.gif" onmouseover="document.getElementById('spend').src='assets/spend.gif'" onmouseout="document.getElementById('spend').src='assets/spend_static.gif'"><br>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <br>
-<span style="font-weight: bold;">Congratulations! At this point,
-you know the general worklfow, but there's one more topic to cover: Credit
-Cards.<br>
-      <br>
-      </span>
-      <table style="text-align: left; width: 100%;" border="0" cellpadding="6" cellspacing="1">
-        <tbody>
-          <tr>
-            <td style="vertical-align: top; background-color: rgb(230, 230, 230);"><span style="font-weight: bold;">Walk-through six:</span> Fred gets a credit
-card<br>
+In this example, we took grandma to Red Lobster and paid with our Amazon credit card. Note the various balances.<br>
+            <img style="width: 783px; height: 561px;" alt="CC expense" src="assets/17_cc_expense.png"><br>
             <br>
-Fred has learned that he can get 5% back on his Amazon purchases if he
-pays with an Amazon credit card. This sounds good to Fred (and I
-agree!) so he gets one. <br>
-            <ul>
-              <li>When Fred adds a credit card account, a category titled 'Credit card payment' is automatically created</li>
-              <li>When an expense is record against the credit card
-money moves from the original expense category into the 'Credit card
-payment' category</li>
-              <li>Credit cards are paid from the account list</li>
-              <li>Like
-any expense, credit cards are paid from an account (i.e. checking), and
-tracked against a category (in this case the 'Credit card payment'
-category).<br>
-              </li>
-            </ul>
-
-            
-            <img id="cc" style="width: 1365px; height: 770px;" alt="CC" src="assets/ccPurchase_static.gif" onmouseover="document.getElementById('cc').src='assets/ccPurchase.gif'" onmouseout="document.getElementById('cc').src='assets/ccPurchase_static.gif'"><br>
-            </td></tr></tbody></table><span style="font-weight: bold;"><br></span><span style="font-weight: bold;"></span><span style="font-weight: bold;"></span></td>
+The Amazon credit card balance is now -$84.32. The 'Dining out'
+cateogry balance has been deducted by $84.32, and the 'Credit card
+payment' category has had $84.32 to it. The intent of this work flow is
+to keep the $84.32 locked up since we've spent it.<br>
+            <img style="width: 805px; height: 534px;" alt="Pay CC 2" src="assets/18_cc_expense.png"><br>
+            <br>
+Let's pay the credit card and see what happens. Credit cards are paid
+via right click menu or by clicking the receipt icon next to the credit
+card account. Note the highlighted balances before we record the
+transaction.<br>
+            <img style="width: 758px; height: 374px;" alt="Pay CC" src="assets/19_pay_cc.png"><br>
+            <br>
+We paid the balance of $84.32 from our checking account. The checking
+balance has been reduced by that amount. The credit balance has had
+that amount applied and is now zero, and the 'Credit card payment'
+category has had that amount deduceted and is also at zero.<br>
+            <img style="width: 807px; height: 484px;" alt="Pay CC 2" src="assets/20_pay_cc.png"><br>
+            <hr style="width: 100%; height: 2px;"><br>
+The last topic is the transaction list. This displays all transactions.
+You can search and filter as desired. Transactions can be edited
+through the right click context menu, or by double clicking.<br>
+            <img style="width: 731px; height: 153px;" alt="Transactions" src="assets/21_transactions.png"><br>
+<br>
+</td></tr></tbody></table><br><br><br><br>
+<span style="font-weight: bold;"></span><span style="font-weight: bold;"><br></span><span style="font-weight: bold;"></span><span style="font-weight: bold;"></span></td>
     </tr>
   </tbody>
 </table>
