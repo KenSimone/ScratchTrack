@@ -26,6 +26,7 @@
 #include "FolderDlg.h"
 #include "FundCategoryDlg.h"
 #include "FundCategoriesDlg.h"
+#include "TransactionImportDlg.h"
 
 #include <commctrl.h>
 #include <Windows.h>
@@ -910,6 +911,8 @@ void doImportTransactions(Account* pAccount)
         std::vector<ImportedTransactionInfo> transactions;
         if (ERROR_SUCCESS == g_transactionImporter.readTransactions(szFile, transactions) && !transactions.empty())
         {
+            TransactionImportDlg dlg(pAccount, transactions);
+            dlg.ShowDialog();
             int x = 5;
         }
     }

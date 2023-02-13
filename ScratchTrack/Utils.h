@@ -14,6 +14,7 @@ public:
 // String stuff
 	static bool searchText(const wchar_t* szString, const wchar_t* szSearchText);
 	static std::wstring multiByteToWide(const char* szString);
+	static size_t stringDistance(std::wstring s1, std::wstring s2);
 
 // Money stuff
 	static std::wstring penniesToDollarsString(int money);

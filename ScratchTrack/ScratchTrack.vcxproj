@@ -80,6 +80,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)mCtrl-0.11.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/Zc:nrvo- %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard_C>Default</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -101,6 +102,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)mCtrl-0.11.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/Zc:nrvo- %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard_C>Default</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -122,6 +124,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)mCtrl-0.11.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/Zc:nrvo- %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard_C>Default</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -143,6 +146,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)mCtrl-0.11.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/Zc:nrvo- %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard_C>Default</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -164,6 +168,7 @@
     <ClInclude Include="FolderDlg.h" />
     <ClInclude Include="FundCategoryDlg.h" />
     <ClInclude Include="FundCategoriesDlg.h" />
+    <ClInclude Include="ImportMapDlg.h" />
     <ClInclude Include="PayCCDlg.h" />
     <ClInclude Include="Transaction.h" />
     <ClInclude Include="TransactionDialog.h" />
@@ -173,6 +178,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TinyXml2.h" />
     <ClInclude Include="TransactionFilterDlg.h" />
+    <ClInclude Include="TransactionImportDlg.h" />
     <ClInclude Include="TransactionImporter.h" />
     <ClInclude Include="TransferDlg.h" />
     <ClInclude Include="TreeUtils.h" />
@@ -189,12 +195,14 @@
     <ClCompile Include="FolderDlg.cpp" />
     <ClCompile Include="FundCategoryDlg.cpp" />
     <ClCompile Include="FundCategoriesDlg.cpp" />
+    <ClCompile Include="ImportMapDlg.cpp" />
     <ClCompile Include="PayCCDlg.cpp" />
     <ClCompile Include="Transaction.cpp" />
     <ClCompile Include="TransactionDialog.cpp" />
     <ClCompile Include="ScratchTrack.cpp" />
     <ClCompile Include="TinyXml2.cpp" />
     <ClCompile Include="TransactionFilterDlg.cpp" />
+    <ClCompile Include="TransactionImportDlg.cpp" />
     <ClCompile Include="TransactionImporter.cpp" />
     <ClCompile Include="TransferDlg.cpp" />
     <ClCompile Include="TreeUtils.cpp" />

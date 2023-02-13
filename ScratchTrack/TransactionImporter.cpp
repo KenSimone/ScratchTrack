@@ -1,7 +1,12 @@
 #include <Windows.h>
 
 #include "TransactionImporter.h"
+#include "AccountInfo.h"
 #include "Utils.h"
+#include "Transaction.h"
+#include <algorithm>
+#include <set>
+#include <vector>
 
 int TransactionImporter::readTransactions(const wchar_t* szFile, std::vector<ImportedTransactionInfo>& transactions)
 {
@@ -101,4 +106,33 @@ int TransactionImporter::deserialize(tinyxml2::XMLElement* pSettings)
 	}
 
 	return ret;
+}
+
+int TransactionImporter::bestGuessAtPayeeAndCat(const wchar_t* szPayeeIn, std::wstring& payeeOut, std::wstring& catOut)
+{
+	std::wstring origPayee(szPayeeIn);
+	std::transform(origPayee.begin(), origPayee.end(), origPayee.begin(), towupper);
+
+	
+	std::vector<Transaction*> transactions = Transaction::getAllTransactions();
+	unsigned int distance = MAXUINT32;
+
+	Transaction* pCur = nullptr;
+	for (auto itr = transactions.begin(); itr != transactions.end(); itr++) {
+		std::wstring curPayee((*itr)->getPayee());
+		std::transform(curPayee.begin(), curPayee.end(), curPayee.begin(), towupper);
+
+		unsigned int curDistance = Utils::stringDistance(origPayee, curPayee);
+		if (curDistance < distance) {
+			pCur = *itr;
+			distance = curDistance;
+		}
+	}
+
+	payeeOut = pCur->getPayee();
+	AccountBase* pCat = AccountBase::lookupById(pCur->getCategoryId());
+	if (pCat) {
+		catOut = pCat->getName();
+	}
+	return ERROR_SUCCESS;
 }

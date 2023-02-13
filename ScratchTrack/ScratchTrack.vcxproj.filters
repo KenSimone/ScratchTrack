@@ -102,6 +102,12 @@
     <ClInclude Include="TransactionImporter.h">
       <Filter>Header Files\Utility</Filter>
     </ClInclude>
+    <ClInclude Include="TransactionImportDlg.h">
+      <Filter>Header Files\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="ImportMapDlg.h">
+      <Filter>Header Files\Dialogs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScratchTrack.cpp">
@@ -160,6 +166,12 @@
     </ClCompile>
     <ClCompile Include="TransactionImporter.cpp">
       <Filter>Source Files\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="TransactionImportDlg.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="ImportMapDlg.cpp">
+      <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

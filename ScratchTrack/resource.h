@@ -40,6 +40,8 @@
 #define IDD_FUND_GROUP_DIALOG           165
 #define IDB_BITMAP1                     171
 #define IDB_BITMAP_SCRATCHTRACK         171
+#define IDD_DIALOG_TRANSACTION_IMPORT   172
+#define IDD_DIALOG_MAP_IMPORT           173
 #define IDC_ONE_INPUT_TEXT              1000
 #define IDC_EDIT_Transaction_AMOUNT     1001
 #define IDC_RADIO1                      1002
@@ -96,6 +98,10 @@
 #define IDC_STATIC_WARN                 1044
 #define IDC_VERSION                     1045
 #define IDC_STATIC_COPYRIGHT            1046
+#define IDC_LIST_TRANS_IMPORT           1047
+#define IDC_EDIT_ORIG_PAYEE             1048
+#define IDC_COMBO_NEW_PAYEE             1049
+#define IDC_COMBO2                      1050
 #define YEAR                            2023
 #define ID_ROOT_ADD_GROUP               32771
 #define IDM_EDIT_FOLDER                 32772
@@ -146,9 +152,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        172
+#define _APS_NEXT_RESOURCE_VALUE        174
 #define _APS_NEXT_COMMAND_VALUE         33031
-#define _APS_NEXT_CONTROL_VALUE         1047
+#define _APS_NEXT_CONTROL_VALUE         1051
 #define _APS_NEXT_SYMED_VALUE           113
 #endif
 #endif
