@@ -13,9 +13,11 @@ public:
 
 // String stuff
 	static bool searchText(const wchar_t* szString, const wchar_t* szSearchText);
+	static std::wstring multiByteToWide(const char* szString);
 
 // Money stuff
 	static std::wstring penniesToDollarsString(int money);
+	static int dollarsStringToPennies(const char* szCurrency);
 	static int dollarsStringToPennies(const wchar_t* szCurrency);
 
 // GUI stuff

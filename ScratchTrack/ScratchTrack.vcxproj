@@ -173,6 +173,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TinyXml2.h" />
     <ClInclude Include="TransactionFilterDlg.h" />
+    <ClInclude Include="TransactionImporter.h" />
     <ClInclude Include="TransferDlg.h" />
     <ClInclude Include="TreeUtils.h" />
     <ClInclude Include="Utils.h" />
@@ -194,6 +195,7 @@
     <ClCompile Include="ScratchTrack.cpp" />
     <ClCompile Include="TinyXml2.cpp" />
     <ClCompile Include="TransactionFilterDlg.cpp" />
+    <ClCompile Include="TransactionImporter.cpp" />
     <ClCompile Include="TransferDlg.cpp" />
     <ClCompile Include="TreeUtils.cpp" />
     <ClCompile Include="Utils.cpp" />

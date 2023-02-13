@@ -167,6 +167,23 @@ std::wstring Utils::penniesToDollarsString(int money)
 	return std::wstring(szBuff2);
 }
 
+std::wstring Utils::multiByteToWide(const char* szString)
+{
+	std::wstring ret;
+	wchar_t szWide[1024] = { 0 };
+	MultiByteToWideChar(CP_UTF8, 0, szString, -1, szWide, 1024);
+
+	return szWide;
+
+}
+
+int Utils::dollarsStringToPennies(const char* szCurrency)
+{
+	wchar_t szWide[1024] = { 0 };
+	MultiByteToWideChar(CP_UTF8, 0, szCurrency, -1, szWide, 1024);
+	return dollarsStringToPennies(szWide);
+}
+
 int Utils::dollarsStringToPennies(const wchar_t* szCurrency)
 {
 	std::wstring coins, dollars;

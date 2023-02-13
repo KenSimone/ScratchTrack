@@ -13,6 +13,7 @@
 #include "TreeUtils.h"
 #include "AccountListViewUtils.h"
 #include "Version.h"
+#include "TransactionImporter.h"
 
 // Dialogs
 #include "TransactionFilterDlg.h"
@@ -31,6 +32,7 @@
 #include <windowsx.h>
 #include <objbase.h>
 #include <vector>
+#include <Commdlg.h>
 
 #pragma comment(lib, "Comctl32")
 #pragma comment(lib, "Shlwapi")
@@ -50,6 +52,8 @@ WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 wchar_t szOneInputText[1024] = { 0 };
 TransactionFilterDlg g_transactionFilterDlg;
 AccountInfoDlg g_accountInfoDlg;
+
+TransactionImporter g_transactionImporter;
 
 extern BUDGET_TREE_COLUMN_SIZES g_columnSizes;
 extern BUDGET_TREE_DRAG_DETAILS g_btDragDetails;
@@ -891,6 +895,26 @@ void doAddFolder()
     }
 }
 
+void doImportTransactions(Account* pAccount)
+{
+    OPENFILENAME of = { 0 };
+    wchar_t szFile[MAX_PATH] = { 0 };
+    of.lStructSize = sizeof(of);
+    of.hwndOwner = g_hTopWindow;
+    of.lpstrFilter = _T("QIF\0*.qif\0\0");
+    of.lpstrFile = szFile;
+    of.nMaxFile = MAX_PATH;
+    of.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+    if (GetOpenFileName(&of)) {
+        std::vector<ImportedTransactionInfo> transactions;
+        if (ERROR_SUCCESS == g_transactionImporter.readTransactions(szFile, transactions) && !transactions.empty())
+        {
+            int x = 5;
+        }
+    }
+}
+
 //
 //  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
 //
@@ -1114,13 +1138,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         }
 
                         break;
+                    case ID_ROOT_IMPORTTRANSACTIONS:
+                        if (pAccount) {
+                            doImportTransactions(pAccount);
+                        }
+                        break;
                     case ID_ROOT_EDITACCOUNT:
-                    {
                         if (pAccount) {
                             editAccount(pAccount);
                         }
                         break;
-                    }
                     }
                 }
             }

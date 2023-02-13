@@ -1,5 +1,6 @@
 #include "Transaction.h"
 #include "AccountInfo.h"
+#include "Utils.h"
 
 #include <vector>
 #include <set>

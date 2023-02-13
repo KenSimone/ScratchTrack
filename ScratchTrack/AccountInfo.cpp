@@ -1,12 +1,15 @@
 #include "AccountInfo.h"
 #include "Transaction.h"
 #include "Utils.h"
+#include "Version.h"
+#include "TransactionImporter.h"
 #include <map>
 #include <limits.h>
 
 static unsigned int _curId = 0;
 std::map<unsigned int, AccountBase*> _idToItem;
 extern std::vector<Transaction*> _Transactions;
+extern TransactionImporter g_transactionImporter;
 
 using namespace tinyxml2;
 
@@ -82,12 +85,18 @@ int serialize(std::vector<AccountBase*>& topLevelItems, const char* szFilename)
 {
 	tinyxml2::XMLDocument* pDoc = new tinyxml2::XMLDocument;
 	tinyxml2::XMLElement* pRoot = pDoc->NewElement("root");
+	tinyxml2::XMLElement* pSettings = pDoc->NewElement("settings");
 	tinyxml2::XMLElement* pAccounts = pDoc->NewElement("accounts");
 	tinyxml2::XMLElement* pTransactions = pDoc->NewElement("transactions");
 
 	pDoc->InsertFirstChild(pRoot);
 	pRoot->InsertFirstChild(pAccounts);
 	pRoot->InsertFirstChild(pTransactions);
+	pRoot->InsertFirstChild(pSettings);
+
+	pRoot->SetAttribute("version", VER_STRING);
+
+	g_transactionImporter.serialize(pSettings);
 
 	// Serialize accounts
 	for (size_t i = 0; i < topLevelItems.size(); i++){
@@ -177,6 +186,9 @@ int deserialize(const char* szFilename, std::vector<AccountBase*>& topLevelItems
 	_curId = ACCOUNT_ID_INVALID;
 
 	Transaction::deserialize(pRoot);
+
+	tinyxml2::XMLElement* pSettings = pRoot->FirstChildElement("settings");
+	g_transactionImporter.deserialize(pSettings);
 
 	topLevelItems.clear();
 	tinyxml2::XMLElement* pAccounts = pRoot->FirstChildElement("accounts");

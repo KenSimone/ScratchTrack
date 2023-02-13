@@ -1,7 +1,10 @@
 #include "pch.h"
 #include "AccountInfo.h"
 #include "Transaction.h"
+#include "TransactionImporter.h"
 #include <vector>
+
+TransactionImporter g_transactionImporter;
 
 void deleteAllAccounts()
 {

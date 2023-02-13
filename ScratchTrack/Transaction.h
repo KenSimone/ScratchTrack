@@ -28,6 +28,7 @@ public:
 
 	// This creates a transaction, but doesn't actually apply it. Call apply on the resulting transaction to add it to the system
 	static Transaction* addTransaction(TRANSACTION_TYPE type, int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int categoryId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp = nullptr);
+
 	static int deserialize(tinyxml2::XMLElement* pRoot);
 
 	static std::vector<Transaction*> getTransactionsForItem(AccountBase* pItem);

@@ -138,6 +138,7 @@
 #define ID_ROOT_HIDECATEGORY            33026
 #define ID_ROOT_HIDEACCOUNT             33028
 #define ID_ROOT_HIDEACCOUNT33029        33029
+#define ID_ROOT_IMPORTTRANSACTIONS      33030
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -146,7 +147,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        172
-#define _APS_NEXT_COMMAND_VALUE         33030
+#define _APS_NEXT_COMMAND_VALUE         33031
 #define _APS_NEXT_CONTROL_VALUE         1047
 #define _APS_NEXT_SYMED_VALUE           113
 #endif
