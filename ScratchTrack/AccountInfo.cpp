@@ -5,6 +5,7 @@
 #include "TransactionImporter.h"
 #include <map>
 #include <limits.h>
+#include "xlsxwriter.h"
 
 static unsigned int _curId = 0;
 std::map<unsigned int, AccountBase*> _idToItem;
@@ -171,8 +172,23 @@ AccountBase* AccountItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 
 }
 
+void testWorkbook()
+{
+
+	lxw_workbook* workbook = workbook_new("hello_world.xlsx");
+	lxw_worksheet* worksheet = workbook_add_worksheet(workbook, NULL);
+
+	worksheet_write_string(worksheet, 0, 0, "Hello", NULL);
+	worksheet_write_number(worksheet, 1, 0, 123, NULL);
+
+	workbook_close(workbook);
+
+}
+
 int deserialize(const char* szFilename, std::vector<AccountBase*>& topLevelItems)
 {
+	//testWorkbook();
+
 	tinyxml2::XMLDocument doc;
 	if (XML_SUCCESS != doc.LoadFile(szFilename)) {
 		return -1;
