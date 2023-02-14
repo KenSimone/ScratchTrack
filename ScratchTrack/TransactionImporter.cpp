@@ -116,6 +116,9 @@ int TransactionImporter::serialize(tinyxml2::XMLElement* pSettings)
 int TransactionImporter::deserialize(tinyxml2::XMLElement* pSettings)
 {
 	int ret = ERROR_SUCCESS;
+	if (!pSettings) {
+		return ERROR_SUCCESS;
+	}
 	tinyxml2::XMLElement* pImporterSettings = pSettings->FirstChildElement("importer");
 	if (pImporterSettings) {
 		tinyxml2::XMLElement* pPayeeMap = pImporterSettings->FirstChildElement("payeeMap");
