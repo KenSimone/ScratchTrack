@@ -101,6 +101,28 @@ protected:
 	size_t _pos;
 };
 
+SYSTEMTIME Utils::dateStringToSysTime(const wchar_t* szDate)
+{
+	// The MS function VarDateFromStr seems to weed out crap fairly well
+	// The only thing I've found that's trouble is an apostrophe
+	std::wstring toParse;
+	const wchar_t* szCur = szDate;
+
+	while (szCur && *szCur) {
+		if (*szCur != L'\'') {
+			toParse += *szCur;
+		}
+		szCur++;
+	}
+	// Assume month day year
+	DATE date = { 0 };
+	VarDateFromStr(toParse.c_str(), LOCALE_SYSTEM_DEFAULT, VAR_DATEVALUEONLY, &date);
+	SYSTEMTIME ret = { 0 };
+	VariantTimeToSystemTime(date, &ret);
+
+	return ret;
+}
+
 
 bool Utils::searchText(const wchar_t* szString, const wchar_t* szSearchText)
 {
@@ -168,6 +190,29 @@ std::wstring Utils::penniesToDollarsString(int money)
 	return std::wstring(szBuff2);
 }
 
+size_t Utils::looksSimilar(std::wstring s1, std::wstring s2)
+{
+	if (s1.empty() || s2.empty()) {
+		return false;
+	}
+
+	std::transform(s1.begin(), s1.end(), s1.begin(), towupper);
+	std::transform(s2.begin(), s2.end(), s2.begin(), towupper);
+	size_t matchesCount = 0;
+	const wchar_t* szCur = &s1[0];
+	const wchar_t* szEnd = szCur + s1.length();
+
+	while (szCur < szEnd) {
+		size_t step = min(3, szEnd - szCur);
+		if (s2.find(szCur, 0, step) != std::string::npos)
+		{
+			matchesCount++;
+		}
+		szCur++;
+	}
+	return matchesCount;
+}
+
 size_t Utils::stringDistance(std::wstring s1, std::wstring s2)
 {
 	const std::size_t len1 = s1.length(), len2 = s2.length();
@@ -197,6 +242,15 @@ size_t Utils::stringDistance(std::wstring s1, std::wstring s2)
 
 	return d[len1][len2];
 }
+std::string Utils::wideToMultibyte(const wchar_t* szString)
+{
+	char szBuff[1024] = { 0 };
+	WideCharToMultiByte(CP_UTF8, 0, szString, -1, szBuff, 1024, nullptr, nullptr);
+
+	return std::string(szBuff);
+}
+
+
 std::wstring Utils::multiByteToWide(const char* szString)
 {
 	std::wstring ret;
@@ -628,4 +682,11 @@ void Utils::doBackups()
 
 }
 
+unsigned int Utils::daysDiff(const SYSTEMTIME& t1, const SYSTEMTIME& t2)
+{
+	double d1, d2;
+	SystemTimeToVariantTime(const_cast<SYSTEMTIME*>(&t1), &d1);
+	SystemTimeToVariantTime(const_cast<SYSTEMTIME*>(&t2), &d2);
 
+	return (unsigned int)abs(d2 - d1);
+}

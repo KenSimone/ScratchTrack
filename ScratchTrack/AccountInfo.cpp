@@ -260,7 +260,7 @@ int AccountBase::getCurrentMonthTransacationTotal()
 
 	// Get time as local time
 	SYSTEMTIME currentTime = { 0 };
-	GetLocalTime(&currentTime);
+	GetSystemTime(&currentTime);
 
 	// Get all account IDs of interest
 	std::set<unsigned int> accountIds;

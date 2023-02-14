@@ -52,8 +52,9 @@ INT_PTR CALLBACK ImportMapDlg::ImportMapDlgProc(HWND hDlg, UINT message, WPARAM 
     {
     case WM_INITDIALOG:
     {
-        std::wstring cat, payee;
-        g_transactionImporter.bestGuessAtPayeeAndCat(PTHIS->_pTransactionInfo->_payee.c_str(), payee, cat);
+        std::wstring payee;
+        unsigned int categoryId;
+        g_transactionImporter.bestGuessAtPayeeAndCat(PTHIS->_pTransactionInfo->_payee.c_str(), payee, categoryId);
 
         HWND hCatCombo = nullptr;
         std::vector< AccountBase*> cats;
@@ -65,7 +66,8 @@ INT_PTR CALLBACK ImportMapDlg::ImportMapDlgProc(HWND hDlg, UINT message, WPARAM 
         hCatCombo = GetDlgItem(hDlg, IDC_COMBO_CATEGORY);
         for (size_t i = 0; i < cats.size(); i++) {
             int pos = (int)SendMessage(hCatCombo, CB_ADDSTRING, 0, (LPARAM)cats[i]->getName());
-            if (cats[i]->getName() == cat) {
+            ComboBox_SetItemData(hCatCombo, pos, cats[i]);
+            if (cats[i]->getId() == categoryId) {
                 ComboBox_SetCurSel(hCatCombo, pos);
             }
 
@@ -82,12 +84,20 @@ INT_PTR CALLBACK ImportMapDlg::ImportMapDlgProc(HWND hDlg, UINT message, WPARAM 
         {
             if (LOWORD(wParam) == IDOK)
             {
-                //PTHIS->_amount = Utils::getDlgItemDollarText(hDlg, IDC_EDIT_DEPOSIT_AMOUNT);
-                //PTHIS->_description = Utils::getDlgItemText(hDlg, IDC_EDIT_DESCRIPTION);
-                //PTHIS->_payee = Utils::getDlgItemText(hDlg, IDC_COMBO_PAYEE);
-
-                //int id = Utils::getAccountIdFromAccountCombo(hDlg, IDC_COMBO_ACCOUNT);
-                //PTHIS->_pAccount = (Account*)AccountBase::lookupById(id);
+                // Get payee
+                wchar_t szBuff[1024] = { 0 };
+                GetDlgItemText(hDlg, IDC_COMBO_NEW_PAYEE, szBuff, 1024);
+                PTHIS->_pTransactionInfo->_payeeMapped = szBuff;
+                
+                // Get category
+                HWND hCatCombo = GetDlgItem(hDlg, IDC_COMBO_CATEGORY);
+                int iSel = ComboBox_GetCurSel(hCatCombo);
+                if (iSel >= 0) {
+                    AccountBase* pAccount = (AccountBase*)ComboBox_GetItemData(hCatCombo, iSel);
+                    if (pAccount) {
+                        PTHIS->_pTransactionInfo->_categoryId = pAccount->getId();
+                    }
+                }
             }
 
             EndDialog(hDlg, LOWORD(wParam));

@@ -2,21 +2,30 @@
 
 #include <string>
 #include <vector>
+#include <map>
+#include <string>
 #include "TinyXml2.h"
+#include "AccountInfo.h"
+
+class Account;
 
 struct ImportedTransactionInfo
 {
-	ImportedTransactionInfo() : _amount(0) {}
+	ImportedTransactionInfo() : _amount(0), _categoryId(ACCOUNT_ID_INVALID) {}
 	void reset()
 	{
 		_payee.clear();
-		_date.clear();
+		memset(&_date, 0, sizeof(_date));
 		_amount = 0;
 	}
 	std::wstring _payee;
-	std::wstring _date;
+	std::wstring _payeeMapped;
+	SYSTEMTIME _date;
 	int _amount;
+	unsigned int _categoryId;
 };
+
+class Transaction;
 
 class TransactionImporter
 {
@@ -29,8 +38,26 @@ public:
 
 	int readTransactions(const wchar_t* szFile, std::vector<ImportedTransactionInfo>& transactions);
 
-	int bestGuessAtPayeeAndCat(const wchar_t* szPayeeIn, std::wstring& payeeOut, std::wstring& catOut);
+	int bestGuessAtPayeeAndCat(const wchar_t* szPayeeIn, std::wstring& payeeOut, unsigned int& catIdOut);
+
+	Transaction* findDuplicate(Account* pAccount, const wchar_t* szPayee, int amount, SYSTEMTIME date, unsigned int maxDateDiff);
+
+	void addMapping(const wchar_t* szItemNameIn, std::wstring itemNameOut, unsigned int categoryId)
+	{
+		MAPPED_IMPORT_ITEM mii;
+		mii._categoryId = categoryId;
+		mii._payee = itemNameOut;
+		_impoortMap[szItemNameIn] = mii;
+	}
 
 protected:
+	struct MAPPED_IMPORT_ITEM
+	{
+		std::wstring _payee;
+		unsigned int _categoryId;
+	};
+
+	std::map<std::wstring, MAPPED_IMPORT_ITEM> _impoortMap;
+
 }; // class TransactionImporter
 

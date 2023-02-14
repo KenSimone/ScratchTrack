@@ -73,7 +73,7 @@ protected:
 			_timestamp = *pTimeStamp;
 		}
 		else {
-			GetSystemTime(&_timestamp);
+			GetLocalTime(&_timestamp);
 		}
 
 		_amount = amount;

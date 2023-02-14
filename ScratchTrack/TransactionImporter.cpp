@@ -50,7 +50,7 @@ int TransactionImporter::readTransactions(const wchar_t* szFile, std::vector<Imp
 				{
 				case 'D':
 				case 'd':
-					t._date = Utils::multiByteToWide(line.substr(1).c_str());
+					t._date = Utils::dateStringToSysTime(Utils::multiByteToWide(line.substr(1).c_str()).c_str());
 					break;
 				case 'P':
 				case 'p':
@@ -62,7 +62,7 @@ int TransactionImporter::readTransactions(const wchar_t* szFile, std::vector<Imp
 					break;
 				}
 
-				if (t._amount && !t._date.empty() && !t._payee.empty()) {
+				if (t._amount && t._date.wYear && !t._payee.empty()) {
 					transactions.push_back(t);
 					t.reset();
 				}
@@ -94,6 +94,22 @@ int TransactionImporter::serialize(tinyxml2::XMLElement* pSettings)
 	tinyxml2::XMLElement* pImporterSettings = pDoc->NewElement("importer");
 	pSettings->InsertFirstChild(pImporterSettings);
 
+	tinyxml2::XMLElement* pPayeeMap = pDoc->NewElement("payeeMap");
+	pImporterSettings->InsertFirstChild(pPayeeMap);
+
+	for (auto itr = _impoortMap.begin(); itr != _impoortMap.end(); itr++)
+	{
+		tinyxml2::XMLElement* pPayeeMapping = pDoc->NewElement("payeeMapping");
+		std::wstring nameIn = itr->first;
+		pPayeeMapping->SetAttribute("from", Utils::wideToMultibyte(nameIn.c_str()).c_str());
+
+		std::wstring nameOut = itr->second._payee.c_str();
+		pPayeeMapping->SetAttribute("to", Utils::wideToMultibyte(nameOut.c_str()).c_str());
+		pPayeeMapping->SetAttribute("categoryId", itr->second._categoryId);
+
+		pPayeeMap->InsertFirstChild(pPayeeMapping);
+	}
+
 	return ret;
 }
 
@@ -102,37 +118,124 @@ int TransactionImporter::deserialize(tinyxml2::XMLElement* pSettings)
 	int ret = ERROR_SUCCESS;
 	tinyxml2::XMLElement* pImporterSettings = pSettings->FirstChildElement("importer");
 	if (pImporterSettings) {
+		tinyxml2::XMLElement* pPayeeMap = pImporterSettings->FirstChildElement("payeeMap");
 
+		tinyxml2::XMLElement* pMapping = pPayeeMap ? pPayeeMap->FirstChildElement("payeeMapping") : nullptr;
+		while (pMapping)
+		{
+			const char* pFrom, * pTo;
+			pMapping->QueryStringAttribute("from", &pFrom);
+			pMapping->QueryStringAttribute("to", &pTo);
+
+			unsigned int catId = 0;
+			pMapping->QueryUnsignedAttribute("categoryId", &catId);
+
+			if (pFrom && pTo) {
+				std::wstring from = Utils::multiByteToWide(pFrom);
+				std::wstring to = Utils::multiByteToWide(pTo);
+				addMapping(from.c_str(), to.c_str(), catId);
+			}
+			pMapping = pMapping->NextSiblingElement("payeeMapping");
+		}
 	}
 
 	return ret;
 }
 
-int TransactionImporter::bestGuessAtPayeeAndCat(const wchar_t* szPayeeIn, std::wstring& payeeOut, std::wstring& catOut)
+int TransactionImporter::bestGuessAtPayeeAndCat(const wchar_t* szPayeeIn, std::wstring& payeeOut, unsigned int& catIdOut)
 {
-	std::wstring origPayee(szPayeeIn);
-	std::transform(origPayee.begin(), origPayee.end(), origPayee.begin(), towupper);
+	catIdOut = ACCOUNT_ID_INVALID;
 
-	
+	// First see if we already know about this mapping
+	auto itr = _impoortMap.find(szPayeeIn);
+	if (itr != _impoortMap.end()) {
+		payeeOut = itr->second._payee;
+		catIdOut = itr->second._categoryId;
+		return ERROR_SUCCESS;
+	}
+
+
+	std::wstring origPayee(szPayeeIn);
+
 	std::vector<Transaction*> transactions = Transaction::getAllTransactions();
-	unsigned int distance = MAXUINT32;
+	unsigned int similarity = 0;
 
 	Transaction* pCur = nullptr;
 	for (auto itr = transactions.begin(); itr != transactions.end(); itr++) {
 		std::wstring curPayee((*itr)->getPayee());
-		std::transform(curPayee.begin(), curPayee.end(), curPayee.begin(), towupper);
 
-		unsigned int curDistance = Utils::stringDistance(origPayee, curPayee);
-		if (curDistance < distance) {
+		//unsigned int curDistance = Utils::stringDistance(origPayee, curPayee);
+		unsigned int curSimilarity = (unsigned int)Utils::looksSimilar(origPayee, curPayee);
+		if (curSimilarity > similarity) {
 			pCur = *itr;
-			distance = curDistance;
+			similarity = curSimilarity;
 		}
 	}
 
-	payeeOut = pCur->getPayee();
-	AccountBase* pCat = AccountBase::lookupById(pCur->getCategoryId());
-	if (pCat) {
-		catOut = pCat->getName();
+	if (pCur && similarity >= 3) {
+		payeeOut = pCur->getPayee();
+		AccountBase* pCat = AccountBase::lookupById(pCur->getCategoryId());
+		if (pCat) {
+			catIdOut = pCat->getId();
+		}
 	}
+
 	return ERROR_SUCCESS;
+}
+
+Transaction* TransactionImporter::findDuplicate(Account* pAccount, const wchar_t* szPayee, int amount, SYSTEMTIME date, unsigned int maxDateDiff)
+{
+	Transaction* pTrans = nullptr;
+	std::vector<Transaction*> trans = Transaction::getAllTransactions();
+	for (size_t i = 0; i < trans.size(); i++)
+	{
+		if (pAccount->getId() != trans[i]->getAccountFromId() && pAccount->getId() != trans[i]->getAccountToId()) {
+			continue;
+		}
+
+		if (pAccount->getId() == trans[i]->getAccountToId()) {
+			if (trans[i]->getAmount() != -amount) {
+				continue;
+			}
+		}
+		// Amount has to be an exact match
+		else if (trans[i]->getAmount() != amount) {
+			continue;
+		}
+
+		unsigned int dateDiff = Utils::daysDiff(date, trans[i]->getTimestamp());
+		if (dateDiff > maxDateDiff) {
+			continue;
+		}
+
+		// If this is a unique enough number, don't bother trying to match on name
+		bool skipNameCheck = false;
+		wchar_t szBuff[MAX_PATH] = { 0 };
+		_itow_s(amount, szBuff, 10);
+		size_t len = wcslen(szBuff);
+		if (len > 2)
+		{
+			wchar_t one = szBuff[len - 1];
+			wchar_t ten = szBuff[len - 2];
+
+			if (one != L'0' || ten != L'0')
+			{
+				skipNameCheck = true;
+			}
+		}
+
+		// See if the names are similar
+		if ( !skipNameCheck ) {
+			size_t iPayDelta = Utils::looksSimilar(szPayee, trans[i]->getPayee());
+			if (iPayDelta < 2) {
+				continue;
+
+			}
+		}
+
+		pTrans = trans[i];
+		break;
+	}
+
+	return pTrans;
 }

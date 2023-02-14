@@ -24,29 +24,41 @@ TransactionImportDlg::~TransactionImportDlg()
 
 void TransactionImportDlg::enableDisableUi(HWND hDlg)
 {
+    HWND hListView = GetDlgItem(hDlg, IDC_LIST_TRANS_IMPORT);
+    unsigned int numItems =  ListView_GetItemCount(hListView);
+
+    int amountImported = 0;
+    for (unsigned int i = 0; i < numItems; i++)
+    {
+        LVITEM item = { 0 };
+        item.mask = LVIF_PARAM;
+        item.iItem = i;
+        if (ListView_GetCheckState(hListView, i)) {
+            ListView_GetItem(hListView, &item);
+            ImportedTransactionInfo* pInfo = (ImportedTransactionInfo*)item.lParam;
+            amountImported += pInfo->_amount;
+        }
+    }
+    wchar_t szBuff[1024] = { 0 };
+    std::wstring newBal = Utils::penniesToDollarsString(amountImported + _pAccount->getBalance());
+    swprintf(szBuff, 1024, L"Account %ls will have a balance of %ls after importing selected transactions\n",
+        _pAccount->getName(), newBal.c_str());
+
+    SetDlgItemText(hDlg, IDC_STATIC_BALANCE, szBuff);
 }
 
 bool TransactionImportDlg::ShowDialog()
 {
     PTHIS = this;
 
-    //g_accountInfoDlg.saveText();
-    //g_accountInfoDlg.appendText(L"About Deposits\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
-
-    //g_accountInfoDlg.appendText(L"Money can be deposited via the deposit action. A deposit can be edited afer it's created through the transaction list.",
-    //    RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
-
     INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_DIALOG_TRANSACTION_IMPORT), g_hTopWindow, TransactionImportDlgProc);
     PTHIS = nullptr;
-    //g_accountInfoDlg.restoreText();
 
     return result == IDOK;
 }
 
 INT_PTR CALLBACK TransactionImportDlg::TransactionImportDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    //IDC_COMBO_PAYEE
-
     UNREFERENCED_PARAMETER(lParam);
     HWND hListView = nullptr;
     size_t columnCount = 0;
@@ -57,6 +69,10 @@ INT_PTR CALLBACK TransactionImportDlg::TransactionImportDlgProc(HWND hDlg, UINT 
     {
     case WM_NOTIFY:
         pHeader = (LPNMHDR)lParam;
+        if (pHeader->idFrom == IDC_LIST_TRANS_IMPORT && pHeader->code == LVN_ITEMCHANGED)
+        {
+            PTHIS->enableDisableUi(hDlg);
+        }
         if (pHeader->idFrom == IDC_LIST_TRANS_IMPORT  && pHeader->code == NM_DBLCLK)
         {
             hListView = GetDlgItem(hDlg, IDC_LIST_TRANS_IMPORT);
@@ -79,7 +95,17 @@ INT_PTR CALLBACK TransactionImportDlg::TransactionImportDlgProc(HWND hDlg, UINT 
                 ImportedTransactionInfo* pInfo = (ImportedTransactionInfo*)item.lParam;
 
                 ImportMapDlg dlg(pInfo);
-                dlg.ShowDialog(hDlg);
+                if (dlg.ShowDialog(hDlg))
+                {
+                    hListView = GetDlgItem(hDlg, IDC_LIST_TRANS_IMPORT);
+                    
+                    ListView_SetItemText(hListView, hi.iItem, 2, const_cast<wchar_t*>(pInfo->_payeeMapped.c_str()));
+
+                    auto pCategory = AccountBase::lookupById(pInfo->_categoryId);
+                    if (pCategory) {
+                        ListView_SetItemText(hListView, hi.iItem, 3, const_cast<wchar_t*>(pCategory->getName()));
+                    }
+                }
             }
         }
         break;
@@ -107,35 +133,43 @@ INT_PTR CALLBACK TransactionImportDlg::TransactionImportDlgProc(HWND hDlg, UINT 
         for (size_t i = 0; i < PTHIS->_transactions.size(); i++) {
             ImportedTransactionInfo& info = PTHIS->_transactions[i];
 
-            std::wstring payeeMapped, catMapped;
-            g_transactionImporter.bestGuessAtPayeeAndCat(info._payee.c_str(), payeeMapped, catMapped);
+            Transaction* pDup = g_transactionImporter.findDuplicate(PTHIS->_pAccount, info._payee.c_str(),
+                info._amount, info._date, 5);
+
+            g_transactionImporter.bestGuessAtPayeeAndCat(info._payee.c_str(), info._payeeMapped, info._categoryId);
+            AccountBase* pCategory = nullptr;
+            if (info._categoryId != ACCOUNT_ID_INVALID) {
+                pCategory = AccountBase::lookupById(info._categoryId);
+            }
             
             LVITEM item = { 0 };
             item.mask = LVIF_TEXT | LVIF_PARAM;
-            item.pszText = const_cast<wchar_t*>(info._date.c_str());
+
+            wchar_t szBuff[1024] = { 0 };
+            GetDateFormatEx(LOCALE_NAME_USER_DEFAULT, DATE_SHORTDATE, &info._date, nullptr, szBuff, 1024, nullptr);
+
+            item.pszText = szBuff;
             item.lParam = (LPARAM) &info;
             item.iItem = MAXINT;
 
             int iIndex = ListView_InsertItem(hListView, &item);
-            ListView_SetItemText(hListView, iIndex, 2, const_cast<wchar_t*>(info._payee.c_str()));
-            ListView_SetItemText(hListView, iIndex, 1, const_cast<wchar_t*>(payeeMapped.c_str()));
+            ListView_SetItemText(hListView, iIndex, 1, const_cast<wchar_t*>(info._payee.c_str()));
+            ListView_SetItemText(hListView, iIndex, 2, const_cast<wchar_t*>(info._payeeMapped.c_str()));
 
+            if (pCategory) {
+                ListView_SetItemText(hListView, iIndex, 3, const_cast<wchar_t*>(pCategory->getName()));
+            }
 
-            ListView_SetItemText(hListView, iIndex, 3, const_cast<wchar_t*>(catMapped.c_str()));
             std::wstring amount = Utils::penniesToDollarsString(info._amount);
             ListView_SetItemText(hListView, iIndex, 4, const_cast<wchar_t*>(amount.c_str()));
-        }
+
+            ListView_SetCheckState(hListView, iIndex, pDup ? false : true);
+        } // for each transaction
 
         for (size_t i = 0; i < 5; i++) {
             ListView_SetColumnWidth(hListView, i, LVSCW_AUTOSIZE_USEHEADER);
         }
-
-        // Accounts
-        //Utils::populateAccountCombo(hDlg, IDC_COMBO_ACCOUNT, PTHIS->_pAccount->getId(), true);
-        //SetDlgItemText(hDlg, IDC_EDIT_DESCRIPTION, PTHIS->_description.c_str());
-        //Utils::setDlgItemDollarText(hDlg, IDC_EDIT_DEPOSIT_AMOUNT, PTHIS->_amount);
-        //Utils::populatePayeeCombo(hDlg, IDC_COMBO_PAYEE, PTHIS->_payee.c_str());
-        //PTHIS->enableDisableUi(hDlg);
+        PTHIS->enableDisableUi(hDlg);
 
         return (INT_PTR)TRUE;
     case WM_COMMAND:
@@ -147,12 +181,20 @@ INT_PTR CALLBACK TransactionImportDlg::TransactionImportDlgProc(HWND hDlg, UINT 
         {
             if (LOWORD(wParam) == IDOK)
             {
-                //PTHIS->_amount = Utils::getDlgItemDollarText(hDlg, IDC_EDIT_DEPOSIT_AMOUNT);
-                //PTHIS->_description = Utils::getDlgItemText(hDlg, IDC_EDIT_DESCRIPTION);
-                //PTHIS->_payee = Utils::getDlgItemText(hDlg, IDC_COMBO_PAYEE);
-
-                //int id = Utils::getAccountIdFromAccountCombo(hDlg, IDC_COMBO_ACCOUNT);
-                //PTHIS->_pAccount = (Account*)AccountBase::lookupById(id);
+                hListView = GetDlgItem(hDlg, IDC_LIST_TRANS_IMPORT);
+                size_t entries = ListView_GetItemCount(hListView);
+                for (size_t i = 0; i < entries; i++)
+                {
+                    LVITEM item = { 0 };
+                    item.mask = LVIF_PARAM;
+                    item.iItem = (int)i;
+                    if (ListView_GetCheckState(hListView, i)) {
+                        ListView_GetItem(hListView, &item);
+                        ImportedTransactionInfo* pInfo = (ImportedTransactionInfo*)item.lParam;
+                        g_transactionImporter.addMapping(pInfo->_payee.c_str(), pInfo->_payeeMapped, pInfo->_categoryId);
+                        PTHIS->_transactionsOut.push_back(*pInfo);
+                    }
+                }
             }
 
             EndDialog(hDlg, LOWORD(wParam));

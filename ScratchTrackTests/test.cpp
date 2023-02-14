@@ -2,6 +2,7 @@
 #include "AccountInfo.h"
 #include "Transaction.h"
 #include "TransactionImporter.h"
+#include "Utils.h"
 #include <vector>
 
 TransactionImporter g_transactionImporter;
@@ -254,4 +255,45 @@ TEST(TestAccounts, TestIDManipulations) {
 	std::vector<AccountBase*> accounts = AccountBase::getAllAccountsOfType(AccountBase::CATEGORY);
 
 	EXPECT_EQ(1, accounts.size());
+}
+
+TEST(TestUtils, similarStrings)
+{
+	size_t similarity = Utils::looksSimilar(L"TST*Killa pie-prosper", L"Kill-A-Pie");
+	EXPECT_EQ(3, similarity);
+
+}
+
+TEST(TestUtils, TestDateParse) {
+
+	SYSTEMTIME sys= Utils::dateStringToSysTime(L"December 1 2022");
+	EXPECT_EQ(2022, sys.wYear);
+	EXPECT_EQ(1, sys.wDay);
+	EXPECT_EQ(12, sys.wMonth);
+
+	sys = Utils::dateStringToSysTime(L"5/6/23");
+	EXPECT_EQ(2023, sys.wYear);
+	EXPECT_EQ(6, sys.wDay);
+	EXPECT_EQ(5, sys.wMonth);
+
+	sys = Utils::dateStringToSysTime(L"6 7 2023");
+	EXPECT_EQ(6, sys.wMonth);
+	EXPECT_EQ(7, sys.wDay);
+	EXPECT_EQ(2023, sys.wYear);
+
+	sys = Utils::dateStringToSysTime(L"7 8 24");
+	EXPECT_EQ(7, sys.wMonth);
+	EXPECT_EQ(8, sys.wDay);
+	EXPECT_EQ(2024, sys.wYear);
+
+	sys = Utils::dateStringToSysTime(L"8-9-25");
+	EXPECT_EQ(8, sys.wMonth);
+	EXPECT_EQ(9, sys.wDay);
+	EXPECT_EQ(2025, sys.wYear);
+
+	sys = Utils::dateStringToSysTime(L"10 11 '25");
+	EXPECT_EQ(10, sys.wMonth);
+	EXPECT_EQ(11, sys.wDay);
+	EXPECT_EQ(2025, sys.wYear);
+
 }

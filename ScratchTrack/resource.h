@@ -101,7 +101,7 @@
 #define IDC_LIST_TRANS_IMPORT           1047
 #define IDC_EDIT_ORIG_PAYEE             1048
 #define IDC_COMBO_NEW_PAYEE             1049
-#define IDC_COMBO2                      1050
+#define IDC_STATIC_BALANCE              1051
 #define YEAR                            2023
 #define ID_ROOT_ADD_GROUP               32771
 #define IDM_EDIT_FOLDER                 32772
@@ -154,7 +154,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        174
 #define _APS_NEXT_COMMAND_VALUE         33031
-#define _APS_NEXT_CONTROL_VALUE         1051
+#define _APS_NEXT_CONTROL_VALUE         1052
 #define _APS_NEXT_SYMED_VALUE           113
 #endif
 #endif
