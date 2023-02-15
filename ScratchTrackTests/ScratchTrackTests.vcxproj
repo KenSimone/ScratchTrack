@@ -50,14 +50,11 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\libxlsxwriter\libxlsxwriter.vcxproj">
-      <Project>{4e9343c7-60f0-4dea-a612-e140baf4d58a}</Project>
+    <ProjectReference Include="..\OpenXLSX\OpenXLSX.vcxproj">
+      <Project>{6e07c93a-e84b-4303-a157-bd4e4632bf22}</Project>
     </ProjectReference>
     <ProjectReference Include="..\ScratchTrack\ScratchTrack.vcxproj">
       <Project>{21c7a854-a881-4d02-a2ca-5da45ee99fa3}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\zlib\zlib.vcxproj">
-      <Project>{05a066fd-3d01-45fa-9102-459a44d61584}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -77,7 +74,8 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)libxlsxwriter\include;..\ScratchTrack;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)OpenXLSX;..\ScratchTrack;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -93,7 +91,8 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(SolutionDir)libxlsxwriter\include;..\ScratchTrack;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)OpenXLSX;..\ScratchTrack;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -108,7 +107,8 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>$(SolutionDir)libxlsxwriter\include;..\ScratchTrack;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)OpenXLSX;..\ScratchTrack;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -125,7 +125,8 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>$(SolutionDir)libxlsxwriter\include;..\ScratchTrack;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)OpenXLSX;..\ScratchTrack;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

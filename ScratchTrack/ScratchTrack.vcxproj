@@ -77,10 +77,11 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)libxlsxwriter\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)OpenXLSX;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/Zc:nrvo- %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>Default</LanguageStandard_C>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -99,10 +100,11 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)libxlsxwriter\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)OpenXLSX;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/Zc:nrvo- %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>Default</LanguageStandard_C>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -121,10 +123,11 @@
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)libxlsxwriter\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)OpenXLSX;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/Zc:nrvo- %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>Default</LanguageStandard_C>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -143,10 +146,11 @@
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)libxlsxwriter\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)OpenXLSX;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/Zc:nrvo- %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>Default</LanguageStandard_C>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -236,11 +240,8 @@
     <None Include="Version.rc2" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\libxlsxwriter\libxlsxwriter.vcxproj">
-      <Project>{4e9343c7-60f0-4dea-a612-e140baf4d58a}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\zlib\zlib.vcxproj">
-      <Project>{05a066fd-3d01-45fa-9102-459a44d61584}</Project>
+    <ProjectReference Include="..\OpenXLSX\OpenXLSX.vcxproj">
+      <Project>{6e07c93a-e84b-4303-a157-bd4e4632bf22}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
