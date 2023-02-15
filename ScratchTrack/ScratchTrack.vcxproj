@@ -165,6 +165,7 @@
     <ClInclude Include="AccountListViewUtils.h" />
     <ClInclude Include="DepositDlg.h" />
     <ClInclude Include="CategoryDlg.h" />
+    <ClInclude Include="ExcelSerializer.h" />
     <ClInclude Include="FolderDlg.h" />
     <ClInclude Include="FundCategoryDlg.h" />
     <ClInclude Include="FundCategoriesDlg.h" />
@@ -192,6 +193,7 @@
     <ClCompile Include="AccountListViewUtils.cpp" />
     <ClCompile Include="DepositDlg.cpp" />
     <ClCompile Include="CategoryDlg.cpp" />
+    <ClCompile Include="ExcelSerializer.cpp" />
     <ClCompile Include="FolderDlg.cpp" />
     <ClCompile Include="FundCategoryDlg.cpp" />
     <ClCompile Include="FundCategoriesDlg.cpp" />

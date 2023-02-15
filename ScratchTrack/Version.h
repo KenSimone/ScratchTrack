@@ -5,7 +5,7 @@
 #define VER_MAJOR 0
 #define VER_MINOR 5
 #define VER_SUBMINOR 23
-#define VER_BUILD 44
+#define VER_BUILD 45
 
 #define _STR(x) #x
 #define STR(x) _STR(x)

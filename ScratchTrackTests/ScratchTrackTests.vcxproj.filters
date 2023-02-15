@@ -13,7 +13,9 @@
       <Filter>ScratchTrackFiles</Filter>
     </ClCompile>
     <ClCompile Include="..\ScratchTrack\TinyXml2.cpp" />
-    <ClCompile Include="..\ScratchTrack\TransactionImporter.cpp" />
+    <ClCompile Include="..\ScratchTrack\TransactionImporter.cpp">
+      <Filter>ScratchTrackFiles</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

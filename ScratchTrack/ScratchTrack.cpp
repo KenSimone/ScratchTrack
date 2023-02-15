@@ -14,6 +14,7 @@
 #include "AccountListViewUtils.h"
 #include "Version.h"
 #include "TransactionImporter.h"
+#include "ExcelSerializer.h"
 
 // Dialogs
 #include "TransactionFilterDlg.h"
@@ -1658,6 +1659,7 @@ int serializeState()
 
 
     serialize(topItems, Utils::getPersistFile());
+    ExcelSerializer::serialize(Utils::getPersistFileXlsx(), topItems);
 
     g_accountInfoDlg.updateReport();
 

@@ -606,6 +606,19 @@ void Utils::monitorDataFileForChanges(bool stop)
 
 }
 
+const char* Utils::getPersistFileXlsx()
+{
+	static char szBuff[1024] = { 0 };
+	GetModuleFileNameA(NULL, szBuff, 1024);
+
+	char* slashSpot = strrchr(szBuff, '.');
+	*slashSpot = 0;
+
+	strcat_s(szBuff, 1024, ".xlsx");
+
+	return szBuff;
+}
+
 const char* Utils::getPersistFile()
 {
 	static char szBuff[1024] = { 0 };

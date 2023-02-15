@@ -46,6 +46,7 @@ public:
 // File stuff
 	static void monitorDataFileForChanges(bool stop); // Watch for external file modification, exit if it happens
 	static const char* getPersistFile(); // Gets the name of our data file
+	static const char* getPersistFileXlsx(); // Gets the name of our data file
 	static void doBackups(); // ScratchTrack has rolling backup files (.xml, .xml.1, .xml2 and so on). This does the file roll
 
 protected:
