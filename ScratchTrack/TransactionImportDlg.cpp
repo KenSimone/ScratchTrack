@@ -101,9 +101,9 @@ INT_PTR CALLBACK TransactionImportDlg::TransactionImportDlgProc(HWND hDlg, UINT 
                     
                     ListView_SetItemText(hListView, hi.iItem, 2, const_cast<wchar_t*>(pInfo->_payeeMapped.c_str()));
 
-                    auto pCategory = AccountBase::lookupById(pInfo->_categoryId);
-                    if (pCategory) {
-                        ListView_SetItemText(hListView, hi.iItem, 3, const_cast<wchar_t*>(pCategory->getName()));
+                    auto pExpense = AccountBase::lookupById(pInfo->_expenseId);
+                    if (pExpense) {
+                        ListView_SetItemText(hListView, hi.iItem, 3, const_cast<wchar_t*>(pExpense->getName()));
                     }
                 }
             }
@@ -124,7 +124,7 @@ INT_PTR CALLBACK TransactionImportDlg::TransactionImportDlgProc(HWND hDlg, UINT 
         column.pszText = const_cast<wchar_t*>(L"Payee (mapped)");
         ListView_InsertColumn(hListView, columnCount++, &column);
 
-        column.pszText = const_cast<wchar_t*>(L"Category");
+        column.pszText = const_cast<wchar_t*>(L"Expense");
         ListView_InsertColumn(hListView, columnCount++, &column);
 
         column.pszText = const_cast<wchar_t*>(L"Amount");
@@ -136,10 +136,10 @@ INT_PTR CALLBACK TransactionImportDlg::TransactionImportDlgProc(HWND hDlg, UINT 
             Transaction* pDup = g_transactionImporter.findDuplicate(PTHIS->_pAccount, info._payee.c_str(),
                 info._amount, info._date, 5);
 
-            g_transactionImporter.bestGuessAtPayeeAndCat(info._payee.c_str(), info._payeeMapped, info._categoryId);
-            AccountBase* pCategory = nullptr;
-            if (info._categoryId != ACCOUNT_ID_INVALID) {
-                pCategory = AccountBase::lookupById(info._categoryId);
+            g_transactionImporter.bestGuessAtPayeeAndCat(info._payee.c_str(), info._payeeMapped, info._expenseId);
+            AccountBase* pExpense = nullptr;
+            if (info._expenseId != ACCOUNT_ID_INVALID) {
+                pExpense = AccountBase::lookupById(info._expenseId);
             }
             
             LVITEM item = { 0 };
@@ -156,8 +156,8 @@ INT_PTR CALLBACK TransactionImportDlg::TransactionImportDlgProc(HWND hDlg, UINT 
             ListView_SetItemText(hListView, iIndex, 1, const_cast<wchar_t*>(info._payee.c_str()));
             ListView_SetItemText(hListView, iIndex, 2, const_cast<wchar_t*>(info._payeeMapped.c_str()));
 
-            if (pCategory) {
-                ListView_SetItemText(hListView, iIndex, 3, const_cast<wchar_t*>(pCategory->getName()));
+            if (pExpense) {
+                ListView_SetItemText(hListView, iIndex, 3, const_cast<wchar_t*>(pExpense->getName()));
             }
 
             std::wstring amount = Utils::penniesToDollarsString(info._amount);
@@ -191,7 +191,7 @@ INT_PTR CALLBACK TransactionImportDlg::TransactionImportDlgProc(HWND hDlg, UINT 
                     if (ListView_GetCheckState(hListView, i)) {
                         ListView_GetItem(hListView, &item);
                         ImportedTransactionInfo* pInfo = (ImportedTransactionInfo*)item.lParam;
-                        g_transactionImporter.addMapping(pInfo->_payee.c_str(), pInfo->_payeeMapped, pInfo->_categoryId);
+                        g_transactionImporter.addMapping(pInfo->_payee.c_str(), pInfo->_payeeMapped, pInfo->_expenseId);
                         PTHIS->_transactionsOut.push_back(*pInfo);
                     }
                 }

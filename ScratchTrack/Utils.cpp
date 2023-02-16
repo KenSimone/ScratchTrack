@@ -486,7 +486,7 @@ bool Utils::confirmHide(AccountBase* pAccount)
 
 	g_accountInfoDlg.appendText(L"In ScratchTrack there is no delete, at least not yet. If you want something gone from your view you "
 		L"can hide it. As of now, hidden items are simply not displayed. No money moves, nothing is assigned or unassigned. If you hide an "
-		L"category with money in it, those funds will be hidden as well. You can always unhide things with the unhide button.",
+		L"expense with money in it, those funds will be hidden as well. You can always unhide things with the unhide button.",
 		RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 	if (IDYES == MessageBox(g_hTopWindow, szBuff, L"Confirm Hide", MB_YESNO)) {
 		return true;

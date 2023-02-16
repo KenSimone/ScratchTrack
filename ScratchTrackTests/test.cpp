@@ -14,7 +14,7 @@ void deleteAllAccounts()
 		delete accounts[i];
 	}
 
-	accounts = AccountBase::getAllAccountsOfType(AccountBase::CATEGORY);
+	accounts = AccountBase::getAllAccountsOfType(AccountBase::EXPENSE);
 	for (size_t i = 0; i < accounts.size(); i++) {
 		delete accounts[i];
 	}
@@ -176,24 +176,24 @@ TEST(TestAccounts, TestExpense) {
 	deleteAllAccounts();
 	Account* pAccount = new Account;
 	AccountGroup* pFolder = new AccountGroup;
-	AccountCategory* pCategory = new AccountCategory;
-	pCategory->addBalance(100);
-	pFolder->addChild(pCategory);
+	AccountExpense* pExpense = new AccountExpense;
+	pExpense->addBalance(100);
+	pFolder->addChild(pExpense);
 
 	pAccount->addBalance(500);
 
-	Transaction* pTrans = Transaction::addTransaction(Transaction::EXPENSE, -99, pAccount->getId(), ACCOUNT_ID_INVALID, pCategory->getId(), nullptr, nullptr);
+	Transaction* pTrans = Transaction::addTransaction(Transaction::EXPENSE, -99, pAccount->getId(), ACCOUNT_ID_INVALID, pExpense->getId(), nullptr, nullptr);
 
 	EXPECT_EQ(500, pAccount->getBalance());
-	EXPECT_EQ(100, pCategory->getBalance());
+	EXPECT_EQ(100, pExpense->getBalance());
 
 	pTrans->apply();
 	EXPECT_EQ(401, pAccount->getBalance());
-	EXPECT_EQ(1, pCategory->getBalance());
+	EXPECT_EQ(1, pExpense->getBalance());
 	pTrans->undo();
 
 	EXPECT_EQ(500, pAccount->getBalance());
-	EXPECT_EQ(100, pCategory->getBalance());
+	EXPECT_EQ(100, pExpense->getBalance());
 }
 
 TEST(TestAccounts, TestExpenseCC) {
@@ -201,58 +201,58 @@ TEST(TestAccounts, TestExpenseCC) {
 	Account* pAccount = new Account;
 	Account* pAccountCC = new Account;
 	AccountGroup* pFolder = new AccountGroup;
-	AccountCategory* pCategory = new AccountCategory;
-	pCategory->addBalance(100);
-	pFolder->addChild(pCategory);
+	AccountExpense* pExpense = new AccountExpense;
+	pExpense->addBalance(100);
+	pFolder->addChild(pExpense);
 
 	pAccount->addBalance(500);
 	pAccountCC->setIsCCAccount(true);
 	pAccountCC->setName(L"CC Account");
 
-	Transaction* pTrans = Transaction::addTransaction(Transaction::EXPENSE, -99, pAccountCC->getId(), ACCOUNT_ID_INVALID, pCategory->getId(), nullptr, nullptr);
+	Transaction* pTrans = Transaction::addTransaction(Transaction::EXPENSE, -99, pAccountCC->getId(), ACCOUNT_ID_INVALID, pExpense->getId(), nullptr, nullptr);
 
 	EXPECT_EQ(500, pAccount->getBalance());
 	EXPECT_EQ(0, pAccountCC->getBalance());
-	EXPECT_EQ(100, pCategory->getBalance());
+	EXPECT_EQ(100, pExpense->getBalance());
 
 	pTrans->apply();
 	EXPECT_EQ(500, pAccount->getBalance());
 	EXPECT_EQ(-99, pAccountCC->getBalance());
-	EXPECT_EQ(1, pCategory->getBalance());
+	EXPECT_EQ(1, pExpense->getBalance());
 	pTrans->undo();
 
 	EXPECT_EQ(500, pAccount->getBalance());
 	EXPECT_EQ(0, pAccountCC->getBalance());
-	EXPECT_EQ(100, pCategory->getBalance());
+	EXPECT_EQ(100, pExpense->getBalance());
 
 	pTrans->apply();
 	EXPECT_EQ(500, pAccount->getBalance());
 	EXPECT_EQ(-99, pAccountCC->getBalance());
-	EXPECT_EQ(1, pCategory->getBalance());
+	EXPECT_EQ(1, pExpense->getBalance());
 
 	// Now test paying the CC
 	Transaction* pPayCCTrans = Transaction::addTransaction(Transaction::CCPAYMENT, -99, pAccount->getId(), pAccountCC->getId(), ACCOUNT_ID_PAY_CC, pAccount->getName(), L"Pay CC");
 	EXPECT_EQ(500, pAccount->getBalance());
 	EXPECT_EQ(-99, pAccountCC->getBalance());
-	EXPECT_EQ(1, pCategory->getBalance());
+	EXPECT_EQ(1, pExpense->getBalance());
 
 	pPayCCTrans->apply();
 	EXPECT_EQ(401, pAccount->getBalance());
 	EXPECT_EQ(0, pAccountCC->getBalance());
-	EXPECT_EQ(1, pCategory->getBalance());
+	EXPECT_EQ(1, pExpense->getBalance());
 
 	pPayCCTrans->undo();
 	EXPECT_EQ(500, pAccount->getBalance());
 	EXPECT_EQ(-99, pAccountCC->getBalance());
-	EXPECT_EQ(1, pCategory->getBalance());
+	EXPECT_EQ(1, pExpense->getBalance());
 
 }
 
 TEST(TestAccounts, TestIDManipulations) {
 	deleteAllAccounts();
 
-	AccountCategory* pCat = AccountCategory::getOrCreateCCCategory();
-	std::vector<AccountBase*> accounts = AccountBase::getAllAccountsOfType(AccountBase::CATEGORY);
+	AccountExpense* pCat = AccountExpense::getOrCreateCCExpense();
+	std::vector<AccountBase*> accounts = AccountBase::getAllAccountsOfType(AccountBase::EXPENSE);
 
 	EXPECT_EQ(1, accounts.size());
 }

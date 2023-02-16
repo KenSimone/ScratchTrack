@@ -19,7 +19,7 @@ int ExcelSerializer::serialize(const char* szFile, std::vector<AccountBase*>& to
 
 	serializeFrontSheet(workbook, topLevelItems);
 	serializeAccounts(workbook, topLevelItems);
-	serializeFolders(workbook, topLevelItems);
+	serializeIncomes(workbook, topLevelItems);
 	serializeSettings(workbook, topLevelItems);
 	serializeTransactions(workbook, topLevelItems);
 	serializeCategories(workbook, topLevelItems);
@@ -100,10 +100,10 @@ std::string ExcelSerializer::accountTypeToString(AccountBase* pAccount)
 	switch (pAccount->getType())
 	{
 	case AccountBase::GROUP:
-		ret = "folder";
+		ret = "income";
 		break;
-	case AccountBase::CATEGORY:
-		ret = "category";
+	case AccountBase::EXPENSE:
+		ret = "expense";
 		break;
 	}
 
@@ -123,10 +123,10 @@ AccountBase::accountItemType ExcelSerializer::accountTypeFromString(const char* 
 {
 	if (_stricmp(szAccountType, "account") == 0)
 		return AccountBase::ACCOUNT;
-	if (_stricmp(szAccountType, "folder") == 0)
+	if (_stricmp(szAccountType, "income") == 0)
 		return AccountBase::GROUP;
-	if (_stricmp(szAccountType, "category") == 0)
-		return AccountBase::CATEGORY;
+	if (_stricmp(szAccountType, "expense") == 0)
+		return AccountBase::EXPENSE;
 	if (_stricmp(szAccountType, "credit card") == 0)
 		isCC = true;
 
@@ -191,9 +191,9 @@ int ExcelSerializer::serializeAccounts(lxw_workbook* workbook, std::vector<Accou
 	return ERROR_SUCCESS;
 }
 
-int ExcelSerializer::serializeFolders(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems)
+int ExcelSerializer::serializeIncomes(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems)
 {
-	lxw_worksheet* worksheet = workbook_add_worksheet(workbook, FOLDER_WORKSHEET_NAME);
+	lxw_worksheet* worksheet = workbook_add_worksheet(workbook, INCOME_WORKSHEET_NAME);
 
 	uint16_t curRow = 0;
 
@@ -218,8 +218,8 @@ int ExcelSerializer::serializeFolders(lxw_workbook* workbook, std::vector<Accoun
 	formatMoney->text_h_align = LXW_ALIGN_CENTER;
 	formatMoney->bg_color = RGB(238, 238, 238);
 
-	// Write folders
-	worksheet_write_string(worksheet, curRow, 0, "Folder name", formatHeader);
+	// Write incomes
+	worksheet_write_string(worksheet, curRow, 0, "Income name", formatHeader);
 	worksheet_write_string(worksheet, curRow, 1, "Id", formatHeader);
 	worksheet_write_string(worksheet, curRow, 2, "Income", formatHeader);
 	worksheet_write_string(worksheet, curRow, 3, "Hidden", formatHeader);
@@ -249,7 +249,7 @@ int ExcelSerializer::serializeFolders(lxw_workbook* workbook, std::vector<Accoun
 
 int ExcelSerializer::serializeCategories(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems)
 {
-	lxw_worksheet* worksheet = workbook_add_worksheet(workbook, CATEGORY_WORKSHEET_NAME);
+	lxw_worksheet* worksheet = workbook_add_worksheet(workbook, EXPENSE_WORKSHEET_NAME);
 	uint16_t curRow = 0;
 
 	lxw_format* formatHeader = workbook_add_format(workbook);
@@ -276,9 +276,9 @@ int ExcelSerializer::serializeCategories(lxw_workbook* workbook, std::vector<Acc
 
 
 	// Write categories
-	worksheet_write_string(worksheet, curRow, 0, "Category name", formatHeader);
+	worksheet_write_string(worksheet, curRow, 0, "Expense name", formatHeader);
 	worksheet_write_string(worksheet, curRow, 1, "Id", formatHeader);
-	worksheet_write_string(worksheet, curRow, 2, "Folder Id", formatHeader);
+	worksheet_write_string(worksheet, curRow, 2, "Income Id", formatHeader);
 	worksheet_write_string(worksheet, curRow, 3, "Budgeted", formatHeader);
 	worksheet_write_string(worksheet, curRow, 4, "Hidden", formatHeader);
 	worksheet_write_string(worksheet, curRow, 5, "Read Only", formatHeader);
@@ -299,11 +299,11 @@ int ExcelSerializer::serializeCategories(lxw_workbook* workbook, std::vector<Acc
 		auto children = pGroup->getChildren();
 		for (int j = 0; j < children.size(); j++)
 		{
-			if (children[j]->getType() != AccountBase::CATEGORY) {
+			if (children[j]->getType() != AccountBase::EXPENSE) {
 				continue;
 			}
 
-			AccountCategory* p = dynamic_cast<AccountCategory*>(children[j]);
+			AccountExpense* p = dynamic_cast<AccountExpense*>(children[j]);
 
 			worksheet_write_string(worksheet, curRow, 0, Utils::wideToMultibyte(p->getName()).c_str(), formatLeft);
 			worksheet_write_number(worksheet, curRow, 1, p->getId(), formatLeft);
@@ -357,7 +357,7 @@ int ExcelSerializer::serializeTransactions(lxw_workbook* workbook, std::vector<A
 	worksheet_write_string(worksheet, curRow, 0, "Date", formatHeader);
 	worksheet_write_string(worksheet, curRow, 1, "Payee", formatHeader);
 	worksheet_write_string(worksheet, curRow, 2, "Amount", formatHeader);
-	worksheet_write_string(worksheet, curRow, 3, "Category", formatHeader);
+	worksheet_write_string(worksheet, curRow, 3, "Expense", formatHeader);
 	worksheet_write_string(worksheet, curRow, 4, "Account From", formatHeader);
 	worksheet_write_string(worksheet, curRow, 5, "Account To", formatHeader);
 	worksheet_write_string(worksheet, curRow, 6, "Description", formatHeader);
@@ -378,7 +378,7 @@ int ExcelSerializer::serializeTransactions(lxw_workbook* workbook, std::vector<A
 		worksheet_write_datetime(worksheet, curRow, 0, &dt, formatDate);
 		worksheet_write_string(worksheet, curRow, 1, Utils::wideToMultibyte(pTrans->getPayee()).c_str(), formatLeft);
 		worksheet_write_number(worksheet, curRow, 2, _wtof(Utils::penniesToDollarsString(pTrans->getAmount(), false).c_str()), formatMoney);
-		worksheet_write_number(worksheet, curRow, 3, pTrans->getCategoryId(), formatLeft);
+		worksheet_write_number(worksheet, curRow, 3, pTrans->getExpenseId(), formatLeft);
 		worksheet_write_number(worksheet, curRow, 4, pTrans->getAccountFromId(), formatLeft);
 		worksheet_write_number(worksheet, curRow, 5, pTrans->getAccountToId(), formatLeft);
 		worksheet_write_string(worksheet, curRow, 6, Utils::wideToMultibyte(pTrans->getDescription()).c_str(), formatLeft);
@@ -417,7 +417,7 @@ int ExcelSerializer::serializeSettings(lxw_workbook* workbook, std::vector<Accou
 	// Write transactions
 	worksheet_write_string(worksheet, curRow, 0, "Imported payee", formatHeader);
 	worksheet_write_string(worksheet, curRow, 1, "Maps to payee", formatHeader);
-	worksheet_write_string(worksheet, curRow, 2, "Maps to category ID", formatHeader);
+	worksheet_write_string(worksheet, curRow, 2, "Maps to expense ID", formatHeader);
 	worksheet_set_column(worksheet, 0, 8, 25, nullptr);
 	curRow++;
 
@@ -425,7 +425,7 @@ int ExcelSerializer::serializeSettings(lxw_workbook* workbook, std::vector<Accou
 	{
 		std::string impName = Utils::wideToMultibyte(itr->first.c_str());
 		std::string mapName = Utils::wideToMultibyte(itr->second._payee.c_str());
-		unsigned int catId = itr->second._categoryId;
+		unsigned int catId = itr->second._expenseId;
 
 		worksheet_write_string(worksheet, curRow, 0, impName.c_str(), formatLeft);
 		worksheet_write_string(worksheet, curRow, 1, mapName.c_str(), formatLeft);

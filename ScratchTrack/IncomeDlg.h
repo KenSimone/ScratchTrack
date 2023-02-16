@@ -5,15 +5,15 @@
 
 class AccountGroup;
 
-class FolderDlg
+class IncomeDlg
 {
 public:
-	FolderDlg(const wchar_t* szName, int limit) :
+	IncomeDlg(const wchar_t* szName, int limit) :
 		_name(szName), _limit(limit)
 	{
 	};
 
-	~FolderDlg() {};
+	~IncomeDlg() {};
 
 	bool ShowDialog();
 
@@ -22,12 +22,12 @@ public:
 
 
 protected:
-	static INT_PTR CALLBACK FolderDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
+	static INT_PTR CALLBACK IncomeDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 	void enableDisableUi(HWND hDlg);
 
 protected:
 	int _limit;
 	std::wstring _name;
-	static FolderDlg* PTHIS;
+	static IncomeDlg* PTHIS;
 
-}; // class FolderDlg
+}; // class IncomeDlg

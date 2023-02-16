@@ -105,7 +105,7 @@ int TransactionImporter::serialize(tinyxml2::XMLElement* pSettings)
 
 		std::wstring nameOut = itr->second._payee.c_str();
 		pPayeeMapping->SetAttribute("to", Utils::wideToMultibyte(nameOut.c_str()).c_str());
-		pPayeeMapping->SetAttribute("categoryId", itr->second._categoryId);
+		pPayeeMapping->SetAttribute("expenseId", itr->second._expenseId);
 
 		pPayeeMap->InsertFirstChild(pPayeeMapping);
 	}
@@ -131,7 +131,7 @@ int TransactionImporter::deserialize(tinyxml2::XMLElement* pSettings)
 			pMapping->QueryStringAttribute("to", &pTo);
 
 			unsigned int catId = 0;
-			pMapping->QueryUnsignedAttribute("categoryId", &catId);
+			pMapping->QueryUnsignedAttribute("expenseId", &catId);
 
 			if (pFrom && pTo) {
 				std::wstring from = Utils::multiByteToWide(pFrom);
@@ -153,7 +153,7 @@ int TransactionImporter::bestGuessAtPayeeAndCat(const wchar_t* szPayeeIn, std::w
 	auto itr = _importMap.find(szPayeeIn);
 	if (itr != _importMap.end()) {
 		payeeOut = itr->second._payee;
-		catIdOut = itr->second._categoryId;
+		catIdOut = itr->second._expenseId;
 		return ERROR_SUCCESS;
 	}
 
@@ -177,7 +177,7 @@ int TransactionImporter::bestGuessAtPayeeAndCat(const wchar_t* szPayeeIn, std::w
 
 	if (pCur && similarity >= 3) {
 		payeeOut = pCur->getPayee();
-		AccountBase* pCat = AccountBase::lookupById(pCur->getCategoryId());
+		AccountBase* pCat = AccountBase::lookupById(pCur->getExpenseId());
 		if (pCat) {
 			catIdOut = pCat->getId();
 		}

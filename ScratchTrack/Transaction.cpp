@@ -9,9 +9,9 @@
 std::vector<Transaction*> _Transactions;
 
 
-Transaction* Transaction::addTransaction(TRANSACTION_TYPE type, int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int categoryId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp /*= nullptr*/)
+Transaction* Transaction::addTransaction(TRANSACTION_TYPE type, int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int expenseId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp /*= nullptr*/)
 {
-	Transaction* pTransaction = new Transaction(type, amount, payFromAccountId, payToAccountId, categoryId, szPayee, szDescription, pTimeStamp);
+	Transaction* pTransaction = new Transaction(type, amount, payFromAccountId, payToAccountId, expenseId, szPayee, szDescription, pTimeStamp);
 
 	_Transactions.push_back(pTransaction);
 
@@ -29,7 +29,7 @@ std::vector<Transaction*> Transaction::getTransactionsForItem(AccountBase* pItem
 
 	for (size_t i = 0; i < _Transactions.size(); i++)
 	{
-		if (ids.find(_Transactions[i]->getCategoryId()) != ids.end())
+		if (ids.find(_Transactions[i]->getExpenseId()) != ids.end())
 		{
 			ret.push_back(_Transactions[i]);
 		}
@@ -46,7 +46,7 @@ int Transaction::serialize(tinyxml2::XMLElement* pParent)
 {
 	tinyxml2::XMLElement* pElement = pParent->GetDocument()->NewElement("transaction");
 
-	pElement->SetAttribute("category", _categoryId);
+	pElement->SetAttribute("expense", _expenseId);
 	pElement->SetAttribute("accountFrom", _payFromAccountId);
 	pElement->SetAttribute("accountTo", _payToAccountId);
 
@@ -78,8 +78,8 @@ int Transaction::deserialize(tinyxml2::XMLElement* pRoot)
 		tinyxml2::XMLElement* pTransaction = pTransactions->FirstChildElement("transaction");
 		while (pTransaction) {
 			// deserialize
-			int categoryId = 0, fromAccountId = 0, toAccountId = ACCOUNT_ID_INVALID;
-			pTransaction->QueryIntAttribute("category", &categoryId);
+			int expenseId = 0, fromAccountId = 0, toAccountId = ACCOUNT_ID_INVALID;
+			pTransaction->QueryIntAttribute("expense", &expenseId);
 			pTransaction->QueryIntAttribute("accountFrom", &fromAccountId);
 			pTransaction->QueryIntAttribute("accountTo", &toAccountId);
 
@@ -139,7 +139,7 @@ int Transaction::deserialize(tinyxml2::XMLElement* pRoot)
 
 			int type = 0;
 			pTransaction->QueryIntAttribute("type", &type);
-			Transaction::addTransaction((Transaction::TRANSACTION_TYPE)type, amount, fromAccountId, toAccountId, categoryId, szPayeeW, szDescriptionW, &st);
+			Transaction::addTransaction((Transaction::TRANSACTION_TYPE)type, amount, fromAccountId, toAccountId, expenseId, szPayeeW, szDescriptionW, &st);
 
 			// next
 			pTransaction = pTransaction->NextSiblingElement("transaction");
@@ -154,7 +154,7 @@ void Transaction::apply(bool undo /*= false*/)
 {
 	AccountBase* pFrom = AccountBase::lookupById(_payFromAccountId);
 	AccountBase* pTo = AccountBase::lookupById(_payToAccountId);
-	AccountBase* pCategory = AccountBase::lookupById(_categoryId);
+	AccountBase* pExpense = AccountBase::lookupById(_expenseId);
 
 	int fromAmount = getAmount();
 	if (getType() == Transaction::TRANSFER) {
@@ -182,8 +182,8 @@ void Transaction::apply(bool undo /*= false*/)
 		pTo->addBalance(!undo ? toAmount : -toAmount);
 	}
 
-	if (pCategory) {
-		pCategory->addBalance(!undo ? getAmount() : -getAmount());
+	if (pExpense) {
+		pExpense->addBalance(!undo ? getAmount() : -getAmount());
 	}
 }
 

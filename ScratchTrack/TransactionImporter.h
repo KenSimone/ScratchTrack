@@ -11,7 +11,7 @@ class Account;
 
 struct ImportedTransactionInfo
 {
-	ImportedTransactionInfo() : _amount(0), _categoryId(ACCOUNT_ID_INVALID) {}
+	ImportedTransactionInfo() : _amount(0), _expenseId(ACCOUNT_ID_INVALID) {}
 	void reset()
 	{
 		_payee.clear();
@@ -22,7 +22,7 @@ struct ImportedTransactionInfo
 	std::wstring _payeeMapped;
 	SYSTEMTIME _date;
 	int _amount;
-	unsigned int _categoryId;
+	unsigned int _expenseId;
 };
 
 class Transaction;
@@ -42,10 +42,10 @@ public:
 
 	Transaction* findDuplicate(Account* pAccount, const wchar_t* szPayee, int amount, SYSTEMTIME date, unsigned int maxDateDiff);
 
-	void addMapping(const wchar_t* szItemNameIn, std::wstring itemNameOut, unsigned int categoryId)
+	void addMapping(const wchar_t* szItemNameIn, std::wstring itemNameOut, unsigned int expenseId)
 	{
 		MAPPED_IMPORT_ITEM mii;
-		mii._categoryId = categoryId;
+		mii._expenseId = expenseId;
 		mii._payee = itemNameOut;
 		_importMap[szItemNameIn] = mii;
 	}
@@ -53,7 +53,7 @@ public:
 	struct MAPPED_IMPORT_ITEM
 	{
 		std::wstring _payee;
-		unsigned int _categoryId;
+		unsigned int _expenseId;
 	};
 
 	const std::map<std::wstring, MAPPED_IMPORT_ITEM>& map() { return _importMap; }

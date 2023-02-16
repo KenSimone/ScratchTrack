@@ -19,14 +19,14 @@ public:
 	{
 		ACCOUNT, // Holds funds
 		GROUP, // Display-only method for dividing categories
-		CATEGORY // A virtual account, essentially
+		EXPENSE // A virtual account, essentially
 	}; // enum accountItemType
 
 	// Construction / destruction
 	AccountBase(accountItemType type);
 	virtual ~AccountBase();
 
-	// The item-type (account/group/category)
+	// The item-type (account/group/expense)
 	virtual accountItemType getType() = 0;
 	static std::vector<AccountBase*> getAllAccountsOfType(accountItemType type);
 
@@ -95,7 +95,7 @@ private:
 
 };
 
-// Group / folder class and implementation
+// Group / income class and implementation
 class AccountGroup : public AccountBase
 {
 public:
@@ -103,7 +103,7 @@ public:
 	virtual int serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement);
 	virtual int initItemFromXmlElement(tinyxml2::XMLElement* pAccount);
 
-	// The item-type (account/group/category)
+	// The item-type (account/group/expense)
 	virtual accountItemType getType() { return AccountBase::GROUP; }
 
 	// Groups only have aggregate balances from their children and hold no value on their own
@@ -243,23 +243,23 @@ public:
 	void setContributesToBudget(bool budgeted) { _isBudgeted = budgeted; }
 
 	// If this is a credit card account, when an expense is charged to this account,
-	// funds will be taken from the expense category and applied to '_paidFromCategoryId'.
-	// This allows "paying" for items via credit card (removing funds from a category), and
+	// funds will be taken from the expense expense and applied to '_paidFromExpenseId'.
+	// This allows "paying" for items via credit card (removing funds from a expense), and
 	// still properly tracking expenses.
 	// 
 	// Example
-	// 1) Dining transaction category has a balance of $50 dollars.
+	// 1) Dining transaction expense has a balance of $50 dollars.
 	// 2) You spend $25 dollars at McDonalds, and pay with a credit card.
-	// 3) You record the transaction against the dining category, paid with CC.
-	// 4) $25 dollars comes out of the dining category and moves to the "pay cc" category.
+	// 3) You record the transaction against the dining expense, paid with CC.
+	// 4) $25 dollars comes out of the dining expense and moves to the "pay cc" expense.
 	// 5) The CC account balance is deducted by $25.
 	//
 	// Later, when the credit card is paid, record an expense transaction against that 
-	// category.
+	// expense.
 	unsigned int isCCAccount() { return _isCCAccount; }
 	void setIsCCAccount(bool isCC) { _isCCAccount = isCC; }
 
-	// The item-type (account/group/category)
+	// The item-type (account/group/expense)
 	virtual accountItemType getType() { return AccountBase::ACCOUNT; }
 
 	virtual int initItemFromXmlElement(tinyxml2::XMLElement* pAccount);
@@ -297,14 +297,14 @@ protected:
 
 }; // class Account
 
-// Category (category) class and implementation
-class AccountCategory : public AccountBase
+// Expense (expense) class and implementation
+class AccountExpense : public AccountBase
 {
 public:
-	AccountCategory() : AccountBase(CATEGORY), _pDefaultTransactionPayFromAccount(nullptr), _defaultTransactionAmount(0), 
+	AccountExpense() : AccountBase(EXPENSE), _pDefaultTransactionPayFromAccount(nullptr), _defaultTransactionAmount(0), 
 		_isExpense(true), _isVirtualAccount(false), _pDefaultTransactionPayToAccount(nullptr){};
 
-	virtual accountItemType getType() { return AccountBase::CATEGORY; }
+	virtual accountItemType getType() { return AccountBase::EXPENSE; }
 
 	// Transaction defaults
 	int getDefaultTransactionAmount() { return _defaultTransactionAmount; }
@@ -322,7 +322,7 @@ public:
 
 	virtual void addBalance(int balance) 
 	{ 
-		// A category can't have negative money in it
+		// A expense can't have negative money in it
 		_balance += balance; 
 		if (_balance < 0) {
 			_balance = 0;
@@ -336,7 +336,7 @@ public:
 	virtual int initItemFromXmlElement(tinyxml2::XMLElement* pAccount);
 	virtual int serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement);
 
-	static AccountCategory* getOrCreateCCCategory();
+	static AccountExpense* getOrCreateCCExpense();
 
 protected:
 	std::wstring _defaultTransactionPayee;
@@ -345,7 +345,7 @@ protected:
 	int _defaultTransactionAmount;
 	bool _isExpense;
 	bool _isVirtualAccount;
-}; // class Category
+}; // class Expense
 
 int serialize(std::vector<AccountBase*>& topLevelItems, const char* szFilename);
 int deserialize(const char* szFilename, std::vector<AccountBase*>& topLevelItems);

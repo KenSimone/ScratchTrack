@@ -14,7 +14,7 @@ public:
 	operator HWND() { return _hThisDialg;  }
 
 	bool showTransactionList();
-	bool filterToCategorySelection();
+	bool filterToExpenseSelection();
 	bool filterToAccount();
 
 	std::wstring filterText();

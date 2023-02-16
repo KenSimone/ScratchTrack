@@ -39,16 +39,16 @@ void AccountInfoDlg::doUnhidePopup()
 {
     // Get all items
     auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
-    auto categories = AccountBase::getAllAccountsOfType(AccountBase::CATEGORY);
-    auto folders = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
+    auto categories = AccountBase::getAllAccountsOfType(AccountBase::EXPENSE);
+    auto incomes = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
 
     HMENU hPopup = CreatePopupMenu();
     HMENU hAcctMenu = CreatePopupMenu();
-    HMENU hFolderMenu = CreatePopupMenu();
+    HMENU hIncomeMenu = CreatePopupMenu();
     HMENU hEnvMenu = CreatePopupMenu();
 
     AppendMenu(hPopup, MF_STRING | MF_POPUP, (UINT_PTR)hAcctMenu, L"Accounts");
-    AppendMenu(hPopup, MF_STRING | MF_POPUP, (UINT_PTR)hFolderMenu, L"Folders");
+    AppendMenu(hPopup, MF_STRING | MF_POPUP, (UINT_PTR)hIncomeMenu, L"Incomes");
     AppendMenu(hPopup, MF_STRING | MF_POPUP, (UINT_PTR)hEnvMenu, L"Categories");
 
     // A return code of zero from trackpopup means nothing was selected, so we can't
@@ -64,10 +64,10 @@ void AccountInfoDlg::doUnhidePopup()
     }
 
     // Add hidden groups
-    for (size_t i = 0; i < folders.size(); i++) {
-        AccountBase* pAcct = folders[i];
+    for (size_t i = 0; i < incomes.size(); i++) {
+        AccountBase* pAcct = incomes[i];
         if (pAcct->getHidden()) {
-            AppendMenu(hFolderMenu, MF_STRING | MF_POPUP, (UINT_PTR)pAcct->getId() + menuIdOffset, pAcct->getName());
+            AppendMenu(hIncomeMenu, MF_STRING | MF_POPUP, (UINT_PTR)pAcct->getId() + menuIdOffset, pAcct->getName());
         }
     }
 
@@ -84,7 +84,7 @@ void AccountInfoDlg::doUnhidePopup()
     DWORD dwCode = TrackPopupMenu(hPopup, TPM_RETURNCMD, pt.x, pt.y, 0, _hThisDialg, NULL);
     DestroyMenu(hPopup);
     DestroyMenu(hAcctMenu);
-    DestroyMenu(hFolderMenu);
+    DestroyMenu(hIncomeMenu);
     DestroyMenu(hEnvMenu);
 
 
@@ -97,8 +97,8 @@ void AccountInfoDlg::doUnhidePopup()
             // Unhide the item
             pAcct->setHidden(false);
 
-            // Category special work
-            if (pAcct->getType() == AccountBase::CATEGORY) {
+            // Expense special work
+            if (pAcct->getType() == AccountBase::EXPENSE) {
                 AccountBase* pParent = pAcct->getParent();
 
                 // If its parent is hidden, warn.
@@ -114,7 +114,7 @@ void AccountInfoDlg::doUnhidePopup()
                 }
             }
 
-            // Folder / group special work
+            // Income / group special work
             if (pAcct->getType() == AccountBase::GROUP) {
                 addTreeItem(TVI_ROOT, pAcct);
 
@@ -164,8 +164,8 @@ INT_PTR CALLBACK AccountInfoDlg::AccountInfoDlgProc(HWND hwnd, UINT Message, WPA
             case IDC_BUTTON_ADD_ACCOUNT:
                 message = NM_ACCOUNT_INFO_DIALOG_ADD_ACCOUNT;
                 break;
-            case IDC_BUTTON_ADD_FOLDER:
-                message = NM_ACCOUNT_DIALOG_ADD_FOLDER;
+            case IDC_BUTTON_ADD_INCOME:
+                message = NM_ACCOUNT_DIALOG_ADD_INCOME;
                 break;
             case IDC_BUTTON_UNHIDE:
                 pThis->doUnhidePopup();
@@ -231,8 +231,8 @@ void AccountInfoDlg::printMasterSummary()
     int iReservedDollars = 0, iBalance = 0;
     bool isError = false;
     std::vector<AccountBase*> accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
-    std::vector<AccountBase*> folders = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
-    std::vector<AccountBase*> categories = AccountBase::getAllAccountsOfType(AccountBase::CATEGORY);
+    std::vector<AccountBase*> incomes = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
+    std::vector<AccountBase*> categories = AccountBase::getAllAccountsOfType(AccountBase::EXPENSE);
 
     wchar_t szCaption[1024] = { 0 };
 
@@ -241,18 +241,18 @@ void AccountInfoDlg::printMasterSummary()
         L"Examples of common account types are checking, savings, and credit card.\n\n"
         L"Click 'Add Account...' to add an account to ScratchTrack.\n\n");
     }
-    else if (folders.empty()) {
-        swprintf(szCaption, 1024, L"You don't have any folders. Folders help organize expenses.\n\n"
-            L"A common strategy is to create a folder for each pay peried. For example, if you're paid on the 15th and 31st "
-            L"you might create folders titled '15th' and '31st'.\n\n"
-            L"Click 'Add Folder...' to add a folder to ScratchTrack.\n\n");
+    else if (incomes.empty()) {
+        swprintf(szCaption, 1024, L"You don't have any incomes. Incomes help organize expenses.\n\n"
+            L"A common strategy is to create a income for each pay peried. For example, if you're paid on the 15th and 31st "
+            L"you might create incomes titled '15th' and '31st'.\n\n"
+            L"Click 'Add Income...' to add a income to ScratchTrack.\n\n");
     }
     else if (categories.empty()) {
         swprintf(szCaption, 1024, L"You don't have any expense categories. Categories are used to reserve money "
             L"for expenses. Categories have a name and a monthly budget.\n\n"
             L"You'll add money to your categories and then pay expenses from those categories as needed. If your "
-            L"category runs out of money you'll need to replenish that category.\n\n"
-            L"Click the new category icon next to a folder name to create a category.\n\n");
+            L"expense runs out of money you'll need to replenish that expense.\n\n"
+            L"Click the new expense icon next to a income name to create a expense.\n\n");
     }
     else {
 
@@ -314,17 +314,17 @@ void AccountInfoDlg::updateReport()
 
     printMasterSummary();
 
-    //appendText(L"\nFolder Status\n", TEXT_COLOR_NORMAL, true, true, HEADER_SIZE);
-    auto folders = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
-    for (size_t i = 0; i < folders.size(); i++) {
-        AccountGroup* folder = dynamic_cast<AccountGroup*>(folders[i]);
-        if (folder->getReadOnly()) {
+    //appendText(L"\nIncome Status\n", TEXT_COLOR_NORMAL, true, true, HEADER_SIZE);
+    auto incomes = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
+    for (size_t i = 0; i < incomes.size(); i++) {
+        AccountGroup* income = dynamic_cast<AccountGroup*>(incomes[i]);
+        if (income->getReadOnly()) {
             continue;
         }
 
-        int iMonthlySpend = folder->getCurrentMonthTransacationTotal();
-        int iMonthlyBudget = folder->budgetedToSubAccounts();
-        int iMonthlyLimit = folder->getExpenseLimit();
+        int iMonthlySpend = income->getCurrentMonthTransacationTotal();
+        int iMonthlyBudget = income->budgetedToSubAccounts();
+        int iMonthlyLimit = income->getExpenseLimit();
 
         wchar_t szBuff[1024] = { 0 };
 
@@ -333,7 +333,7 @@ void AccountInfoDlg::updateReport()
         COLORREF cr = isError ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL;
 
         if (isError) {
-            swprintf(szBuff, 1024, L"Folder '%ls' - Monthly expenses are %ls budget by %ls\n\n", folder->getName(), szPreposition,
+            swprintf(szBuff, 1024, L"Income '%ls' - Monthly expenses are %ls budget by %ls\n\n", income->getName(), szPreposition,
                 Utils::penniesToDollarsString(iMonthlyBudget - iMonthlySpend).c_str());
             appendText(szBuff, cr, false, false, TEXT_SIZE);
         }
@@ -345,7 +345,7 @@ void AccountInfoDlg::updateReport()
             cr = isError ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL;
 
             if (isError) {
-                swprintf(szBuff, 1024, L"Folder '%ls' - Monthly expenses are %ls limit by %ls\n\n", folder->getName(), szPreposition,
+                swprintf(szBuff, 1024, L"Income '%ls' - Monthly expenses are %ls limit by %ls\n\n", income->getName(), szPreposition,
                     Utils::penniesToDollarsString(iMonthlyLimit - iMonthlySpend).c_str());
                 appendText(szBuff, cr, false, false, TEXT_SIZE);
             }
@@ -355,33 +355,33 @@ void AccountInfoDlg::updateReport()
             cr = isError ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL;
 
             if (isError) {
-                swprintf(szBuff, 1024, L"Folder '%ls' - Monthly budget is %ls limit by %ls\n\n", folder->getName(), szPreposition,
+                swprintf(szBuff, 1024, L"Income '%ls' - Monthly budget is %ls limit by %ls\n\n", income->getName(), szPreposition,
                     Utils::penniesToDollarsString(iMonthlyLimit - iMonthlyBudget).c_str());
                 appendText(szBuff, cr, false, false, TEXT_SIZE);
             }
         }
     }
 
-    //appendText(L"\nCategory Status\n", TEXT_COLOR_NORMAL, true, true, HEADER_SIZE);
-    auto categories = AccountBase::getAllAccountsOfType(AccountBase::CATEGORY);
+    //appendText(L"\nExpense Status\n", TEXT_COLOR_NORMAL, true, true, HEADER_SIZE);
+    auto categories = AccountBase::getAllAccountsOfType(AccountBase::EXPENSE);
     for (size_t i = 0; i < categories.size(); i++)
     {
-        AccountCategory* category = dynamic_cast<AccountCategory*>(categories[i]);
-        if (category->getId() == ACCOUNT_ID_PAY_CC) {
+        AccountExpense* expense = dynamic_cast<AccountExpense*>(categories[i]);
+        if (expense->getId() == ACCOUNT_ID_PAY_CC) {
             continue;
         }
 
-        int ibudgeted = category->getBudgeted();
-        int spent = category->getCurrentMonthTransacationTotal();
+        int ibudgeted = expense->getBudgeted();
+        int spent = expense->getCurrentMonthTransacationTotal();
         std::wstring diff = Utils::penniesToDollarsString (abs(ibudgeted - spent));
         bool error = ibudgeted > spent;
         wchar_t szBuff[1024] = { 0 };
         if (error) {
-            swprintf(szBuff, 1024, L"Category '%ls' - Monthly expenses are over budget by %ls\n\n", category->getName(), diff.c_str());
+            swprintf(szBuff, 1024, L"Expense '%ls' - Monthly expenses are over budget by %ls\n\n", expense->getName(), diff.c_str());
             appendText(szBuff, error ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL, false, false, TEXT_SIZE);
         }
         //else {
-        //    swprintf(szBuff, 1024, L"%ls - Monthly expenses are currently under budget by %ls\n", category->getName(), diff.c_str());
+        //    swprintf(szBuff, 1024, L"%ls - Monthly expenses are currently under budget by %ls\n", expense->getName(), diff.c_str());
         //}
     }
 

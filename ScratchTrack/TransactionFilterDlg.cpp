@@ -42,9 +42,9 @@ INT_PTR CALLBACK TransactionFilterDlg::TransactionFilterDlgProc(HWND hwnd, UINT 
     return false;
 }
 
-bool TransactionFilterDlg::filterToCategorySelection()
+bool TransactionFilterDlg::filterToExpenseSelection()
 {
-    return SendDlgItemMessage(_hThisDialg, IDC_CHECK_FILTER_TO_CATEGORY, BM_GETCHECK, 0, 0);
+    return SendDlgItemMessage(_hThisDialg, IDC_CHECK_FILTER_TO_EXPENSE, BM_GETCHECK, 0, 0);
 }
 
 std::wstring TransactionFilterDlg::filterText()

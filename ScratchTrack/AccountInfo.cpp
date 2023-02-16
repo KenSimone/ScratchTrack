@@ -160,8 +160,8 @@ AccountBase* AccountItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	case AccountBase::GROUP:
 		pItem = new AccountGroup;
 		break;
-	case AccountBase::CATEGORY:
-		pItem = new AccountCategory;
+	case AccountBase::EXPENSE:
+		pItem = new AccountExpense;
 		break;
 	}
 
@@ -277,7 +277,7 @@ int AccountBase::getCurrentMonthTransacationTotal()
 		if ((transactionTime.wYear == currentTime.wYear) &&
 			(transactionTime.wMonth == currentTime.wMonth))
 		{
-			if (accountIds.find((*itr)->getCategoryId()) != accountIds.end())
+			if (accountIds.find((*itr)->getExpenseId()) != accountIds.end())
 			{
 				ret += (*itr)->getAmount();
 			}
@@ -328,7 +328,7 @@ int AccountGroup::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	return ERROR_SUCCESS;
 }
 
-int AccountCategory::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
+int AccountExpense::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 {
 	AccountBase::initItemFromXmlElement(pAccount);
 
@@ -360,7 +360,7 @@ int AccountCategory::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	return ERROR_SUCCESS;
 }
 
-int AccountCategory::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement)
+int AccountExpense::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement)
 {
 	tinyxml2::XMLElement* pNewElement = nullptr;
 	if (!ppSerializedElement) {
@@ -396,7 +396,7 @@ int Account::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	pAccount->QueryBoolAttribute("isCCAccount", &_isCCAccount);
 
 	unsigned int temp = ACCOUNT_ID_INVALID;
-	pAccount->QueryUnsignedAttribute("paidFromCategoryId", &temp);
+	pAccount->QueryUnsignedAttribute("paidFromExpenseId", &temp);
 	if (temp != ACCOUNT_ID_INVALID) {
 		_isCCAccount = true;
 	}
@@ -420,12 +420,12 @@ int Account::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppS
 	return ERROR_SUCCESS;
 }
 
-AccountCategory* AccountCategory::getOrCreateCCCategory()
+AccountExpense* AccountExpense::getOrCreateCCExpense()
 {
-	AccountCategory* pCategory = dynamic_cast<AccountCategory*>(lookupById(ACCOUNT_ID_PAY_CC));
-	if (!pCategory) {
-		pCategory = new AccountCategory;
-		pCategory->setId(ACCOUNT_ID_PAY_CC);
+	AccountExpense* pExpense = dynamic_cast<AccountExpense*>(lookupById(ACCOUNT_ID_PAY_CC));
+	if (!pExpense) {
+		pExpense = new AccountExpense;
+		pExpense->setId(ACCOUNT_ID_PAY_CC);
 	}
-	return pCategory;
+	return pExpense;
 }

@@ -26,10 +26,10 @@ bool AccountDlg::ShowDialog()
     g_accountInfoDlg.appendText(L"About Accounts\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
     g_accountInfoDlg.appendText(L"An account in ScratchTrack has a name and a balance. The balance can be positive, zero, or negative.\n\n", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
     g_accountInfoDlg.appendText(L"If an account is in-budget, the funds in that account can be assigned to categories.\n\n", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
-    g_accountInfoDlg.appendText(L"When you create a credit card account, a matching 'credit card payment' category "
+    g_accountInfoDlg.appendText(L"When you create a credit card account, a matching 'credit card payment' expense "
     L"will be created. When you pay expenses with the credit card, "
-    L"funds move from the original expense category to the credit card expense category.\n\n", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
-    g_accountInfoDlg.appendText(L"When you pay a credit card, funds are withdrawn from the credit card category.\n\n", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
+    L"funds move from the original expense expense to the credit card expense expense.\n\n", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
+    g_accountInfoDlg.appendText(L"When you pay a credit card, funds are withdrawn from the credit card expense.\n\n", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
     g_accountInfoDlg.appendText(L"Deposits, transfers, and credit card payments are entered through action icons in the account list.\n\n", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
 

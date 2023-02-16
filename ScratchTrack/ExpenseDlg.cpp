@@ -1,4 +1,4 @@
-#include "CategoryDlg.h"
+#include "ExpenseDlg.h"
 #include "resource.h"
 #include "AccountInfo.h"
 #include "Transaction.h"
@@ -12,38 +12,38 @@ extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 extern AccountInfoDlg g_accountInfoDlg;
 
-CategoryDialog::CategoryDialog() : _amount(0), _pDefaultTransactionPayFromAccount(nullptr), _budget(0)
+ExpenseDialog::ExpenseDialog() : _amount(0), _pDefaultTransactionPayFromAccount(nullptr), _budget(0)
 {
 
 }
 
-CategoryDialog::~CategoryDialog()
+ExpenseDialog::~ExpenseDialog()
 {
 
 }
 
-bool CategoryDialog::ShowDialog()
+bool ExpenseDialog::ShowDialog()
 {
     PTHIS = this;
 
     g_accountInfoDlg.saveText();
     g_accountInfoDlg.appendText(L"About Categories\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
 
-    g_accountInfoDlg.appendText(L"In ScratchTrack funds are assigned to spending categories. When expenses are recorded in a category, funds in that category are reduced by the epxense amount. "
-        L"When a category is out of money, spending in that category should stop until more funds are added.\n\n",
+    g_accountInfoDlg.appendText(L"In ScratchTrack funds are assigned to spending categories. When expenses are recorded in a expense, funds in that expense are reduced by the epxense amount. "
+        L"When a expense is out of money, spending in that expense should stop until more funds are added.\n\n",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
     g_accountInfoDlg.appendText(L"Examples of categories include 'Dining out', 'Utilities', and 'Car payment'. "
         L"Categories have a budget. This is a best guess of how much you'll spend in a month. Don't worry if you're not sure. You can adjust this value later as needed.\n\n",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
-    g_accountInfoDlg.appendText(L"Expenses are paid from categories through the category's action icon or right click menu. If a category's "
+    g_accountInfoDlg.appendText(L"Expenses are paid from categories through the expense's action icon or right click menu. If a expense's "
         L"expense is the same ever time (i.e. a car payment), you can set those values here. When you "
-        L"create a transaction in this category, the settings will be filled in for you (but you can change them as needed).",
+        L"create a transaction in this expense, the settings will be filled in for you (but you can change them as needed).",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
 
-    INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_CATEGORY_DIALOG), g_hTopWindow, CategoryDialogProc);
+    INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_EXPENSE_DIALOG), g_hTopWindow, ExpenseDialogProc);
     PTHIS = nullptr;
 
     g_accountInfoDlg.restoreText();
@@ -52,7 +52,7 @@ bool CategoryDialog::ShowDialog()
 
 }
 
-void CategoryDialog::enableDisableUi(HWND hDlg)
+void ExpenseDialog::enableDisableUi(HWND hDlg)
 {
 
     bool enableOk = true;
@@ -64,7 +64,7 @@ void CategoryDialog::enableDisableUi(HWND hDlg)
 }
 
 
-INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK ExpenseDialog::ExpenseDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     UNREFERENCED_PARAMETER(lParam);
     switch (message)
@@ -73,7 +73,7 @@ INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPA
         if (PTHIS) {
 
             HWND hCatNameEdit = GetDlgItem(hDlg, IDC_EDIT_CAT_NAME);
-            SetWindowText(hCatNameEdit, const_cast<wchar_t*>(PTHIS->getCategoryName()));
+            SetWindowText(hCatNameEdit, const_cast<wchar_t*>(PTHIS->getExpenseName()));
 
             HWND hAccountCombo = GetDlgItem(hDlg, IDC_COMBO_CAT_ACCOUNT);
             auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
@@ -132,7 +132,7 @@ INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPA
                     // Name
                     wchar_t szBuff[1024] = { 0 };
                     GetDlgItemText(hDlg, IDC_EDIT_CAT_NAME, szBuff, 1024);
-                    PTHIS->setCategoryName(szBuff);
+                    PTHIS->setExpenseName(szBuff);
 
                     // Account from
                     HWND hAccountCombo = GetDlgItem(hDlg, IDC_COMBO_CAT_ACCOUNT);
@@ -178,4 +178,4 @@ INT_PTR CALLBACK CategoryDialog::CategoryDialogProc(HWND hDlg, UINT message, WPA
     return (INT_PTR)FALSE;
 }
 
-CategoryDialog* CategoryDialog::PTHIS = nullptr;
+ExpenseDialog* ExpenseDialog::PTHIS = nullptr;

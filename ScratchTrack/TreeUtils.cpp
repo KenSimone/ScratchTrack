@@ -5,9 +5,9 @@
 #include <map>
 void setGuiFont(HWND hCtrl);
 
-const wchar_t* szFolderOpen = L"\U0001F5C1 ";
-const wchar_t* szFolderClosed = L"\U0001F5C0 ";
-const wchar_t* szCategory = L"\U0001F95B ";
+const wchar_t* szIncomeOpen = L"\U0001F5C1 ";
+const wchar_t* szIncomeClosed = L"\U0001F5C0 ";
+const wchar_t* szExpense = L"\U0001F95B ";
 
 extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
@@ -57,7 +57,7 @@ LRESULT CALLBACK treeViewSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 void calcColumnSpots()
 {
     HFONT hFont = (HFONT)SendMessage(g_hwndTV, WM_GETFONT, 0, 0);
-    static const wchar_t* szMaxNameLength = L"INDENT__BIG FOLDER NAME__ICONS";
+    static const wchar_t* szMaxNameLength = L"INDENT__BIG INCOME NAME__ICONS";
     static const wchar_t* szMaxValueLength = L"DIFFERENCE";
 
     HDC dc = GetDC(g_hwndTV);
@@ -161,15 +161,15 @@ void handleDragDrop(HTREEITEM hDragSource, HTREEITEM hDragTarget)
 
         HTREEITEM hNewParent = nullptr, hInsertAfter = TVI_LAST;
 
-        if (dropSource->getType() == AccountBase::CATEGORY && dropTarget->getType() == AccountBase::CATEGORY)
+        if (dropSource->getType() == AccountBase::EXPENSE && dropTarget->getType() == AccountBase::EXPENSE)
         {
             // This is the most common case, re-ordering categories
-            // The real drop target is the parent of the target category
+            // The real drop target is the parent of the target expense
             AccountBase* pParent = dropTarget->getParent();
             hNewParent = treeItemFromAccount(pParent);
             hInsertAfter = hDragTarget;
         }
-        else if (dropSource->getType() == AccountBase::CATEGORY && dropTarget->getType() == AccountBase::GROUP)
+        else if (dropSource->getType() == AccountBase::EXPENSE && dropTarget->getType() == AccountBase::GROUP)
         {
             // This is the second most common case, re-ordering categories, trying to get the item into the first spot
             hNewParent = hDragTarget;
@@ -182,10 +182,10 @@ void handleDragDrop(HTREEITEM hDragSource, HTREEITEM hDragTarget)
             hNewParent = TVI_ROOT;
             hInsertAfter = hDragTarget;
         }
-        else if ( dropSource->getType() == AccountBase::GROUP && dropTarget->getType() == AccountBase::CATEGORY)
+        else if ( dropSource->getType() == AccountBase::GROUP && dropTarget->getType() == AccountBase::EXPENSE)
         {
-            // Someone has dropped a group on to a category. Assume they want to move the group after the
-            // parent of the category
+            // Someone has dropped a group on to a expense. Assume they want to move the group after the
+            // parent of the expense
             AccountBase* pParent = dropTarget->getParent();
             hNewParent = TVI_ROOT;
             hInsertAfter = treeItemFromAccount(pParent);
@@ -319,7 +319,7 @@ HTREEITEM treeViewHitTestLinks(LONG xCur, LONG yCur, BUDGET_TREE_LINK_ITEM_TYPE&
         for (auto itr = g_budgetTreeLinkSpots.begin(); itr != g_budgetTreeLinkSpots.end(); itr++)
         {
             // Weed out the wrong types
-            if (pItem->getType() == AccountBase::CATEGORY && (itr->first < ENV_FIRST || itr->first > ENV_LAST))
+            if (pItem->getType() == AccountBase::EXPENSE && (itr->first < ENV_FIRST || itr->first > ENV_LAST))
             {
                 continue;
 
@@ -412,23 +412,23 @@ bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
             wcscpy_s(szBuffer, 1024, L"No hint. File a bug.");
             switch (type) 
             {
-            case ENV_CATEGORY_EDIT:
-                swprintf(szBuffer, 1024, L"Edit the '%ls' category", pHitItem->getName());
+            case ENV_EXPENSE_EDIT:
+                swprintf(szBuffer, 1024, L"Edit the '%ls' expense", pHitItem->getName());
                 break;
             case ENV_TRANS_ADD:
-                swprintf(szBuffer, 1024, L"Record expense in the '%ls' category", pHitItem->getName());
+                swprintf(szBuffer, 1024, L"Record expense in the '%ls' expense", pHitItem->getName());
                 break;
             case ENV_MONEY_ADD:
-                swprintf(szBuffer, 1024, L"Assign money to the '%ls' category", pHitItem->getName());
+                swprintf(szBuffer, 1024, L"Assign money to the '%ls' expense", pHitItem->getName());
                 break;
-            case GRP_CATEGORY_ADD:
-                swprintf(szBuffer, 1024, L"Add a new category to the '%ls' folder", pHitItem->getName());
+            case GRP_EXPENSE_ADD:
+                swprintf(szBuffer, 1024, L"Add a new expense to the '%ls' income", pHitItem->getName());
                 break;
-            case GRP_FOLDER_EDIT:
-                swprintf(szBuffer, 1024, L"Edit the '%ls' folder", pHitItem->getName());
+            case GRP_INCOME_EDIT:
+                swprintf(szBuffer, 1024, L"Edit the '%ls' income", pHitItem->getName());
                 break;
             case GRP_FUND_CHILDREN:
-                swprintf(szBuffer, 1024, L"Assign money to the categories in the '%ls' folder", pHitItem->getName());
+                swprintf(szBuffer, 1024, L"Assign money to the categories in the '%ls' income", pHitItem->getName());
                 break;
             }
             g_toolTip.lpszText = szBuffer;
@@ -493,14 +493,14 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
     // static const wchar_t* szAddTransaction = L"\U0001F4B5"; // cash stack
     //static const wchar_t* szAddTransaction = L"\U0001F4B2"; // dollar sign
     //static const wchar_t* szAddTransaction = L"\U0001f4c9"; // downward graph
-    //static const wchar_t* szAddTransaction = L"\U0001F4E9"; // Category in
+    //static const wchar_t* szAddTransaction = L"\U0001F4E9"; // Expense in
 
     
-    static const wchar_t* szEditCategory= L"\u270E";  // pencil
-    //static const wchar_t* szAddCategory = L"\u271A"; // plus sign
-    //static const wchar_t* szAddCategory = L"\U0001F95B"; // Category
-    //static const wchar_t* szAddCategory = L"\U0001F195"; // Category
-    static const wchar_t* szAddCategory = L"\U0001F7BC"; // Category
+    static const wchar_t* szEditExpense= L"\u270E";  // pencil
+    //static const wchar_t* szAddExpense = L"\u271A"; // plus sign
+    //static const wchar_t* szAddExpense = L"\U0001F95B"; // Expense
+    //static const wchar_t* szAddExpense = L"\U0001F195"; // Expense
+    static const wchar_t* szAddExpense = L"\U0001F7BC"; // Expense
     
     static const wchar_t* szAddMoney = L"\U0001F4B2";
     //static const wchar_t* szHide = L"\U0001F576"; // sunglasses
@@ -508,7 +508,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
 
     static const COLORREF ACCOUNT_COLOR = RGB(230, 240, 250);
     static const COLORREF GROUP_COLOR = RGB(230, 240, 250);
-    static const COLORREF CATEGORY_COLOR = RGB(255, 255, 255);
+    static const COLORREF EXPENSE_COLOR = RGB(255, 255, 255);
 
     static const COLORREF SEL_COLOR = GetSysColor(COLOR_HIGHLIGHT);
     static const COLORREF LINK_COLOR = GetSysColor(COLOR_HOTLIGHT);
@@ -541,8 +541,8 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             case AccountBase::GROUP:
                 cr = GROUP_COLOR;
                 break;
-            case AccountBase::CATEGORY:
-                cr = CATEGORY_COLOR;
+            case AccountBase::EXPENSE:
+                cr = EXPENSE_COLOR;
                 break;
             }
 
@@ -577,11 +577,11 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             std::wstring balance = Utils::penniesToDollarsString(iBalance);
 
             // Amount budgeted for this item
-            int iBudget = pItem->getType() == AccountBase::CATEGORY ? pItem->getBudgeted() : pItem->budgetedToSubAccounts();
+            int iBudget = pItem->getType() == AccountBase::EXPENSE ? pItem->getBudgeted() : pItem->budgetedToSubAccounts();
             std::wstring budgeted = Utils::penniesToDollarsString(abs(iBudget));
 
             // Money allocated to this item
-            int iCategories = pItem->getType() == AccountBase::CATEGORY ? pItem->getBalance() : pItem->allocatedToSubAccounts();
+            int iCategories = pItem->getType() == AccountBase::EXPENSE ? pItem->getBalance() : pItem->allocatedToSubAccounts();
             std::wstring allocated = Utils::penniesToDollarsString(iCategories);
 
             // Sum of all transactions for this item
@@ -610,13 +610,13 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             // Name
             std::wstring name;
             if (TreeView_GetItemState(g_hwndTV, hItem, TVIF_STATE) & TVIS_EXPANDED) {
-                name = szFolderOpen;
+                name = szIncomeOpen;
             }
-            else if (pItem->getType() == AccountBase::CATEGORY) {
-                //name = szCategory;
+            else if (pItem->getType() == AccountBase::EXPENSE) {
+                //name = szExpense;
             }
             else {
-                name = szFolderClosed;
+                name = szIncomeClosed;
             }
 
             RECT rText = { 0 };
@@ -640,10 +640,10 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             DrawText(pCustomDrawItem->nmcd.hdc, diff.c_str(), (int)diff.length(), &rText, dwDrawTextFlags);
 
             // Balance
-            if (pItem->getType() == AccountBase::CATEGORY)
+            if (pItem->getType() == AccountBase::EXPENSE)
             {
-                AccountCategory* pCategory = (AccountCategory*)pItem;
-                if (pCategory->isVirtualAccount()) {
+                AccountExpense* pExpense = (AccountExpense*)pItem;
+                if (pExpense->isVirtualAccount()) {
                     setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iBalance, selected, true);
                     rText.left = balanceSpot; rText.right = infoSpot;
                     DrawText(pCustomDrawItem->nmcd.hdc, balance.c_str(), (int)balance.length(), &rText, dwDrawTextFlags);
@@ -681,17 +681,17 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             int rightEdge = budgetedSpot;
             switch (pItem->getType())
             {
-            case AccountBase::CATEGORY:
+            case AccountBase::EXPENSE:
             {
-                AccountCategory* pCategory = dynamic_cast<AccountCategory*>(pItem);
-                if (!pCategory->getReadOnly()) {
+                AccountExpense* pExpense = dynamic_cast<AccountExpense*>(pItem);
+                if (!pExpense->getReadOnly()) {
 #ifdef ICON_HIDE_ITEM
                     rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szHide, ENV_HIDE, rightEdge, rcText.top);
 #endif
-                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditCategory, ENV_CATEGORY_EDIT, rightEdge, rcText.top);
+                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditExpense, ENV_EXPENSE_EDIT, rightEdge, rcText.top);
                     rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddMoney, ENV_MONEY_ADD, rightEdge, rcText.top);
 
-                    if (pCategory->getId() != ACCOUNT_ID_PAY_CC) {
+                    if (pExpense->getId() != ACCOUNT_ID_PAY_CC) {
                         rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddTransaction, ENV_TRANS_ADD, rightEdge, rcText.top);
                     }
 
@@ -701,11 +701,11 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             case AccountBase::GROUP:
                 if (!pItem->getReadOnly()) {
 #ifdef ICON_HIDE_ITEM
-                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szHide, GRP_FOLDER_HIDE, rightEdge, rcText.top);
+                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szHide, GRP_INCOME_HIDE, rightEdge, rcText.top);
 #endif
-                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditCategory, GRP_FOLDER_EDIT, rightEdge, rcText.top);
+                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditExpense, GRP_INCOME_EDIT, rightEdge, rcText.top);
                     rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddMoney, GRP_FUND_CHILDREN, rightEdge, rcText.top);
-                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddCategory, GRP_CATEGORY_ADD, rightEdge, rcText.top);
+                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddExpense, GRP_EXPENSE_ADD, rightEdge, rcText.top);
                 }
                 break;
 
@@ -795,7 +795,7 @@ void budgetTreeCreateTreeControl()
     // Create tree
     HDITEM item = { 0 };
     item.cxy = g_columnSizes._name;
-    item.pszText = const_cast<wchar_t*>(L"Category");
+    item.pszText = const_cast<wchar_t*>(L"Expense");
     item.mask = HDI_TEXT | HDI_WIDTH;
     Header_InsertItem(g_hwndTreeHeader, 99, &item);
 
