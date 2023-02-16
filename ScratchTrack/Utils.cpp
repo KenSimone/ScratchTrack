@@ -155,7 +155,7 @@ bool Utils::searchText(const wchar_t* szString, const wchar_t* szSearchText)
 	return found;
 }
 
-std::wstring Utils::penniesToDollarsString(int money)
+std::wstring Utils::penniesToDollarsString(int money, bool formatted /*= true*/)
 {
 	// Remember if we're negative, and then flip to positive for easier math
 	bool negative = false;
@@ -178,16 +178,19 @@ std::wstring Utils::penniesToDollarsString(int money)
 	}
 
 	// Now use the handy windows API to print a locale-specific string
-	GetCurrencyFormatEx(LOCALE_NAME_USER_DEFAULT, 0, szBuff, nullptr, szBuff2, 255);
-	if (szBuff2[0] == L'(')
-	{
-		szBuff2[0] = L'-';
-		size_t len = wcslen(szBuff2);
-		szBuff2[len - 1] = 0;
+	if (formatted) {
+		GetCurrencyFormatEx(LOCALE_NAME_USER_DEFAULT, 0, szBuff, nullptr, szBuff2, 255);
+		if (szBuff2[0] == L'(')
+		{
+			szBuff2[0] = L'-';
+			size_t len = wcslen(szBuff2);
+			szBuff2[len - 1] = 0;
+		}
+		return std::wstring(szBuff2);
 	}
 
 	// And return it
-	return std::wstring(szBuff2);
+	return std::wstring(szBuff);
 }
 
 size_t Utils::looksSimilar(std::wstring s1, std::wstring s2)

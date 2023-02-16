@@ -23,7 +23,7 @@ public:
 	static unsigned int daysDiff(const SYSTEMTIME& t1, const SYSTEMTIME& t2);
 
 // Money stuff
-	static std::wstring penniesToDollarsString(int money);
+	static std::wstring penniesToDollarsString(int money, bool formatted = true);
 	static int dollarsStringToPennies(const char* szCurrency);
 	static int dollarsStringToPennies(const wchar_t* szCurrency);
 

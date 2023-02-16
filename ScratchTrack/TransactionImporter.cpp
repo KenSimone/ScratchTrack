@@ -97,7 +97,7 @@ int TransactionImporter::serialize(tinyxml2::XMLElement* pSettings)
 	tinyxml2::XMLElement* pPayeeMap = pDoc->NewElement("payeeMap");
 	pImporterSettings->InsertFirstChild(pPayeeMap);
 
-	for (auto itr = _impoortMap.begin(); itr != _impoortMap.end(); itr++)
+	for (auto itr = _importMap.begin(); itr != _importMap.end(); itr++)
 	{
 		tinyxml2::XMLElement* pPayeeMapping = pDoc->NewElement("payeeMapping");
 		std::wstring nameIn = itr->first;
@@ -150,8 +150,8 @@ int TransactionImporter::bestGuessAtPayeeAndCat(const wchar_t* szPayeeIn, std::w
 	catIdOut = ACCOUNT_ID_INVALID;
 
 	// First see if we already know about this mapping
-	auto itr = _impoortMap.find(szPayeeIn);
-	if (itr != _impoortMap.end()) {
+	auto itr = _importMap.find(szPayeeIn);
+	if (itr != _importMap.end()) {
 		payeeOut = itr->second._payee;
 		catIdOut = itr->second._categoryId;
 		return ERROR_SUCCESS;

@@ -917,8 +917,9 @@ void doImportTransactions(Account* pAccount)
             {
                 auto transactionsNew = dlg.transactionsOut();
                 for (size_t i = 0; i < transactionsNew.size(); i++) {
+                    std::wstring payee = transactionsNew[i]._payeeMapped.empty() ? transactionsNew[i]._payee : transactionsNew[i]._payeeMapped;
                     Transaction* pTransaction = Transaction::addTransaction(Transaction::EXPENSE, transactionsNew[i]._amount, 
-                        pAccount->getId(), ACCOUNT_ID_INVALID, transactionsNew[i]._categoryId, transactionsNew[i]._payee.c_str(), nullptr, &transactionsNew[i]._date);
+                        pAccount->getId(), ACCOUNT_ID_INVALID, transactionsNew[i]._categoryId, payee.c_str(), nullptr, &transactionsNew[i]._date);
                     pTransaction->apply();
 
                     updateGuiValues();

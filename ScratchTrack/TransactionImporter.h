@@ -47,17 +47,20 @@ public:
 		MAPPED_IMPORT_ITEM mii;
 		mii._categoryId = categoryId;
 		mii._payee = itemNameOut;
-		_impoortMap[szItemNameIn] = mii;
+		_importMap[szItemNameIn] = mii;
 	}
 
-protected:
 	struct MAPPED_IMPORT_ITEM
 	{
 		std::wstring _payee;
 		unsigned int _categoryId;
 	};
 
-	std::map<std::wstring, MAPPED_IMPORT_ITEM> _impoortMap;
+	const std::map<std::wstring, MAPPED_IMPORT_ITEM>& map() { return _importMap; }
+
+protected:
+
+	std::map<std::wstring, MAPPED_IMPORT_ITEM> _importMap;
 
 }; // class TransactionImporter
 
