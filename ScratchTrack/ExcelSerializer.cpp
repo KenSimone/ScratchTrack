@@ -492,6 +492,7 @@ int ExcelSerializer::writeFrontSheetBudget(lxw_workbook* workbook, lxw_worksheet
 	formatHeader->bold = true;
 	formatHeader->font_color = RGB(36,100,245);
 	worksheet_merge_range(worksheet, CELL("B8"), CELL("E9"), "Monthly Budget", formatHeader);
+	worksheet_merge_range(worksheet, CELL("H8"), CELL("K9"), "Monthly Income", formatHeader);
 
 	lxw_format* formatHeader2 = workbook_add_format(workbook);
 	formatHeader2->font_size = 17;
@@ -501,9 +502,9 @@ int ExcelSerializer::writeFrontSheetBudget(lxw_workbook* workbook, lxw_worksheet
 	//format_set_bottom(formatHeader2, LXW_BORDER_THIN);
 	//format_set_border_color(formatHeader2, RGB(100, 70, 50));
 	worksheet_merge_range(worksheet, CELL("B12"), CELL("F13"), "Expenses", formatHeader2);
+	worksheet_merge_range(worksheet, CELL("H12"), CELL("L13"), "Income", formatHeader2);
 
 	std::vector<AccountBase*> expenses = AccountBase::getAllAccountsOfType(AccountBase::EXPENSE);
-	size_t expenseCount = min(20, expenses.size());
 
 	char szBuf[1024] = { 0 };
 
@@ -535,6 +536,9 @@ int ExcelSerializer::writeFrontSheetBudget(lxw_workbook* workbook, lxw_worksheet
 
 	worksheet_write_number(worksheet, CELL("D10"), curTime.wMonth, nullptr);
 	worksheet_write_number(worksheet, CELL("D11"), curTime.wYear, nullptr);
+
+// Expenses
+	size_t expenseCount = expenses.size();
 
 	worksheet_merge_range(worksheet, 13, 1, 13, 2, "Category", formatHeader3);
 	worksheet_write_string(worksheet, 13, 3, "Budgeted", formatHeader3);
@@ -586,16 +590,20 @@ int ExcelSerializer::writeFrontSheetBudget(lxw_workbook* workbook, lxw_worksheet
 	worksheet_conditional_format_range(worksheet, totalsRow, 5, totalsRow, 5, &formatMoneyConditional);
 
 
-	// For a Month in D10 and a year in D11
-	// = -SUMIFS(Transactions!C:C, Transactions!D:D, Categories!B2, Transactions!A:A, ">= " & DATE(D11, D10, 1), Transactions!A:A, "< " & EDATE(DATE(D11, D10, 1), 1))
-	/* Add the data series to the chart. */
-	//lxw_chart* budgetPie = workbook_add_chart(workbook, LXW_CHART_BAR);
-	//lxw_chart_series* series = chart_add_series(budgetPie, "=Categories!$A$2:$A$21", "=Categories!$D$2:$D$21");
-	//chart_title_set_name(budgetPie, "Budgeted Expenses");
-	//worksheet_insert_chart(worksheet, CELL("H10"), budgetPie);
+// Income
+	std::vector<AccountBase*> groups = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
 
+	worksheet_write_string(worksheet, CELL("H15"), "Budgeted", formatHeader3);
+	worksheet_write_formula_str(worksheet, CELL("I15"), "=SUM(Incomes!C:C)", formatMoney, "");
 
-	
+	worksheet_write_string(worksheet, CELL("H16"), "Actual", formatHeader3);
+	sprintf_s(szBuf, "=SUMIFS(Transactions!C:C, Transactions!H:H, 1, Transactions!A:A, \">= \" & DATE(D11, D10, 1), Transactions!A:A, \"< \" & EDATE(DATE(D11, D10, 1), 1))");
+	worksheet_write_formula_str(worksheet, CELL("I16"), szBuf, formatMoney, "");
+
+	worksheet_write_string(worksheet, CELL("H17"), "Diff.", formatHeader3);
+	worksheet_write_formula_str(worksheet, CELL("I17"), "=I16-I15", formatMoney, "");
+	worksheet_conditional_format_range(worksheet, CELL("I17"), CELL("I17"), &formatMoneyConditional);
+
 
 	return ERROR_SUCCESS;
 }
