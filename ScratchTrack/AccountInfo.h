@@ -19,7 +19,8 @@ public:
 	{
 		ACCOUNT, // Holds funds
 		GROUP, // Display-only method for dividing categories
-		EXPENSE // A virtual account, essentially
+		EXPENSE, // A virtual account, essentially
+		UNKNOWN
 	}; // enum accountItemType
 
 	// Construction / destruction

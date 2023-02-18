@@ -17,12 +17,13 @@ int ExcelSerializer::serialize(const char* szFile, std::vector<AccountBase*>& to
 {
 	lxw_workbook* workbook = workbook_new(szFile);
 
-	serializeFrontSheet(workbook, topLevelItems);
+	lxw_worksheet* pBudgetSheet = serializeFrontSheet(workbook, topLevelItems);
 	serializeAccounts(workbook, topLevelItems);
 	serializeIncomes(workbook, topLevelItems);
 	serializeSettings(workbook, topLevelItems);
 	serializeTransactions(workbook, topLevelItems);
 	serializeCategories(workbook, topLevelItems);
+	writeFrontSheetBudget(workbook, pBudgetSheet, topLevelItems);
 
 	workbook_close(workbook);
 
@@ -438,9 +439,11 @@ int ExcelSerializer::serializeSettings(lxw_workbook* workbook, std::vector<Accou
 }
 
 
-int ExcelSerializer::serializeFrontSheet(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems)
+lxw_worksheet* ExcelSerializer::serializeFrontSheet(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems)
 {
 	lxw_worksheet* worksheet = workbook_add_worksheet(workbook, FRONT_WORKSHEET_NAME);
+	worksheet_set_column(worksheet, 0, 25, 12, nullptr);
+
 
 	lxw_format* formatST = workbook_add_format(workbook);
 	lxw_format* formatSTHP = workbook_add_format(workbook);
@@ -479,8 +482,121 @@ int ExcelSerializer::serializeFrontSheet(lxw_workbook* workbook, std::vector<Acc
 	worksheet_write_string(worksheet, 5, 11, "version", formatST);
 	worksheet_write_string(worksheet, 5, 12, VER_STRING, formatST);
 
+	return worksheet;
+}
 
+int ExcelSerializer::writeFrontSheetBudget(lxw_workbook* workbook, lxw_worksheet* worksheet, std::vector<AccountBase*>& topLevelItems)
+{
+	lxw_format* formatHeader = workbook_add_format(workbook);
+	formatHeader->font_size = 24;
+	formatHeader->bold = true;
+	formatHeader->font_color = RGB(36,100,245);
+	worksheet_merge_range(worksheet, CELL("B8"), CELL("E9"), "Monthly Budget", formatHeader);
+
+	lxw_format* formatHeader2 = workbook_add_format(workbook);
+	formatHeader2->font_size = 17;
+	formatHeader2->bold = true;
+	formatHeader2->font_color = RGB(36, 100, 245); 
+	formatHeader2->text_v_align = LXW_ALIGN_VERTICAL_CENTER;
+	//format_set_bottom(formatHeader2, LXW_BORDER_THIN);
+	//format_set_border_color(formatHeader2, RGB(100, 70, 50));
+	worksheet_merge_range(worksheet, CELL("B12"), CELL("F13"), "Expenses", formatHeader2);
+
+	std::vector<AccountBase*> expenses = AccountBase::getAllAccountsOfType(AccountBase::EXPENSE);
+	size_t expenseCount = min(20, expenses.size());
+
+	char szBuf[1024] = { 0 };
+
+	lxw_format* formatHeader3 = workbook_add_format(workbook);
+	formatHeader3->font_size = 13;
+	formatHeader3->bold = true;
+	//formatHeader3->font_color = RGB(36, 100, 245);
+	formatHeader3->text_v_align = LXW_ALIGN_VERTICAL_CENTER;
+
+	lxw_conditional_format formatMoneyConditional = { 0 };
+	lxw_format* formatMoney = workbook_add_format(workbook);
+	format_set_num_format(formatMoney, "$#,##0.00");
+
+	lxw_format* formatMoneyNegative = workbook_add_format(workbook);
+	format_set_num_format(formatMoneyNegative, "$#,##0.00");
+	format_set_font_color(formatMoneyNegative, LXW_COLOR_RED);
+
+	formatMoneyConditional.type = LXW_CONDITIONAL_TYPE_CELL;
+	formatMoneyConditional.criteria = LXW_CONDITIONAL_CRITERIA_LESS_THAN;
+	formatMoneyConditional.value = 0;
+	formatMoneyConditional.format = formatMoneyNegative;
+
+	SYSTEMTIME curTime = { 0 };
+	GetLocalTime(&curTime);
+
+	worksheet_write_string(worksheet, CELL("B10"), "Totals for", nullptr);
+	worksheet_write_string(worksheet, CELL("C10"), "Month:", nullptr);
+	worksheet_write_string(worksheet, CELL("C11"), "Year:", nullptr);
+
+	worksheet_write_number(worksheet, CELL("D10"), curTime.wMonth, nullptr);
+	worksheet_write_number(worksheet, CELL("D11"), curTime.wYear, nullptr);
+
+	worksheet_merge_range(worksheet, 13, 1, 13, 2, "Category", formatHeader3);
+	worksheet_write_string(worksheet, 13, 3, "Budgeted", formatHeader3);
+	worksheet_write_string(worksheet, 13, 4, "Actual", formatHeader3);
+	worksheet_write_string(worksheet, 13, 5, "Diff.", formatHeader3);
+
+	int i = 0;
+	int valuesStart = 14;
+	for (i = 0; i < expenseCount; i++)
+	{
+		// Category name =Categories!A2...
+		sprintf_s(szBuf, "=Categories!A%d", i+2);
+		worksheet_merge_range(worksheet, valuesStart + i, 1, valuesStart + i, 2, nullptr, nullptr);
+		worksheet_write_formula_str(worksheet, valuesStart + i, 1, szBuf, nullptr, "");
+
+		// Category budget =Categories!A2...
+		sprintf_s(szBuf, "=-Categories!D%d", i + 2);
+		worksheet_write_formula_str(worksheet, valuesStart + i, 3, szBuf, formatMoney, "");
+
+		// Actual
+		//sprintf_s(szBuf, "=-SUMIFS(Transactions!C:C, Transactions!D:D, Categories!B%d, Transactions!A:A, \">= \"&DATE(YEAR(TODAY()),MONTH(TODAY()),1))", i + 2);
+
+		// =-SUMIFS(Transactions!C:C, Transactions!D:D, Categories!B2, Transactions!A:A, ">= " & DATE(D11, D10, 1), Transactions!A:A, "< " & EDATE(DATE(D11, D10, 1), 1))
+		sprintf_s(szBuf, "=-SUMIFS(Transactions!C:C, Transactions!D:D, Categories!B%d, Transactions!A:A, \">= \" & DATE(D11, D10, 1), Transactions!A:A, \"< \" & EDATE(DATE(D11, D10, 1), 1))", i + 2);
+
+		worksheet_write_formula_str(worksheet, valuesStart + i, 4, szBuf, formatMoney, "");
+		worksheet_conditional_format_range(worksheet, valuesStart + i, 4, valuesStart + i, 4, &formatMoneyConditional);
+
+		// Diff
+		sprintf_s(szBuf, "=D%d-E%d", 15+i, 15+i);
+		worksheet_write_formula_str(worksheet, valuesStart + i, 5, szBuf, formatMoney, "");
+		worksheet_conditional_format_range(worksheet, valuesStart + i, 5, valuesStart + i, 5, &formatMoneyConditional);
+	}
+
+	// Totals
+	int totalsRow = i + valuesStart + 2;
+	worksheet_write_string(worksheet, totalsRow, 1, "Totals", formatHeader3);
+
+	sprintf_s(szBuf, "=SUM(D%d:D%d)", valuesStart + 1, valuesStart + i);
+	worksheet_write_formula_str(worksheet, totalsRow, 3, szBuf, formatMoney, "");
+	worksheet_conditional_format_range(worksheet, totalsRow, 3, totalsRow, 3, &formatMoneyConditional);
+
+	sprintf_s(szBuf, "=SUM(E%d:E%d)", valuesStart + 1, valuesStart + i);
+	worksheet_write_formula_str(worksheet, totalsRow, 4, szBuf, formatMoney, "");
+	worksheet_conditional_format_range(worksheet, totalsRow, 4, totalsRow, 4, &formatMoneyConditional);
+
+	sprintf_s(szBuf, "=SUM(F%d:F%d)", valuesStart + 1, valuesStart + i);
+	worksheet_write_formula_str(worksheet, totalsRow, 5, szBuf, formatMoney, "");
+	worksheet_conditional_format_range(worksheet, totalsRow, 5, totalsRow, 5, &formatMoneyConditional);
+
+
+	// For a Month in D10 and a year in D11
+	// = -SUMIFS(Transactions!C:C, Transactions!D:D, Categories!B2, Transactions!A:A, ">= " & DATE(D11, D10, 1), Transactions!A:A, "< " & EDATE(DATE(D11, D10, 1), 1))
+	/* Add the data series to the chart. */
+	//lxw_chart* budgetPie = workbook_add_chart(workbook, LXW_CHART_BAR);
+	//lxw_chart_series* series = chart_add_series(budgetPie, "=Categories!$A$2:$A$21", "=Categories!$D$2:$D$21");
+	//chart_title_set_name(budgetPie, "Budgeted Expenses");
+	//worksheet_insert_chart(worksheet, CELL("H10"), budgetPie);
+
+
+	
 
 	return ERROR_SUCCESS;
 }
-
+	

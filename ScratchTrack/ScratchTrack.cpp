@@ -61,6 +61,7 @@ extern BUDGET_TREE_COLUMN_SIZES g_columnSizes;
 extern BUDGET_TREE_DRAG_DETAILS g_btDragDetails;
 
 extern HIMAGELIST _il;
+HTREEITEM g_hAddNewIncomeItem = TVI_LAST;
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -159,6 +160,7 @@ int setupPaymentExpenseForAccount(Account* pAccount)
             pIncome = new AccountGroup;
             pIncome->setName(incomeName.c_str());
             pIncome->setReadOnly(true);
+
             hItemIncome = addTreeItem(TVI_ROOT, pIncome, TVI_LAST);
         }
         else if (pIncome->getHidden()) {
@@ -335,6 +337,17 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    //    addTreeItem(TVI_ROOT, pGroup);
    //    serializeState();
    //}
+
+   // Add bottom tree item to add new income folders
+   TVINSERTSTRUCT tvi = { 0 };
+   tvi.itemex.mask = TVIF_TEXT | TVIF_PARAM;
+   tvi.itemex.pszText = const_cast<wchar_t*>(L"Add monthly income group");
+   tvi.hParent = TVI_ROOT;
+   tvi.itemex.lParam = 0;
+   tvi.hInsertAfter = TVI_LAST;
+
+   g_hAddNewIncomeItem = TreeView_InsertItem(g_hwndTV, &tvi);
+   //ShowWindow(g_hwndTV, SW_SHOW);
 
    // Fix up selection / paint
    HTREEITEM hRoot = TreeView_GetRoot(g_hwndTV);
@@ -788,7 +801,7 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
 void doTreeDrag(LPNMTREEVIEW nmTreeItem)
 {
     AccountBase* pItem = accountFromTreeItem(nmTreeItem->itemNew.hItem);
-    if (pItem && pItem->getId() == ACCOUNT_ID_PAY_CC) {
+    if (!pItem || (pItem && pItem->getId() == ACCOUNT_ID_PAY_CC)) {
         return;
     }
 
@@ -892,7 +905,7 @@ void doAddIncome()
         AccountGroup* pGroup = new AccountGroup;
         pGroup->setName(dlg.getName());
         pGroup->setExpenseLimit(dlg.getLimit());
-        addTreeItem(TVI_ROOT, pGroup);
+        addTreeItem(TVI_ROOT, pGroup, TVI_LAST);
         serializeState();
     }
 }
@@ -1227,6 +1240,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 else if (hItem && (type == GRP_FUND_CHILDREN)) {
                     processContextMenu(ID_ROOT_FUNDCATEGORIES, hItem, accountFromTreeItem(hItem));
                 }
+                else if (hItem && (type == GLB_ADD_INCOME)) {
+                    doAddIncome();
+                }
                 else
                 {
                     TreeView_HitTest(g_hwndTV, &tvhi);
@@ -1452,20 +1468,22 @@ void updateGuiValues(HTREEITEM item /*= NULL*/)
         TreeView_GetItem(g_hwndTV, &tvi);
 
         Account* pAccount = (Account*)tvi.lParam;
-        budgetTreeSetItemText(item, pAccount->getName());
+        if (pAccount) {
+            budgetTreeSetItemText(item, pAccount->getName());
 
-        // Get children
-        HTREEITEM child = TreeView_GetChild(g_hwndTV, item);
-        if (child)
-        {
-            updateGuiValues(child);
-        }
+            // Get children
+            HTREEITEM child = TreeView_GetChild(g_hwndTV, item);
+            if (child)
+            {
+                updateGuiValues(child);
+            }
 
-        // Get next
-        item = TreeView_GetNextSibling(g_hwndTV, item);
-        if (item)
-        {
-            updateGuiValues(item);
+            // Get next
+            item = TreeView_GetNextSibling(g_hwndTV, item);
+            if (item)
+            {
+                updateGuiValues(item);
+            }
         }
 
         if (topLevel) {
@@ -1638,7 +1656,9 @@ int serializeState()
     HTREEITEM hItem = TreeView_GetChild(g_hwndTV, TVI_ROOT);
     while (hItem){
         AccountBase* item = accountFromTreeItem(hItem);
-        topItems.push_back(item);
+        if (item) {
+            topItems.push_back(item);
+        }
         hItem = TreeView_GetNextSibling(g_hwndTV, hItem);
     }
 

@@ -14,6 +14,8 @@ extern HWND g_hTopWindow;
 extern HWND g_hwndTV;
 extern HWND g_hwndTreeHeader;
 extern HWND g_hwndAccountLV;
+extern HTREEITEM g_hAddNewIncomeItem;
+
 BUDGET_TREE_DRAG_DETAILS g_btDragDetails;
 
 void addAccount(Account* pAccount);
@@ -153,12 +155,12 @@ AccountBase* accountFromTreeItem(HTREEITEM item)
 
 void handleDragDrop(HTREEITEM hDragSource, HTREEITEM hDragTarget)
 {
-    if (hDragTarget != NULL)
+    AccountBase* dropTarget = accountFromTreeItem(hDragTarget);
+    AccountBase* dropSource = accountFromTreeItem(g_btDragDetails._dragging);
+
+    if (dropTarget && dropSource)
     {
         // Get the associated accounts and figure out the real target
-        AccountBase* dropSource = accountFromTreeItem(g_btDragDetails._dragging);
-        AccountBase* dropTarget = accountFromTreeItem(hDragTarget);
-
         HTREEITEM hNewParent = nullptr, hInsertAfter = TVI_LAST;
 
         if (dropSource->getType() == AccountBase::EXPENSE && dropTarget->getType() == AccountBase::EXPENSE)
@@ -228,7 +230,6 @@ void handleDragDrop(HTREEITEM hDragSource, HTREEITEM hDragTarget)
                 serializeState();
             }
         }
-
     }
     ImageList_EndDrag();
     TreeView_SelectDropTarget(g_hwndTV, NULL);
@@ -266,6 +267,14 @@ HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountBase* pAccount, HTREEITEM hI
         return nullptr;
     }
 
+    if (hInsertAfter == TVI_LAST ) {
+        if (g_hAddNewIncomeItem != TVI_LAST) {
+            hInsertAfter = TreeView_GetPrevSibling(g_hwndTV, g_hAddNewIncomeItem);
+            if (!hInsertAfter) {
+                hInsertAfter = TVI_FIRST;
+            }
+        }
+    }
 
     TVINSERTSTRUCT tvi = { 0 };
     tvi.itemex.mask = TVIF_TEXT | TVIF_PARAM;
@@ -311,20 +320,29 @@ HTREEITEM treeViewHitTestLinks(LONG xCur, LONG yCur, BUDGET_TREE_LINK_ITEM_TYPE&
     HTREEITEM hItem = TreeView_HitTest(g_hwndTV, &tvhi);
     AccountBase* pItem = accountFromTreeItem(hItem);
 
-    if (pItem && !pItem->getReadOnly())
+    bool readOnly = pItem ? pItem->getReadOnly() : false;
+
+    if (!readOnly)
     {
         RECT r = { 0 };
         TreeView_GetItemRect(g_hwndTV, hItem, &r, false);
+        AccountBase::accountItemType type = pItem ? pItem->getType() : AccountBase::UNKNOWN;
+        unsigned int id = pItem ? pItem->getId() : ACCOUNT_ID_INVALID;
+
 
         for (auto itr = g_budgetTreeLinkSpots.begin(); itr != g_budgetTreeLinkSpots.end(); itr++)
         {
             // Weed out the wrong types
-            if (pItem->getType() == AccountBase::EXPENSE && (itr->first < ENV_FIRST || itr->first > ENV_LAST))
+            if (type == AccountBase::EXPENSE && (itr->first < ENV_FIRST || itr->first > ENV_LAST))
             {
                 continue;
 
             }
-            else if (pItem->getType() == AccountBase::GROUP && (itr->first < GRP_FIRST || itr->first > GRP_LAST))
+            else if (type == AccountBase::GROUP && (itr->first < GRP_FIRST || itr->first > GRP_LAST))
+            {
+                continue;
+            }
+            else if (type == AccountBase::UNKNOWN && (itr->first < GLB_FIRST || itr->first > GLB_LAST))
             {
                 continue;
             }
@@ -336,7 +354,7 @@ HTREEITEM treeViewHitTestLinks(LONG xCur, LONG yCur, BUDGET_TREE_LINK_ITEM_TYPE&
             {
                 // A bit hacky, but exclude new transaction from Pay CC envelope
                 itemType = itr->first;
-                if (itemType == ENV_TRANS_ADD && pItem->getId() == ACCOUNT_ID_PAY_CC) {
+                if (itemType == ENV_TRANS_ADD && id == ACCOUNT_ID_PAY_CC) {
                 }
                 else 
                 {
@@ -430,6 +448,9 @@ bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
             case GRP_FUND_CHILDREN:
                 swprintf(szBuffer, 1024, L"Assign money to the categories in the '%ls' income", pHitItem->getName());
                 break;
+            case GLB_ADD_INCOME:
+                swprintf(szBuffer, 1024, L"Add monthly income");
+                break;
             }
             g_toolTip.lpszText = szBuffer;
             ClientToScreen(g_hwndTV, &point);
@@ -516,114 +537,126 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
     static const COLORREF SEL_TEXT_COLOR = GetSysColor(COLOR_HIGHLIGHTTEXT);
 
     wchar_t szInfotText[1024] = { 0 };
+    HFONT hNewFont = nullptr;
 
-    if (pItem)
+    if (pCustomDrawItem->nmcd.dwDrawStage == CDDS_ITEMPREPAINT)
     {
-        static HFONT hNewFont = nullptr;
+        // We want post paint notifications
+        ret |= CDRF_NOTIFYPOSTPAINT;
+    }
+    else if (pCustomDrawItem->nmcd.dwDrawStage == CDDS_ITEMPOSTPAINT)
+    {
+        // Figure out which item we're drawing and figure out render colors
+        HTREEITEM hItem = (HTREEITEM)pCustomDrawItem->nmcd.dwItemSpec;
+        COLORREF cr = { 0 };
 
-        if (pCustomDrawItem->nmcd.dwDrawStage == CDDS_ITEMPREPAINT)
-        {
-            // We want post paint notifications
-            ret |= CDRF_NOTIFYPOSTPAINT;
+        // Is this item selected?
+        bool selected = hItem == (HTREEITEM)TreeView_GetSelection(g_hwndTV);
+
+        AccountBase::accountItemType itemType = pItem ? pItem->getType() : AccountBase::UNKNOWN;
+
+        // Figure out color based on account type
+        if (itemType == AccountBase::UNKNOWN) {
+            //COLORREF oldColor = SetTextColor(pCustomDrawItem->nmcd.hdc, selected ? SEL_LINK_COLOR : LINK_COLOR);
+            cr = EXPENSE_COLOR;
         }
-        else if (pCustomDrawItem->nmcd.dwDrawStage == CDDS_ITEMPOSTPAINT)
-        {
-            // Figure out which item we're drawing and figure out render colors
-            HTREEITEM hItem = (HTREEITEM)pCustomDrawItem->nmcd.dwItemSpec;
-            COLORREF cr = { 0 }, crText = RGB(0, 0, 0);
+        else if (itemType == AccountBase::ACCOUNT) {
+            cr = ACCOUNT_COLOR;
+        }
+        else if (itemType == AccountBase::GROUP) {
+            cr = GROUP_COLOR;
+        }
+        else if (itemType == AccountBase::EXPENSE) {
+            cr = EXPENSE_COLOR;
+        }
 
-            // Figure out color based on account type
-            switch (pItem->getType())
-            {
-            case AccountBase::ACCOUNT:
-                cr = ACCOUNT_COLOR;
-                break;
-            case AccountBase::GROUP:
-                cr = GROUP_COLOR;
-                break;
-            case AccountBase::EXPENSE:
-                cr = EXPENSE_COLOR;
-                break;
-            }
+        if (selected && itemType != AccountBase::UNKNOWN ) {
+            cr = SEL_COLOR;
+        }
 
-            // Is this item selected?
-            bool selected = hItem == (HTREEITEM)TreeView_GetSelection(g_hwndTV);
-            if (selected) {
-                cr = SEL_COLOR;
-                crText = SEL_TEXT_COLOR;
-            }
+        // Save the original DC state
+        int oldDcState = SaveDC(pCustomDrawItem->nmcd.hdc);
 
-            // Save the original DC state
-            int oldDcState = SaveDC(pCustomDrawItem->nmcd.hdc);
+        // Create our backgroundbrush and select it
+        HBRUSH brush = CreateSolidBrush(cr);
+        SelectObject(pCustomDrawItem->nmcd.hdc, brush);
 
-            // Create our backgroundbrush and select it
-            HBRUSH brush = CreateSolidBrush(cr);
-            SelectObject(pCustomDrawItem->nmcd.hdc, brush);
+        // NULL brush (no border, we'll draw grids later)
+        SelectObject(pCustomDrawItem->nmcd.hdc, GetStockObject(NULL_PEN)/*pen*/);
 
-            // NULL brush (no border, we'll draw grids later)
-            SelectObject(pCustomDrawItem->nmcd.hdc, GetStockObject(NULL_PEN)/*pen*/);
+        // This is a little tricky. We want to cover the 'full' area (all the way to the right)
+        // but we want to start from the left edge of th text.
+        RECT rcFull = { 0 }, rcText = { 0 };
+        TreeView_GetItemRect(g_hwndTV, hItem, &rcText, true);
+        TreeView_GetItemRect(g_hwndTV, hItem, &rcFull, false);
 
-            // This is a little tricky. We want to cover the 'full' area (all the way to the right)
-            // but we want to start from the left edge of th text.
-            RECT rcFull = { 0 }, rcText = { 0 };
-            TreeView_GetItemRect(g_hwndTV, hItem, &rcText, true);
-            TreeView_GetItemRect(g_hwndTV, hItem, &rcFull, false);
+        Rectangle(pCustomDrawItem->nmcd.hdc, rcText.left, rcFull.top, rcFull.right, rcFull.bottom + 1);
+        DeleteObject(brush);
 
-            Rectangle(pCustomDrawItem->nmcd.hdc, rcText.left, rcFull.top, rcFull.right, rcFull.bottom + 1);
-            DeleteObject(brush);
+        // Get the text for the columns
+        int iBalance = pItem ? pItem->getBalance() : 0;
+        std::wstring balance = Utils::penniesToDollarsString(iBalance);
 
-            // Get the text for the columns
-            int iBalance = pItem->getBalance();
-            std::wstring balance = Utils::penniesToDollarsString(iBalance);
+        // Amount budgeted for this item
+        int iBudget = !pItem ? 0 : pItem->getType() == AccountBase::EXPENSE ? pItem->getBudgeted() : pItem->budgetedToSubAccounts();
+        std::wstring budgeted = Utils::penniesToDollarsString(abs(iBudget));
 
-            // Amount budgeted for this item
-            int iBudget = pItem->getType() == AccountBase::EXPENSE ? pItem->getBudgeted() : pItem->budgetedToSubAccounts();
-            std::wstring budgeted = Utils::penniesToDollarsString(abs(iBudget));
+        // Money allocated to this item
+        int iCategories = !pItem ? 0 : pItem->getType() == AccountBase::EXPENSE ? pItem->getBalance() : pItem->allocatedToSubAccounts();
+        std::wstring allocated = Utils::penniesToDollarsString(iCategories);
 
-            // Money allocated to this item
-            int iCategories = pItem->getType() == AccountBase::EXPENSE ? pItem->getBalance() : pItem->allocatedToSubAccounts();
-            std::wstring allocated = Utils::penniesToDollarsString(iCategories);
+        // Sum of all transactions for this item
+        int iTransactionSum = !pItem ? 0 : pItem->getCurrentMonthTransacationTotal();
+        std::wstring transactionSum = Utils::penniesToDollarsString(iTransactionSum);
 
-            // Sum of all transactions for this item
-            int iTransactionSum = pItem->getCurrentMonthTransacationTotal();
-            std::wstring transactionSum = Utils::penniesToDollarsString(iTransactionSum);
+        int iDiff = abs(iBudget) - abs(iTransactionSum);
+        std::wstring diff = Utils::penniesToDollarsString(iDiff);
 
-            int iDiff = abs(iBudget) - abs(iTransactionSum);
-            std::wstring diff = Utils::penniesToDollarsString(iDiff);
+        // Calculate column positions
+        getColumnSpots();
 
-            // Calculate column positions
-            getColumnSpots();
+        int nameSpot = rcText.left;
+        int budgetedSpot = g_columnSizes._name;
+        int inCategoriesSpot = budgetedSpot + g_columnSizes._budgeted;
+        int diffSpot = inCategoriesSpot + g_columnSizes._inCategories;
+        int balanceSpot = diffSpot + g_columnSizes._diff;
+        int infoSpot = balanceSpot + g_columnSizes._balance;
+        int endSpot = infoSpot + g_columnSizes._info;
 
-            int nameSpot = rcText.left;
-            int budgetedSpot = g_columnSizes._name;
-            int inCategoriesSpot = budgetedSpot + g_columnSizes._budgeted;
-            int diffSpot = inCategoriesSpot + g_columnSizes._inCategories;
-            int balanceSpot = diffSpot + g_columnSizes._diff;
-            int infoSpot = balanceSpot + g_columnSizes._balance;
-            int endSpot = infoSpot + g_columnSizes._info;
+        HPEN pen = CreatePen(PS_SOLID, 1, RGB(200, 200, 200));
+        SelectObject(pCustomDrawItem->nmcd.hdc, GetStockObject(HOLLOW_BRUSH));
+        SelectObject(pCustomDrawItem->nmcd.hdc, pen);
+        SetBkMode(pCustomDrawItem->nmcd.hdc, TRANSPARENT);
 
-            HPEN pen = CreatePen(PS_SOLID, 1, RGB(200, 200, 200));
-            SelectObject(pCustomDrawItem->nmcd.hdc, GetStockObject(HOLLOW_BRUSH));
-            SelectObject(pCustomDrawItem->nmcd.hdc, pen);
-            SetBkMode(pCustomDrawItem->nmcd.hdc, TRANSPARENT);
+        // Name
+        std::wstring name;
+        if (itemType == AccountBase::UNKNOWN) {
+            // Use the text from the tree
+            wchar_t szBuff[1024] = { 0 };
+            TVITEM item = { 0 };
+            item.mask = TVIF_TEXT;
+            item.hItem = (HTREEITEM)pCustomDrawItem->nmcd.dwItemSpec;
+            item.pszText = szBuff;
+            item.cchTextMax = 1024;
+            TreeView_GetItem(g_hwndTV, &item);
+            name = item.pszText;
+        }
+        else if (TreeView_GetItemState(g_hwndTV, hItem, TVIF_STATE) & TVIS_EXPANDED) {
+            name = szIncomeOpen;
+        }
+        else if (itemType == AccountBase::EXPENSE) {
+            //name = szExpense;
+        }
+        else {
+            name = szIncomeClosed;
+        }
 
-            // Name
-            std::wstring name;
-            if (TreeView_GetItemState(g_hwndTV, hItem, TVIF_STATE) & TVIS_EXPANDED) {
-                name = szIncomeOpen;
-            }
-            else if (pItem->getType() == AccountBase::EXPENSE) {
-                //name = szExpense;
-            }
-            else {
-                name = szIncomeClosed;
-            }
+        RECT rText = { 0 };
+        rText.bottom = rcText.bottom; rText.top = rcText.top;
 
-            RECT rText = { 0 };
-            rText.bottom = rcText.bottom; rText.top = rcText.top;
+        DWORD dwDrawTextFlags = DT_NOPREFIX | DT_END_ELLIPSIS;
 
-            DWORD dwDrawTextFlags = DT_NOPREFIX | DT_END_ELLIPSIS;
-
+        if (itemType != AccountBase::UNKNOWN) {
             // Budgeted dollars
             setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iBudget, selected, false);
             rText.left = budgetedSpot; rText.right = inCategoriesSpot;
@@ -638,124 +671,133 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iDiff, selected, true);
             rText.left = diffSpot; rText.right = balanceSpot;
             DrawText(pCustomDrawItem->nmcd.hdc, diff.c_str(), (int)diff.length(), &rText, dwDrawTextFlags);
-
-            // Balance
-            if (pItem->getType() == AccountBase::EXPENSE)
-            {
-                AccountExpense* pExpense = (AccountExpense*)pItem;
-                if (pExpense->isVirtualAccount()) {
-                    setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iBalance, selected, true);
-                    rText.left = balanceSpot; rText.right = infoSpot;
-                    DrawText(pCustomDrawItem->nmcd.hdc, balance.c_str(), (int)balance.length(), &rText, dwDrawTextFlags);
-                }
-            } 
-            else if ( pItem->getType() == AccountBase::GROUP && !pItem->getReadOnly())
-            {
-                AccountGroup* pGroup = dynamic_cast<AccountGroup*>(pItem);
-                if (pGroup->getExpenseLimit()) {
-                    std::wstring limit = Utils::penniesToDollarsString(-pGroup->getExpenseLimit());
-                    std::wstring budgeted = Utils::penniesToDollarsString(abs(pGroup->budgetedToSubAccounts()));
-                    int idiff = -(pGroup->getExpenseLimit() - pGroup->budgetedToSubAccounts());
-                    std::wstring diff = Utils::penniesToDollarsString(abs(idiff));
-                    if (idiff < 0) {
-                        wnsprintf(szInfotText, 1024, L"  %ls of %ls budgeted [%ls over limit!]", budgeted.c_str(), limit.c_str(), diff.c_str());
-                    }
-                    else {
-                        wnsprintf(szInfotText, 1024, L"  %ls of %ls budgeted [%ls unbudgeted]", budgeted.c_str(), limit.c_str(), diff.c_str());
-                    }
-                    setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 0, selected, true);
-                    rText.left = infoSpot; rText.right = infoSpot + g_columnSizes._info;
-                    DrawText(pCustomDrawItem->nmcd.hdc, szInfotText, (int)wcslen(szInfotText), &rText, dwDrawTextFlags);
-                }
-            }
-
-            // Create font for add/edit links
-            HFONT hTreeFont = (HFONT)GetCurrentObject(pCustomDrawItem->nmcd.hdc, OBJ_FONT);
-            LOGFONT lf = { 0 };
-            GetObject(hTreeFont, sizeof(LOGFONT), &lf);
-            //lf.lfUnderline = true;
-            HFONT hFontItalic = CreateFontIndirect(&lf);
-            HFONT hOrigFont = (HFONT)SelectObject(pCustomDrawItem->nmcd.hdc, hFontItalic);
-            COLORREF oldColor = SetTextColor(pCustomDrawItem->nmcd.hdc, selected ? SEL_LINK_COLOR : LINK_COLOR);
-
-            int rightEdge = budgetedSpot;
-            switch (pItem->getType())
-            {
-            case AccountBase::EXPENSE:
-            {
-                AccountExpense* pExpense = dynamic_cast<AccountExpense*>(pItem);
-                if (!pExpense->getReadOnly()) {
-#ifdef ICON_HIDE_ITEM
-                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szHide, ENV_HIDE, rightEdge, rcText.top);
-#endif
-                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditExpense, ENV_EXPENSE_EDIT, rightEdge, rcText.top);
-                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddMoney, ENV_MONEY_ADD, rightEdge, rcText.top);
-
-                    if (pExpense->getId() != ACCOUNT_ID_PAY_CC) {
-                        rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddTransaction, ENV_TRANS_ADD, rightEdge, rcText.top);
-                    }
-
-                }
-                break;
-            }
-            case AccountBase::GROUP:
-                if (!pItem->getReadOnly()) {
-#ifdef ICON_HIDE_ITEM
-                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szHide, GRP_INCOME_HIDE, rightEdge, rcText.top);
-#endif
-                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditExpense, GRP_INCOME_EDIT, rightEdge, rcText.top);
-                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddMoney, GRP_FUND_CHILDREN, rightEdge, rcText.top);
-                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddExpense, GRP_EXPENSE_ADD, rightEdge, rcText.top);
-                }
-                break;
-
-            }
-
-            // Name
-            if (pItem->getId() == ACCOUNT_ID_PAY_CC) {
-                static const wchar_t* szCreditCard = (wchar_t*)(u"\U0001F4B3 ");
-                name = szCreditCard;
-            }
-            name += pItem->getName();
-            setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 1, selected, false);
-            rText.left = nameSpot; rText.top = rcText.top;
-            rText.bottom = rcText.bottom; rText.right = rightEdge;
-            DrawText(pCustomDrawItem->nmcd.hdc, name.c_str(), (int)name.length(), &rText, dwDrawTextFlags);
-
-            // Clean up
-            SelectObject(pCustomDrawItem->nmcd.hdc, hOrigFont);
-            SetTextColor(pCustomDrawItem->nmcd.hdc, oldColor);
-            DeleteObject(hFontItalic);
-
-
-            // Draw a horizontal line above the item, across the full span
-            MoveToEx(pCustomDrawItem->nmcd.hdc, pCustomDrawItem->nmcd.rc.left, pCustomDrawItem->nmcd.rc.top, nullptr);
-            LineTo(pCustomDrawItem->nmcd.hdc, pCustomDrawItem->nmcd.rc.right, pCustomDrawItem->nmcd.rc.top);
-
-            // Draw vertical column lines
-            MoveToEx(pCustomDrawItem->nmcd.hdc, budgetedSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
-            LineTo(pCustomDrawItem->nmcd.hdc, budgetedSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
-
-            MoveToEx(pCustomDrawItem->nmcd.hdc, inCategoriesSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
-            LineTo(pCustomDrawItem->nmcd.hdc, inCategoriesSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
-
-            MoveToEx(pCustomDrawItem->nmcd.hdc, balanceSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
-            LineTo(pCustomDrawItem->nmcd.hdc, balanceSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
-
-            MoveToEx(pCustomDrawItem->nmcd.hdc, diffSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
-            LineTo(pCustomDrawItem->nmcd.hdc, diffSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
-
-            MoveToEx(pCustomDrawItem->nmcd.hdc, infoSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
-            LineTo(pCustomDrawItem->nmcd.hdc, infoSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
-
-            MoveToEx(pCustomDrawItem->nmcd.hdc, endSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
-            LineTo(pCustomDrawItem->nmcd.hdc, endSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
-
-
-            RestoreDC(pCustomDrawItem->nmcd.hdc, oldDcState);
-
-            DeleteObject(pen);
         }
+
+        // Balance
+        if (itemType == AccountBase::EXPENSE)
+        {
+            AccountExpense* pExpense = (AccountExpense*)pItem;
+            if (pExpense->isVirtualAccount()) {
+                setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iBalance, selected, true);
+                rText.left = balanceSpot; rText.right = infoSpot;
+                DrawText(pCustomDrawItem->nmcd.hdc, balance.c_str(), (int)balance.length(), &rText, dwDrawTextFlags);
+            }
+        } 
+        else if (itemType == AccountBase::GROUP && !pItem->getReadOnly())
+        {
+            AccountGroup* pGroup = dynamic_cast<AccountGroup*>(pItem);
+            if (pGroup->getExpenseLimit()) {
+                std::wstring limit = Utils::penniesToDollarsString(-pGroup->getExpenseLimit());
+                std::wstring budgeted = Utils::penniesToDollarsString(abs(pGroup->budgetedToSubAccounts()));
+                int idiff = -(pGroup->getExpenseLimit() - pGroup->budgetedToSubAccounts());
+                std::wstring diff = Utils::penniesToDollarsString(abs(idiff));
+                if (idiff < 0) {
+                    wnsprintf(szInfotText, 1024, L"  %ls of %ls budgeted [%ls over limit!]", budgeted.c_str(), limit.c_str(), diff.c_str());
+                }
+                else {
+                    wnsprintf(szInfotText, 1024, L"  %ls of %ls budgeted [%ls unbudgeted]", budgeted.c_str(), limit.c_str(), diff.c_str());
+                }
+                setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 0, selected, true);
+                rText.left = infoSpot; rText.right = infoSpot + g_columnSizes._info;
+                DrawText(pCustomDrawItem->nmcd.hdc, szInfotText, (int)wcslen(szInfotText), &rText, dwDrawTextFlags);
+            }
+        }
+
+        // Create font for add/edit links
+        HFONT hTreeFont = (HFONT)GetCurrentObject(pCustomDrawItem->nmcd.hdc, OBJ_FONT);
+        LOGFONT lf = { 0 };
+        GetObject(hTreeFont, sizeof(LOGFONT), &lf);
+        lf.lfUnderline = true;
+        HFONT hFontLink = CreateFontIndirect(&lf);
+        //HFONT hOrigFont = (HFONT)SelectObject(pCustomDrawItem->nmcd.hdc, hFontItalic);
+        COLORREF oldColor = SetTextColor(pCustomDrawItem->nmcd.hdc, selected ? SEL_LINK_COLOR : LINK_COLOR);
+
+        int rightEdge = budgetedSpot;
+        switch (itemType)
+        {
+        case AccountBase::EXPENSE:
+        {
+            AccountExpense* pExpense = dynamic_cast<AccountExpense*>(pItem);
+            if (!pExpense->getReadOnly()) {
+#ifdef ICON_HIDE_ITEM
+                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szHide, ENV_HIDE, rightEdge, rcText.top);
+#endif
+                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditExpense, ENV_EXPENSE_EDIT, rightEdge, rcText.top);
+                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddMoney, ENV_MONEY_ADD, rightEdge, rcText.top);
+
+                if (pExpense->getId() != ACCOUNT_ID_PAY_CC) {
+                    rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddTransaction, ENV_TRANS_ADD, rightEdge, rcText.top);
+                }
+
+            }
+            break;
+        }
+        case AccountBase::GROUP:
+            if (!pItem->getReadOnly()) {
+#ifdef ICON_HIDE_ITEM
+                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szHide, GRP_INCOME_HIDE, rightEdge, rcText.top);
+#endif
+                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditExpense, GRP_INCOME_EDIT, rightEdge, rcText.top);
+                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddMoney, GRP_FUND_CHILDREN, rightEdge, rcText.top);
+                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddExpense, GRP_EXPENSE_ADD, rightEdge, rcText.top);
+            }
+            break;
+
+        }
+
+        // Name
+        if (pItem && pItem->getId() == ACCOUNT_ID_PAY_CC) {
+            static const wchar_t* szCreditCard = (wchar_t*)(u"\U0001F4B3 ");
+            name = szCreditCard;
+        }
+        if (pItem) {
+            name += pItem->getName();
+        }
+
+        rText.left = nameSpot; rText.top = rcText.top;
+        rText.bottom = rcText.bottom; rText.right = rightEdge;
+        if (itemType == AccountBase::UNKNOWN) {
+            SelectObject(pCustomDrawItem->nmcd.hdc, hFontLink);
+            //SetTextColor(pCustomDrawItem->nmcd.hdc, selected ? SEL_LINK_COLOR : LINK_COLOR);
+            SetTextColor(pCustomDrawItem->nmcd.hdc, LINK_COLOR);
+
+            g_budgetTreeLinkSpots[GLB_ADD_INCOME] = rText;
+        }
+        else {
+            setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 1, selected, false);
+        }
+        DrawText(pCustomDrawItem->nmcd.hdc, name.c_str(), (int)name.length(), &rText, dwDrawTextFlags);
+
+        // Clean up
+
+        // Draw a horizontal line above the item, across the full span
+        MoveToEx(pCustomDrawItem->nmcd.hdc, pCustomDrawItem->nmcd.rc.left, pCustomDrawItem->nmcd.rc.top, nullptr);
+        LineTo(pCustomDrawItem->nmcd.hdc, pCustomDrawItem->nmcd.rc.right, pCustomDrawItem->nmcd.rc.top);
+
+        // Draw vertical column lines
+        MoveToEx(pCustomDrawItem->nmcd.hdc, budgetedSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
+        LineTo(pCustomDrawItem->nmcd.hdc, budgetedSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
+
+        MoveToEx(pCustomDrawItem->nmcd.hdc, inCategoriesSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
+        LineTo(pCustomDrawItem->nmcd.hdc, inCategoriesSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
+
+        MoveToEx(pCustomDrawItem->nmcd.hdc, balanceSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
+        LineTo(pCustomDrawItem->nmcd.hdc, balanceSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
+
+        MoveToEx(pCustomDrawItem->nmcd.hdc, diffSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
+        LineTo(pCustomDrawItem->nmcd.hdc, diffSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
+
+        MoveToEx(pCustomDrawItem->nmcd.hdc, infoSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
+        LineTo(pCustomDrawItem->nmcd.hdc, infoSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
+
+        MoveToEx(pCustomDrawItem->nmcd.hdc, endSpot - 2, pCustomDrawItem->nmcd.rc.top, nullptr);
+        LineTo(pCustomDrawItem->nmcd.hdc, endSpot - 2, pCustomDrawItem->nmcd.rc.bottom);
+
+
+        RestoreDC(pCustomDrawItem->nmcd.hdc, oldDcState);
+
+        DeleteObject(pen);
+        DeleteObject(hFontLink);
 
     } // if item
     return ret;
@@ -795,7 +837,7 @@ void budgetTreeCreateTreeControl()
     // Create tree
     HDITEM item = { 0 };
     item.cxy = g_columnSizes._name;
-    item.pszText = const_cast<wchar_t*>(L"Expense");
+    item.pszText = const_cast<wchar_t*>(L"Expense / Income");
     item.mask = HDI_TEXT | HDI_WIDTH;
     Header_InsertItem(g_hwndTreeHeader, 99, &item);
 

@@ -46,7 +46,7 @@ int Transaction::serialize(tinyxml2::XMLElement* pParent)
 {
 	tinyxml2::XMLElement* pElement = pParent->GetDocument()->NewElement("transaction");
 
-	pElement->SetAttribute("expense", _expenseId);
+	pElement->SetAttribute("category", _expenseId);
 	pElement->SetAttribute("accountFrom", _payFromAccountId);
 	pElement->SetAttribute("accountTo", _payToAccountId);
 
@@ -79,7 +79,7 @@ int Transaction::deserialize(tinyxml2::XMLElement* pRoot)
 		while (pTransaction) {
 			// deserialize
 			int expenseId = 0, fromAccountId = 0, toAccountId = ACCOUNT_ID_INVALID;
-			pTransaction->QueryIntAttribute("expense", &expenseId);
+			pTransaction->QueryIntAttribute("category", &expenseId);
 			pTransaction->QueryIntAttribute("accountFrom", &fromAccountId);
 			pTransaction->QueryIntAttribute("accountTo", &toAccountId);
 
