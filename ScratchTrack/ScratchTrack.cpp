@@ -1690,8 +1690,15 @@ int serializeState()
     }
 
 
-    serialize(topItems, Utils::getPersistFile());
-    ExcelSerializer::serialize(Utils::getPersistFileXlsx(), topItems);
+    //serialize(topItems, Utils::getPersistFile());
+    int ret = ExcelSerializer::serialize(Utils::getPersistFileXlsx(), topItems);
+    if (ret != ERROR_SUCCESS)
+    {
+        const char* msg = ExcelSerializer::libxslErrorToText(ret);
+        wchar_t szMessage[1024] = { 0 };
+        swprintf(szMessage, 1024, L"Failed to save budget [%hs] [%hs]!", Utils::getPersistFileXlsx(), msg);
+        MessageBox(g_hTopWindow, szMessage, L"Error saving", MB_ICONWARNING);
+    }
 
     g_accountInfoDlg.updateReport();
 

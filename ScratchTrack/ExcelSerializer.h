@@ -20,6 +20,8 @@ public:
 	static int serialize(const char* szFile, std::vector<AccountBase*>& topLevelItems);
 	static int deserialize(const char* szFile, std::vector<AccountBase*>& topLevelItems);
 
+	static const char* libxslErrorToText(int error);
+
 protected:
 	static std::string accountTypeToString(AccountBase* pAccount);
 	static AccountBase::accountItemType accountTypeFromString(const char* szAccountType, bool& isCC);

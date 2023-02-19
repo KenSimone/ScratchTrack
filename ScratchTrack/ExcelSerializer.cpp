@@ -51,7 +51,7 @@ int ExcelSerializer::serialize(const char* szFile, std::vector<AccountBase*>& to
 
 end:
 	if (workbook) {
-		workbook_close(workbook);
+		ret = workbook_close(workbook);
 	}
 
 	return ret;
@@ -1095,4 +1095,9 @@ int ExcelSerializer::pennyValueFromCell(int row, int col, OpenXLSX::XLWorksheet&
 	}
 
 	return Utils::excelMoneyToPennies(valueIn);
+}
+
+const char* ExcelSerializer::libxslErrorToText(int error)
+{
+	return lxw_strerror((lxw_error)error);
 }
