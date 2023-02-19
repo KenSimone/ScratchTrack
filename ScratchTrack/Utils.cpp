@@ -101,6 +101,19 @@ protected:
 	size_t _pos;
 };
 
+bool Utils::stringToBool(const char* szString)
+{
+	if (_strcmpi(szString, "true") == 0) {
+		return true;
+	}
+
+	if (_strcmpi(szString, "yes") == 0) {
+		return true;
+	}
+
+	return false;
+}
+
 SYSTEMTIME Utils::dateStringToSysTime(const wchar_t* szDate)
 {
 	// The MS function VarDateFromStr seems to weed out crap fairly well
@@ -153,6 +166,23 @@ bool Utils::searchText(const wchar_t* szString, const wchar_t* szSearchText)
 	delete[] szUpcaseSearchText;
 
 	return found;
+}
+
+int Utils::excelMoneyToPennies(double money) // Float is trouble, due to rounding. Avoid as much as possible
+{
+	// The first rule of float is DO NO MATH with floats. Get it to string asap
+	wchar_t szBuff[1024] = { 0 };
+	swprintf(szBuff, 1024, L"%f", money);
+
+	// Now find the decimal and kill after two places
+	int ret = 0;
+	wchar_t* szDecimalSpot = wcsrchr(szBuff, L'.');
+	if (szDecimalSpot && szDecimalSpot+3 < szBuff+1024) {
+		*(szDecimalSpot + 3) = 0;
+	}
+
+	return dollarsStringToPennies(szBuff);
+	
 }
 
 std::wstring Utils::penniesToDollarsString(int money, bool formatted /*= true*/)

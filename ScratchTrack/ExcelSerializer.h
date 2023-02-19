@@ -8,6 +8,12 @@
 struct lxw_workbook;
 struct lxw_worksheet;
 
+namespace OpenXLSX
+{
+	class XLWorkbook;
+	class XLWorksheet;
+};
+
 class ExcelSerializer
 {
 public:
@@ -21,7 +27,6 @@ protected:
 	static std::string transactionTypeToString(Transaction* pTransaction);
 	static Transaction::TRANSACTION_TYPE transactionTypeFromString(const char* szTransactionType);
 
-
 	static lxw_worksheet* serializeFrontSheet(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems);
 	static int serializeAccounts(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems, std::map<unsigned int, std::string>& accountIdToCellRef);
 	static int serializeIncomes(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems, std::map<unsigned int, std::string>& accountIdToCellRef);
@@ -32,10 +37,25 @@ protected:
 	// Do this after serializing other stuff so that locations are captured
 	static int writeFrontSheetBudget(lxw_workbook* workbook, lxw_worksheet* worksheet, std::vector<AccountBase*>& topLevelItems);
 
+	// Deserialize stuff
+	static int deserializeAccounts(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId);
+	static int deserializeIncomes(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId);
+
+	static int deserializeSettings(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId);
+	static int deserializeTransactions(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId);
+	static int deserializeCategories(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId);
+
 	inline static const char* ACCOUNT_WORKSHEET_NAME = "Accounts";
 	inline static const char* INCOME_WORKSHEET_NAME = "Incomes";
 	inline static const char* EXPENSE_WORKSHEET_NAME = "Categories";
 	inline static const char* SETTINGS_WORKSHEET_NAME = "Settings";
 	inline static const char* FRONT_WORKSHEET_NAME = "Budget";
 	inline static const char* TRANSACTIONS_WORKSHEET_NAME = "Transactions";
+
+protected:
+	static void addAccountLocationToMap(int row, int col, OpenXLSX::XLWorksheet& worksheet, AccountBase* pAccount, std::map<std::string, unsigned int>& cellRefToAccountId);
+
+	// Functions to deal with bugs / deficiencies in OpenXLSX
+	static void excelSerialDateToDMY(int nSerialDate, int& nDay, int& nMonth, int& nYear);
+	static int pennyValueFromCell(int row, int col, OpenXLSX::XLWorksheet& worksheet);
 }; // class ExcelSerializer

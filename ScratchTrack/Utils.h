@@ -18,6 +18,7 @@ public:
 	static size_t stringDistance(std::wstring s1, std::wstring s2);
 	static size_t looksSimilar(std::wstring s1, std::wstring s2);
 	static SYSTEMTIME dateStringToSysTime(const wchar_t* szDate);
+	static bool stringToBool(const char* szString);
 
 // Date stuff
 	static unsigned int daysDiff(const SYSTEMTIME& t1, const SYSTEMTIME& t2);
@@ -26,6 +27,7 @@ public:
 	static std::wstring penniesToDollarsString(int money, bool formatted = true);
 	static int dollarsStringToPennies(const char* szCurrency);
 	static int dollarsStringToPennies(const wchar_t* szCurrency);
+	static int excelMoneyToPennies(double money); // Float is trouble, due to rounding. Avoid as much as possible
 
 // GUI stuff
 	static bool populatePayeeCombo(HWND hParent, int resourceId, const wchar_t* szDefaultPayee = nullptr);

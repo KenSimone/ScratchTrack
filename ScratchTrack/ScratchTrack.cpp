@@ -315,15 +315,26 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    // Populate data (load or create new)
    DWORD dwAttribs = ::GetFileAttributesA(Utils::getPersistFile());
-   if (dwAttribs != INVALID_FILE_ATTRIBUTES) {
-       std::vector<AccountBase*> topLevelItems;
-       deserialize(Utils::getPersistFile(), topLevelItems);
-       for (size_t i = 0; i < topLevelItems.size(); i++)
-       {
+   bool haveXml = dwAttribs != INVALID_FILE_ATTRIBUTES;
+
+   dwAttribs = ::GetFileAttributesA(Utils::getPersistFileXlsx());
+   bool haveXls = dwAttribs != INVALID_FILE_ATTRIBUTES;
+   std::vector<AccountBase*> topLevelItems, topLevelItems2;
+
+   int deserializeResult = ERROR_FILE_NOT_FOUND;
+   if (haveXls) {
+       deserializeResult = ExcelSerializer::deserialize(Utils::getPersistFileXlsx(), topLevelItems);
+   }
+   else if (haveXml) {
+       deserializeResult = deserialize(Utils::getPersistFile(), topLevelItems);
+   }
+
+   if (deserializeResult == ERROR_SUCCESS ) {
+       for (size_t i = 0; i < topLevelItems.size(); i++) {
            addTreeItem(TVI_ROOT, topLevelItems[i]);
        }
    }
-   else if (GetLastError() != ERROR_FILE_NOT_FOUND) {
+   else if (deserializeResult != ERROR_FILE_NOT_FOUND) {
        MessageBox(g_hTopWindow, L"Unable to load file", L"Error", MB_OK);
        exit(0);
    }

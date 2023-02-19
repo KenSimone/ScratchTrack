@@ -6,7 +6,6 @@
 #include <map>
 #include <limits.h>
 
-static unsigned int _curId = 0;
 std::map<unsigned int, AccountBase*> _idToItem;
 extern std::vector<Transaction*> _Transactions;
 extern TransactionImporter g_transactionImporter;
@@ -185,7 +184,7 @@ int deserialize(const char* szFilename, std::vector<AccountBase*>& topLevelItems
 		return -1;
 	}
 
-	_curId = ACCOUNT_ID_INVALID;
+	AccountBase::startDeserialize();
 
 	Transaction::deserialize(pRoot);
 
@@ -209,16 +208,7 @@ int deserialize(const char* szFilename, std::vector<AccountBase*>& topLevelItems
 		}
 	}
 
-	// Find our biggest ID and set the seed to that +1
-	unsigned int biggestId = 0;
-	for (auto itr = _idToItem.begin(); itr != _idToItem.end(); itr++) {
-		int itemId = itr->second->getId();
-		if (itemId != ACCOUNT_ID_PAY_CC && itemId != ACCOUNT_ID_INVALID) {
-			biggestId = itemId;
-		}
-	}
-
-	_curId = biggestId + 1;
+	AccountBase::stopDeserialize();
 
 	return ERROR_SUCCESS;
 }
@@ -428,4 +418,22 @@ AccountExpense* AccountExpense::getOrCreateCCExpense()
 		pExpense->setId(ACCOUNT_ID_PAY_CC);
 	}
 	return pExpense;
+}
+
+unsigned int AccountBase::_curId = 0;
+
+
+
+void AccountBase::stopDeserialize()
+{
+	// Find our biggest ID and set the seed to that +1
+	unsigned int biggestId = 0;
+	for (auto itr = _idToItem.begin(); itr != _idToItem.end(); itr++) {
+		int itemId = itr->second->getId();
+		if (itemId != ACCOUNT_ID_PAY_CC && itemId != ACCOUNT_ID_INVALID) {
+			biggestId = itemId;
+		}
+	}
+
+	_curId = biggestId + 1;
 }
