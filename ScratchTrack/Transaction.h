@@ -55,11 +55,12 @@ public:
 	SYSTEMTIME getTimestamp() { return _timestamp; }
 	void getLocalTimeStamp(std::wstring& result)
 	{
-		SYSTEMTIME localTime = { 0 };
-		SystemTimeToTzSpecificLocalTime(NULL, &_timestamp, &localTime);
+		// KS - Don't translate dates since we save in XLSX now. 
+		//SYSTEMTIME localTime = { 0 };
+		//SystemTimeToTzSpecificLocalTime(NULL, &_timestamp, &localTime);
 
 		wchar_t szBuff[1024] = { 0 };
-		GetDateFormatEx(LOCALE_NAME_USER_DEFAULT, DATE_SHORTDATE, &localTime, nullptr, szBuff, 1024, nullptr);
+		GetDateFormatEx(LOCALE_NAME_USER_DEFAULT, DATE_SHORTDATE, &_timestamp, nullptr, szBuff, 1024, nullptr);
 
 		result = szBuff;
 	}

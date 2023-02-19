@@ -250,7 +250,7 @@ int AccountBase::getCurrentMonthTransacationTotal()
 
 	// Get time as local time
 	SYSTEMTIME currentTime = { 0 };
-	GetSystemTime(&currentTime);
+	GetLocalTime(&currentTime);
 
 	// Get all account IDs of interest
 	std::set<unsigned int> accountIds;
@@ -259,8 +259,7 @@ int AccountBase::getCurrentMonthTransacationTotal()
 	// Spin through all transactions
 	for (auto itr = _Transactions.begin(); itr != _Transactions.end(); itr++)
 	{
-		SYSTEMTIME transactionTime = (*itr)->getTimestamp(), localTransactionTime = { 0 };
-		SystemTimeToTzSpecificLocalTime(NULL, &transactionTime, &localTransactionTime);
+		SYSTEMTIME transactionTime = (*itr)->getTimestamp();
 
 		if ((transactionTime.wYear == currentTime.wYear) &&
 			(transactionTime.wMonth == currentTime.wMonth))

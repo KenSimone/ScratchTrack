@@ -95,7 +95,7 @@ int Transaction::deserialize(tinyxml2::XMLElement* pRoot)
 
 			uint64_t timestamp = 0;
 			SYSTEMTIME st = { 0 };
-			GetSystemTime(&st);
+			GetLocalTime(&st);
 
 			pTransaction->QueryUnsigned64Attribute("timestamp", &timestamp);
 			if (timestamp) {

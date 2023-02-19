@@ -136,11 +136,10 @@ int ExcelSerializer::serializeAccounts(lxw_workbook* workbook, std::vector<Accou
 
 	// Write accounts
 	worksheet_write_string(worksheet, curRow, 0, "Account name", formatHeader);
-	worksheet_write_string(worksheet, curRow, 1, "Id", formatHeader);
-	worksheet_write_string(worksheet, curRow, 2, "Type", formatHeader);
-	worksheet_write_string(worksheet, curRow, 3, "Balance", formatHeader);
-	worksheet_write_string(worksheet, curRow, 4, "InBudget", formatHeader);
-	worksheet_write_string(worksheet, curRow, 5, "Hidden", formatHeader);
+	worksheet_write_string(worksheet, curRow, 1, "Type", formatHeader);
+	worksheet_write_string(worksheet, curRow, 2, "Balance", formatHeader);
+	worksheet_write_string(worksheet, curRow, 3, "InBudget", formatHeader);
+	worksheet_write_string(worksheet, curRow, 4, "Hidden", formatHeader);
 	worksheet_set_column(worksheet, 0, 8, 15, nullptr);
 	curRow++;
 
@@ -153,11 +152,10 @@ int ExcelSerializer::serializeAccounts(lxw_workbook* workbook, std::vector<Accou
 		Account* p = dynamic_cast<Account*>(topLevelItems[i]);
 
 		worksheet_write_string(worksheet, curRow, 0, Utils::wideToMultibyte(p->getName()).c_str(), formatLeft);
-		worksheet_write_number(worksheet, curRow, 1, p->getId(), formatLeft);
-		worksheet_write_string(worksheet, curRow, 2, accountTypeToString(p).c_str(), formatLeft);
-		worksheet_write_number(worksheet, curRow, 3, _wtof(Utils::penniesToDollarsString(p->getBalance(), false).c_str()), formatMoney);
-		worksheet_write_string(worksheet, curRow, 4, p->getContributesToBudget() ? "yes" : "no", formatLeft);
-		worksheet_write_string(worksheet, curRow, 5, p->getHidden() ? "yes" : "no", formatLeft);
+		worksheet_write_string(worksheet, curRow, 1, accountTypeToString(p).c_str(), formatLeft);
+		worksheet_write_number(worksheet, curRow, 2, _wtof(Utils::penniesToDollarsString(p->getBalance(), false).c_str()), formatMoney);
+		worksheet_write_string(worksheet, curRow, 3, p->getContributesToBudget() ? "yes" : "no", formatLeft);
+		worksheet_write_string(worksheet, curRow, 4, p->getHidden() ? "yes" : "no", formatLeft);
 
 		char szBuff[1024] = { 0 };
 		sprintf_s(szBuff, "=Accounts!A%d", curRow+1);
@@ -198,10 +196,9 @@ int ExcelSerializer::serializeIncomes(lxw_workbook* workbook, std::vector<Accoun
 
 	// Write incomes
 	worksheet_write_string(worksheet, curRow, 0, "Income name", formatHeader);
-	worksheet_write_string(worksheet, curRow, 1, "Id", formatHeader);
-	worksheet_write_string(worksheet, curRow, 2, "Income", formatHeader);
-	worksheet_write_string(worksheet, curRow, 3, "Hidden", formatHeader);
-	worksheet_write_string(worksheet, curRow, 4, "Read Only", formatHeader);
+	worksheet_write_string(worksheet, curRow, 1, "Income", formatHeader);
+	worksheet_write_string(worksheet, curRow, 2, "Hidden", formatHeader);
+	worksheet_write_string(worksheet, curRow, 3, "Read Only", formatHeader);
 	worksheet_set_column(worksheet, 0, 8, 15, nullptr);
 
 	curRow++;
@@ -214,10 +211,9 @@ int ExcelSerializer::serializeIncomes(lxw_workbook* workbook, std::vector<Accoun
 		AccountGroup* p = dynamic_cast<AccountGroup*>(topLevelItems[i]);
 
 		worksheet_write_string(worksheet, curRow, 0, Utils::wideToMultibyte(p->getName()).c_str(), formatLeft);
-		worksheet_write_number(worksheet, curRow, 1, p->getId(), formatLeft);
-		worksheet_write_number(worksheet, curRow, 2, -_wtof(Utils::penniesToDollarsString(p->getExpenseLimit(), false).c_str()), formatMoney);
-		worksheet_write_string(worksheet, curRow, 3, p->getHidden() ? "yes" : "no", formatLeft);
-		worksheet_write_string(worksheet, curRow, 4, p->getReadOnly() ? "yes" : "no", formatLeft);
+		worksheet_write_number(worksheet, curRow, 1, -_wtof(Utils::penniesToDollarsString(p->getExpenseLimit(), false).c_str()), formatMoney);
+		worksheet_write_string(worksheet, curRow, 2, p->getHidden() ? "yes" : "no", formatLeft);
+		worksheet_write_string(worksheet, curRow, 3, p->getReadOnly() ? "yes" : "no", formatLeft);
 
 		char szBuff[1024] = { 0 };
 		sprintf_s(szBuff, "=Incomes!A%d", curRow + 1);
@@ -259,15 +255,15 @@ int ExcelSerializer::serializeCategories(lxw_workbook* workbook, std::vector<Acc
 
 	// Write categories
 	worksheet_write_string(worksheet, curRow, 0, "Expense name", formatHeader);
-	worksheet_write_string(worksheet, curRow, 1, "Id", formatHeader);
-	worksheet_write_string(worksheet, curRow, 2, "Income Id", formatHeader);
-	worksheet_write_string(worksheet, curRow, 3, "Budgeted", formatHeader);
-	worksheet_write_string(worksheet, curRow, 4, "Balance", formatHeader);
-	worksheet_write_string(worksheet, curRow, 5, "Hidden", formatHeader);
-	worksheet_write_string(worksheet, curRow, 6, "Read Only", formatHeader);
-	worksheet_write_string(worksheet, curRow, 7, "default Payee", formatHeader);
-	worksheet_write_string(worksheet, curRow, 8, "default Amount", formatHeader);
-	worksheet_write_string(worksheet, curRow, 9, "default Payer Id", formatHeader);
+	worksheet_write_string(worksheet, curRow, 1, "Income Id", formatHeader);
+	worksheet_write_string(worksheet, curRow, 2, "Budgeted", formatHeader);
+	worksheet_write_string(worksheet, curRow, 3, "Balance", formatHeader);
+	worksheet_write_string(worksheet, curRow, 4, "Hidden", formatHeader);
+	worksheet_write_string(worksheet, curRow, 5, "Read Only", formatHeader);
+	worksheet_write_string(worksheet, curRow, 6, "default Payee", formatHeader);
+	worksheet_write_string(worksheet, curRow, 7, "default Amount", formatHeader);
+	worksheet_write_string(worksheet, curRow, 8, "default Payer Id", formatHeader);
+	worksheet_write_string(worksheet, curRow, 9, "Flags", formatHeader);
 	worksheet_set_column(worksheet, 0, 8, 15, nullptr);
 
 
@@ -289,35 +285,36 @@ int ExcelSerializer::serializeCategories(lxw_workbook* workbook, std::vector<Acc
 			AccountExpense* p = dynamic_cast<AccountExpense*>(children[j]);
 
 			worksheet_write_string(worksheet, curRow, 0, Utils::wideToMultibyte(p->getName()).c_str(), formatLeft);
-			worksheet_write_number(worksheet, curRow, 1, p->getId(), formatLeft);
 
 			auto itr = accountIdToCellRef.find(pGroup->getId());
 			if (itr != accountIdToCellRef.end()) {
 				//worksheet_write_number(worksheet, curRow, 2, pGroup->getId(), formatLeft);
-				worksheet_write_formula_str(worksheet, curRow, 2, itr->second.c_str(), formatLeft, "");
+				worksheet_write_formula_str(worksheet, curRow, 1, itr->second.c_str(), formatLeft, "");
 			}
 			else {
-				worksheet_write_string(worksheet, curRow, 2, "", formatLeft);
+				worksheet_write_string(worksheet, curRow, 1, "", formatLeft);
 			}
 
-			worksheet_write_number(worksheet, curRow, 3, _wtof(Utils::penniesToDollarsString(p->getBudgeted(), false).c_str()), formatMoney);
-			worksheet_write_number(worksheet, curRow, 4, _wtof(Utils::penniesToDollarsString(p->getBalance(), false).c_str()), formatMoney);
+			worksheet_write_number(worksheet, curRow, 2, _wtof(Utils::penniesToDollarsString(p->getBudgeted(), false).c_str()), formatMoney);
+			worksheet_write_number(worksheet, curRow, 3, _wtof(Utils::penniesToDollarsString(p->getBalance(), false).c_str()), formatMoney);
 
-			worksheet_write_string(worksheet, curRow, 5, p->getHidden() ? "yes" : "no", formatLeft);
-			worksheet_write_string(worksheet, curRow, 6, p->getReadOnly() ? "yes" : "no", formatLeft);
+			worksheet_write_string(worksheet, curRow, 4, p->getHidden() ? "yes" : "no", formatLeft);
+			worksheet_write_string(worksheet, curRow, 5, p->getReadOnly() ? "yes" : "no", formatLeft);
 
-			worksheet_write_string(worksheet, curRow, 7, Utils::wideToMultibyte(p->getDefaultTransactionPayee()).c_str(), formatLeft);
-			worksheet_write_number(worksheet, curRow, 8, _wtof(Utils::penniesToDollarsString(p->getDefaultTransactionAmount(), false).c_str()), formatMoney);
+			worksheet_write_string(worksheet, curRow, 6, Utils::wideToMultibyte(p->getDefaultTransactionPayee()).c_str(), formatLeft);
+			worksheet_write_number(worksheet, curRow, 7, _wtof(Utils::penniesToDollarsString(p->getDefaultTransactionAmount(), false).c_str()), formatMoney);
 
 			if (p->getDefaultTransactionPayFromAccount()) {
 				itr = accountIdToCellRef.find(p->getDefaultTransactionPayFromAccount()->getId());
 				if (itr != accountIdToCellRef.end()) {
-					worksheet_write_formula_str(worksheet, curRow, 9, itr->second.c_str(), formatLeft, "");
+					worksheet_write_formula_str(worksheet, curRow, 8, itr->second.c_str(), formatLeft, "");
 				}
 			}
 			else {
-				worksheet_write_string(worksheet, curRow, 9, "", formatLeft);
+				worksheet_write_string(worksheet, curRow, 8, "", formatLeft);
 			}
+
+			worksheet_write_number(worksheet, curRow, 9, p->getId() == ACCOUNT_ID_PAY_CC ? FLAG_PAYS_CCS : FLAG_NO_FLAGS, formatLeft);
 
 			char szBuff[1024] = { 0 };
 			sprintf_s(szBuff, "=Categories!A%d", curRow + 1);
@@ -590,16 +587,12 @@ int ExcelSerializer::writeFrontSheetBudget(lxw_workbook* workbook, lxw_worksheet
 		worksheet_merge_range(worksheet, valuesStart + i, 1, valuesStart + i, 2, nullptr, nullptr);
 		worksheet_write_formula_str(worksheet, valuesStart + i, 1, szBuf, nullptr, "");
 
-		// Category budget =Categories!A2...
-		sprintf_s(szBuf, "=-Categories!D%d", i + 2);
+		// Category budget =Categories!C2...
+		sprintf_s(szBuf, "=-Categories!C%d", i + 2);
 		worksheet_write_formula_str(worksheet, valuesStart + i, 3, szBuf, formatMoney, "");
 
 		// Actual
-		//sprintf_s(szBuf, "=-SUMIFS(Transactions!C:C, Transactions!D:D, Categories!B%d, Transactions!A:A, \">= \"&DATE(YEAR(TODAY()),MONTH(TODAY()),1))", i + 2);
-
-		// =-SUMIFS(Transactions!C:C, Transactions!D:D, Categories!B2, Transactions!A:A, ">= " & DATE(D11, D10, 1), Transactions!A:A, "< " & EDATE(DATE(D11, D10, 1), 1))
 		sprintf_s(szBuf, "=-SUMIFS(Transactions!C:C, Transactions!D:D, Categories!A%d, Transactions!A:A, \">= \" & DATE(D11, D10, 1), Transactions!A:A, \"< \" & EDATE(DATE(D11, D10, 1), 1))", i + 2);
-
 		worksheet_write_formula_str(worksheet, valuesStart + i, 4, szBuf, formatMoney, "");
 		worksheet_conditional_format_range(worksheet, valuesStart + i, 4, valuesStart + i, 4, &formatMoneyConditional);
 
@@ -630,7 +623,7 @@ int ExcelSerializer::writeFrontSheetBudget(lxw_workbook* workbook, lxw_worksheet
 	std::vector<AccountBase*> groups = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
 
 	worksheet_write_string(worksheet, CELL("H15"), "Budgeted", formatHeader3);
-	worksheet_write_formula_str(worksheet, CELL("I15"), "=SUM(Incomes!C:C)", formatMoney, "");
+	worksheet_write_formula_str(worksheet, CELL("I15"), "=SUM(Incomes!B:B)", formatMoney, "");
 
 	worksheet_write_string(worksheet, CELL("H16"), "Actual", formatHeader3);
 	sprintf_s(szBuf, "=SUMIFS(Transactions!C:C, Transactions!H:H, \"Deposit\", Transactions!A:A, \">= \" & DATE(D11, D10, 1), Transactions!A:A, \"< \" & EDATE(DATE(D11, D10, 1), 1))");
@@ -705,7 +698,7 @@ int ExcelSerializer::deserialize(const char* szFile, std::vector<AccountBase*>& 
 
 	std::map<std::string, unsigned int> cellRefToAccountId;
 
-	AccountBase::startDeserialize();
+	//AccountBase::startDeserialize();
 
 	OpenXLSX::XLWorkbook wb = doc.workbook();
 	int err = deserializeAccounts(wb, topLevelItems, cellRefToAccountId);
@@ -735,7 +728,7 @@ int ExcelSerializer::deserialize(const char* szFile, std::vector<AccountBase*>& 
 
 
 end:
-	AccountBase::stopDeserialize();
+	//AccountBase::stopDeserialize();
 	return ret;
 }
 
@@ -756,28 +749,25 @@ int ExcelSerializer::deserializeAccounts(OpenXLSX::XLWorkbook& workbook, std::ve
 			break;
 		}
 
-		// ID
-		unsigned int id = worksheet.cell(row, 2).value();
-
 		// Type
-		std::string typeS = worksheet.cell(row, 3).value();
+		std::string typeS = worksheet.cell(row, 2).value();
 		bool isCC = false;
 		AccountBase::accountItemType type = accountTypeFromString(typeS.c_str(), isCC);
 
 		// Balance
-		int pennies = pennyValueFromCell(row, 4, worksheet);
+		int pennies = pennyValueFromCell(row, 3, worksheet);
 
 		// in budget
-		std::string inBudget = worksheet.cell(row, 5).value();
+		std::string inBudget = worksheet.cell(row, 4).value();
 
 		// Hidden
-		std::string hidden = worksheet.cell(row, 6).value();
+		std::string hidden = worksheet.cell(row, 5).value();
 
 		
 		Account* pAccount = new Account;
 		pAccount->setName(Utils::multiByteToWide(name.c_str()).c_str());
 		pAccount->setIsCCAccount(isCC);
-		pAccount->setId(id);
+		//pAccount->setId(id);
 		pAccount->addBalance(pennies);
 		pAccount->setContributesToBudget(Utils::stringToBool(inBudget.c_str()));
 		pAccount->setHidden(Utils::stringToBool(hidden.c_str()));
@@ -812,24 +802,20 @@ int ExcelSerializer::deserializeIncomes(OpenXLSX::XLWorkbook& workbook, std::vec
 			break;
 		}
 
-		// ID
-		unsigned int id = worksheet.cell(row, 2).value();
-
 		// Balance
-		int pennies = pennyValueFromCell(row, 3, worksheet);
+		int pennies = pennyValueFromCell(row, 2, worksheet);
 
 		// Hidden
-		std::string hidden = worksheet.cell(row, 4).value();
+		std::string hidden = worksheet.cell(row, 3).value();
 
 		// readonly
-		std::string readOnly = worksheet.cell(row, 5).value();
+		std::string readOnly = worksheet.cell(row, 4).value();
 
 		AccountGroup* pGroup = new AccountGroup;
 		pGroup->setName(Utils::multiByteToWide(name.c_str()).c_str());
-		pGroup->setId(id);
 		pGroup->setExpenseLimit(-pennies);
 		pGroup->setHidden(Utils::stringToBool(hidden.c_str()));
-		pGroup->setReadOnly(Utils::stringToBool(hidden.c_str()));
+		pGroup->setReadOnly(Utils::stringToBool(readOnly.c_str()));
 
 		addAccountLocationToMap(row, 1, worksheet, pGroup, cellRefToAccountId);
 
@@ -896,12 +882,9 @@ int ExcelSerializer::deserializeCategories(OpenXLSX::XLWorkbook& workbook, std::
 			break;
 		}
 
-		// ID
-		unsigned int id = worksheet.cell(row, 2).value();
-
 		// Parent folder
 		int parentId = ACCOUNT_ID_INVALID;
-		XLFormula formula = worksheet.cell(row, 3).formula();
+		XLFormula formula = worksheet.cell(row, 2).formula();
 		std::string formulaText = formula.get();
 		auto itr = cellRefToAccountId.find(formulaText);
 		if (itr != cellRefToAccountId.end()) {
@@ -909,47 +892,57 @@ int ExcelSerializer::deserializeCategories(OpenXLSX::XLWorkbook& workbook, std::
 		}
 
 		// Budgeted
-		int budgeted = pennyValueFromCell(row, 4, worksheet);
-
-		int balance = pennyValueFromCell(row, 5, worksheet);
+		int budgeted = pennyValueFromCell(row, 3, worksheet);
+		int balance = pennyValueFromCell(row, 4, worksheet);
 
 		// Hidden
-		std::string hidden = worksheet.cell(row, 6).value();
+		std::string hidden = worksheet.cell(row, 5).value();
 
 		// readonly
-		std::string readOnly = worksheet.cell(row, 7).value();
+		std::string readOnly = worksheet.cell(row, 6).value();
 
 		// Default payee
 		std::string defaultPayee;
 		try {
-			std::string defaultPayeei = worksheet.cell(row, 8).value();
+			std::string defaultPayeei = worksheet.cell(row, 7).value();
 			defaultPayee = defaultPayeei;
 		}
 		catch (...) {}
 
 		// Default amount
-		int defaultAmount = pennyValueFromCell(row, 9, worksheet);
+		int defaultAmount = pennyValueFromCell(row, 8, worksheet);
 
 		// default payer ID
-		unsigned int defPayerId = ACCOUNT_ID_INVALID;
-		formula = worksheet.cell(row, 9).formula();
-		formulaText = formula.get();
+		unsigned int defPayerId = ACCOUNT_ID_PAY_CC;
+		try {
+			formula = worksheet.cell(row, 9).formula();
+			formulaText = formula.get();
+		}
+		catch (...) {
+		}
+
+		// flags
+		int flags = worksheet.cell(row, 10).value();
+		//int flags = atoi(flagsString.c_str());
+
 		itr = cellRefToAccountId.find(formulaText);
 		if (itr != cellRefToAccountId.end()) {
 			defPayerId = itr->second;
 		}
 
-
 		AccountExpense* pExpense = new AccountExpense;
+		if (flags & FLAG_PAYS_CCS) {
+			pExpense->setId(ACCOUNT_ID_PAY_CC);
+		}
+
 		pExpense->setName(Utils::multiByteToWide(name.c_str()).c_str());
-		pExpense->setId(id);
 
 		AccountGroup* pParent = dynamic_cast<AccountGroup*>(AccountBase::lookupById(parentId));
 		pParent->addChild(pExpense);
 
 		pExpense->setBudgeted(budgeted);
 		pExpense->setHidden(Utils::stringToBool(hidden.c_str()));
-		pExpense->setReadOnly(Utils::stringToBool(hidden.c_str()));
+		pExpense->setReadOnly(Utils::stringToBool(readOnly.c_str()));
 
 		pExpense->setDefaultTransactionPayee(Utils::multiByteToWide(defaultPayee.c_str()).c_str());
 		pExpense->setDefaultTransactionAmount(defaultAmount);
@@ -1002,9 +995,6 @@ int ExcelSerializer::deserializeTransactions(OpenXLSX::XLWorkbook& workbook, std
 			if (!time) {
 				break;
 			}
-
-			// Add one to skip midnight bug
-			time++;
 
 			int day = 0, month = 0, year = 0;
 			excelSerialDateToDMY((int)time, day, month, year);

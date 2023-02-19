@@ -60,4 +60,8 @@ protected:
 	// Functions to deal with bugs / deficiencies in OpenXLSX
 	static void excelSerialDateToDMY(int nSerialDate, int& nDay, int& nMonth, int& nYear);
 	static int pennyValueFromCell(int row, int col, OpenXLSX::XLWorksheet& worksheet);
+
+protected:
+	static const unsigned int FLAG_NO_FLAGS = 0;
+	static const unsigned int FLAG_PAYS_CCS = 1;
 }; // class ExcelSerializer
