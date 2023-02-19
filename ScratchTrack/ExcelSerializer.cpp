@@ -253,7 +253,7 @@ int ExcelSerializer::serializeCategories(lxw_workbook* workbook, std::vector<Acc
 
 		AccountGroup* pGroup = dynamic_cast<AccountGroup*>(topLevelItems[i]);
 		auto children = pGroup->getChildren();
-		for (int j = 0; j < children.size(); j++)
+		for (int j = 0; j < (int)children.size(); j++)
 		{
 			if (children[j]->getType() != AccountBase::EXPENSE) {
 				continue;
@@ -283,13 +283,13 @@ int ExcelSerializer::serializeCategories(lxw_workbook* workbook, std::vector<Acc
 			worksheet_write_number(worksheet, curRow, 8, _wtof(Utils::penniesToDollarsString(p->getDefaultTransactionAmount(), false).c_str()), formatMoney);
 
 			if (p->getDefaultTransactionPayFromAccount()) {
-				worksheet_write_number(worksheet, curRow, 9, p->getDefaultTransactionPayFromAccount()->getId(), formatLeft);
+				itr = accountIdToCellRef.find(p->getDefaultTransactionPayFromAccount()->getId());
+				if (itr != accountIdToCellRef.end()) {
+					worksheet_write_formula_str(worksheet, curRow, 9, itr->second.c_str(), formatLeft, "");
+				}
 			}
-
-			itr = accountIdToCellRef.find(p->getDefaultTransactionPayFromAccount()->getId());
-			if (itr != accountIdToCellRef.end()) {
-				//worksheet_write_number(worksheet, curRow, 8, p->getDefaultTransactionPayFromAccount()->getId(), formatLeft);
-				worksheet_write_formula_str(worksheet, curRow, 9, itr->second.c_str(), formatLeft, "");
+			else {
+				worksheet_write_string(worksheet, curRow, 9, "", formatLeft);
 			}
 
 			char szBuff[1024] = { 0 };
@@ -555,7 +555,7 @@ int ExcelSerializer::writeFrontSheetBudget(lxw_workbook* workbook, lxw_worksheet
 
 	int i = 0;
 	int valuesStart = 14;
-	for (i = 0; i < expenseCount; i++)
+	for (i = 0; i < (int)expenseCount; i++)
 	{
 		// Category name =Categories!A2...
 		sprintf_s(szBuf, "=Categories!A%d", i+2);
