@@ -626,7 +626,7 @@ int ExcelSerializer::writeFrontSheetBudget(lxw_workbook* workbook, lxw_worksheet
 		//sprintf_s(szBuf, "=-SUMIFS(Transactions!C:C, Transactions!D:D, Categories!B%d, Transactions!A:A, \">= \"&DATE(YEAR(TODAY()),MONTH(TODAY()),1))", i + 2);
 
 		// =-SUMIFS(Transactions!C:C, Transactions!D:D, Categories!B2, Transactions!A:A, ">= " & DATE(D11, D10, 1), Transactions!A:A, "< " & EDATE(DATE(D11, D10, 1), 1))
-		sprintf_s(szBuf, "=-SUMIFS(Transactions!C:C, Transactions!D:D, Categories!B%d, Transactions!A:A, \">= \" & DATE(D11, D10, 1), Transactions!A:A, \"< \" & EDATE(DATE(D11, D10, 1), 1))", i + 2);
+		sprintf_s(szBuf, "=-SUMIFS(Transactions!C:C, Transactions!D:D, Categories!A%d, Transactions!A:A, \">= \" & DATE(D11, D10, 1), Transactions!A:A, \"< \" & EDATE(DATE(D11, D10, 1), 1))", i + 2);
 
 		worksheet_write_formula_str(worksheet, valuesStart + i, 4, szBuf, formatMoney, "");
 		worksheet_conditional_format_range(worksheet, valuesStart + i, 4, valuesStart + i, 4, &formatMoneyConditional);
