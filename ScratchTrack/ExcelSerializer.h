@@ -1,6 +1,9 @@
 #pragma once
 #include <vector>
+#include <map>
+#include <string>
 #include "AccountInfo.h"
+#include "Transaction.h"
 
 struct lxw_workbook;
 struct lxw_worksheet;
@@ -15,12 +18,16 @@ protected:
 	static std::string accountTypeToString(AccountBase* pAccount);
 	static AccountBase::accountItemType accountTypeFromString(const char* szAccountType, bool& isCC);
 
+	static std::string transactionTypeToString(Transaction* pTransaction);
+	static Transaction::TRANSACTION_TYPE transactionTypeFromString(const char* szTransactionType);
+
+
 	static lxw_worksheet* serializeFrontSheet(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems);
-	static int serializeAccounts(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems);
-	static int serializeIncomes(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems);
-	static int serializeSettings(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems);
-	static int serializeTransactions(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems);
-	static int serializeCategories(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems);
+	static int serializeAccounts(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems, std::map<unsigned int, std::string>& accountIdToCellRef);
+	static int serializeIncomes(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems, std::map<unsigned int, std::string>& accountIdToCellRef);
+	static int serializeSettings(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems, std::map<unsigned int, std::string>& accountIdToCellRef);
+	static int serializeTransactions(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems, std::map<unsigned int, std::string>& accountIdToCellRef);
+	static int serializeCategories(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems, std::map<unsigned int, std::string>& accountIdToCellRef);
 
 	// Do this after serializing other stuff so that locations are captured
 	static int writeFrontSheetBudget(lxw_workbook* workbook, lxw_worksheet* worksheet, std::vector<AccountBase*>& topLevelItems);
