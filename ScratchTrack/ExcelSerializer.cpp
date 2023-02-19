@@ -51,8 +51,13 @@ int ExcelSerializer::serialize(const char* szFile, std::vector<AccountBase*>& to
 
 end:
 	if (workbook) {
+
+		Utils::doBackups();
+		Utils::monitorDataFileForChanges(true);
 		ret = workbook_close(workbook);
+		Utils::monitorDataFileForChanges(false);
 	}
+
 
 	return ret;
 }
@@ -366,9 +371,10 @@ int ExcelSerializer::serializeTransactions(lxw_workbook* workbook, std::vector<A
 	curRow++;
 
 	auto transactions = Transaction::getAllTransactions();
-	for (size_t i = 0; i < transactions.size(); i++)
+
+	for (auto i = transactions.rbegin(); i != transactions.rend(); i++)
 	{
-		Transaction* pTrans = transactions[i];
+		Transaction* pTrans = *i;
 		lxw_datetime dt;
 		ZeroMemory(&dt, sizeof(dt));
 		dt.year = pTrans->getTimestamp().wYear;
@@ -997,6 +1003,9 @@ int ExcelSerializer::deserializeTransactions(OpenXLSX::XLWorkbook& workbook, std
 				break;
 			}
 
+			// Add one to skip midnight bug
+			time++;
+
 			int day = 0, month = 0, year = 0;
 			excelSerialDateToDMY((int)time, day, month, year);
 			ts.wYear = year;
@@ -1049,6 +1058,8 @@ int ExcelSerializer::deserializeTransactions(OpenXLSX::XLWorkbook& workbook, std
 
 		row++;
 	}
+
+	Transaction::sortAllTransactions(); 
 
 
 	return ERROR_SUCCESS;

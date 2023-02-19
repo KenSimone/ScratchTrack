@@ -66,6 +66,9 @@ public:
 
 	virtual int serialize(tinyxml2::XMLElement* pParent);
 
+	// Call this if you add transactions with backdated time stamps
+	static void sortAllTransactions();
+
 protected:
 	Transaction(TRANSACTION_TYPE type, int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int expenseId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp = nullptr)
 	{

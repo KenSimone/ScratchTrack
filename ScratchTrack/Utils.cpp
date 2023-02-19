@@ -555,7 +555,7 @@ unsigned __stdcall Utils::monitorFileChangeThreadFunc(void* parg)
 	static const int WAIT_FILE_CHANGE = 0;
 	static const int WAIT_ABORT = 1;
 
-	const char* szPersistFile = getPersistFile();
+	const char* szPersistFile = getPersistFileXlsx();
 
 	char szPersistPath[MAX_PATH] = { 0 };
 	strcpy_s(szPersistPath, szPersistFile);
@@ -567,33 +567,42 @@ unsigned __stdcall Utils::monitorFileChangeThreadFunc(void* parg)
 	*szSlashSpot = 0;
 
 	bool shuttingDown = false;
+
+	uint32_t crcBefore = 0, crcAfter = 0;
+	HANDLE hFile = CreateFileA(szPersistFile, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+	if (hFile != INVALID_HANDLE_VALUE) {
+		DWORD dwSize = GetFileSize(hFile, nullptr), dwRead = 0;
+		std::vector<unsigned char> buff;
+		buff.resize(dwSize);
+		ReadFile(hFile, &buff[0], dwSize, &dwRead, nullptr);
+		crcBefore = crc32_bitwise(&buff[0], dwSize);
+		CloseHandle(hFile);
+	}
+
+	HANDLE waitHandles[2] = { 0 };
+	waitHandles[WAIT_FILE_CHANGE] = FindFirstChangeNotificationA(szPersistPath, false, FILE_NOTIFY_CHANGE_LAST_WRITE);
+	waitHandles[WAIT_ABORT] = (HANDLE)parg;
+
 	do
 	{
-		FILETIME lastModifiedBefore = { 0 }, lastModifieAfter = { 0 };
-		HANDLE hFile = CreateFileA(szPersistFile, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-		if (hFile != INVALID_HANDLE_VALUE) {
-			GetFileTime(hFile, nullptr, nullptr, &lastModifiedBefore);
-			CloseHandle(hFile);
-		}
-
-		HANDLE waitHandles[2] = { 0 };
-		waitHandles[WAIT_FILE_CHANGE] = FindFirstChangeNotificationA(szPersistPath, false, FILE_NOTIFY_CHANGE_LAST_WRITE);
-		waitHandles[WAIT_ABORT] = (HANDLE)parg;
-
 		DWORD dwWaitResult = WaitForMultipleObjects(2, waitHandles, false, INFINITE);
-		FindCloseChangeNotification(waitHandles[WAIT_FILE_CHANGE]);
-		waitHandles[WAIT_FILE_CHANGE] = nullptr;
+		FindNextChangeNotification(waitHandles[WAIT_FILE_CHANGE]);
 
 		switch (dwWaitResult)
 		{
 		case WAIT_OBJECT_0 + WAIT_FILE_CHANGE:
 			hFile = CreateFileA(szPersistFile, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+			FlushFileBuffers(hFile);
 			if (hFile != INVALID_HANDLE_VALUE) {
-				GetFileTime(hFile, nullptr, nullptr, &lastModifieAfter);
+				DWORD dwSize = GetFileSize(hFile, nullptr), dwRead = 0;
+				std::vector<unsigned char> buff;
+				buff.resize(dwSize);
+				ReadFile(hFile, &buff[0], dwSize, &dwRead, nullptr);
+				crcAfter = crc32_bitwise(&buff[0], dwSize);
 				CloseHandle(hFile);
 			}
 
-			if (memcmp(&lastModifieAfter, &lastModifiedBefore, sizeof(FILETIME)) != 0) {
+			if (crcAfter != crcBefore) {
 				// The file changed
 
 #ifndef SCRATCHTRACK_TESTS
@@ -601,13 +610,15 @@ unsigned __stdcall Utils::monitorFileChangeThreadFunc(void* parg)
 #endif
 				exit(0);
 			}
-
 			break;
 		case WAIT_OBJECT_0 + WAIT_ABORT:
 			shuttingDown = true;
 			break;
 		};
 	} while (!shuttingDown);
+
+	FindCloseChangeNotification(waitHandles[WAIT_FILE_CHANGE]);
+	waitHandles[WAIT_FILE_CHANGE] = nullptr;
 
 	return 0;
 }
@@ -633,6 +644,9 @@ void Utils::monitorDataFileForChanges(bool stop)
 
 	if (!hAbortEvent) {
 		hAbortEvent = CreateEvent(nullptr, true, false, nullptr);
+	}
+	else {
+		ResetEvent(hAbortEvent);
 	}
 	unsigned int threadId = 0;
 	hThread = (HANDLE)_beginthreadex(NULL, 0, &monitorFileChangeThreadFunc, hAbortEvent, 0, &threadId);
@@ -681,7 +695,7 @@ void Utils::doBackups()
 	// rename 1->2
 	// copy current -> 1 (save op will overwrite)
 
-	const char* szPersistFile = getPersistFile();
+	const char* szPersistFile = getPersistFileXlsx();
 	char szPersistPath[MAX_PATH] = { 0 };
 	strcpy_s(szPersistPath, szPersistFile);
 	char* pSlashSpot = strrchr(szPersistPath, '\\');
@@ -735,4 +749,19 @@ unsigned int Utils::daysDiff(const SYSTEMTIME& t1, const SYSTEMTIME& t2)
 	SystemTimeToVariantTime(const_cast<SYSTEMTIME*>(&t2), &d2);
 
 	return (unsigned int)abs(d2 - d1);
+}
+
+uint32_t Utils::crc32_bitwise(const void* data, size_t length, uint32_t previousCrc32 /*= 0*/)
+{
+	const uint32_t Polynomial = 0xEDB88320;
+
+	uint32_t crc = ~previousCrc32;
+	unsigned char* current = (unsigned char*)data;
+	while (length--)
+	{
+		crc ^= *current++;
+		for (unsigned int j = 0; j < 8; j++)
+			crc = (crc >> 1) ^ (-int(crc & 1) & Polynomial);
+	}
+	return ~crc; // same as crc ^ 0xFFFFFFFF
 }

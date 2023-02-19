@@ -945,11 +945,13 @@ void doImportTransactions(Account* pAccount)
                     Transaction* pTransaction = Transaction::addTransaction(Transaction::EXPENSE, transactionsNew[i]._amount, 
                         pAccount->getId(), ACCOUNT_ID_INVALID, transactionsNew[i]._expenseId, payee.c_str(), nullptr, &transactionsNew[i]._date);
                     pTransaction->apply();
+                } // for each new transaction
 
-                    updateGuiValues();
-                    populateTransactions();
-                    serializeState();
-                }
+                Transaction::sortAllTransactions();
+
+                updateGuiValues();
+                populateTransactions();
+                serializeState();
             }
         }
     }

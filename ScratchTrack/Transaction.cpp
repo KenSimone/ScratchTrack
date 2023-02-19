@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <set>
+#include <algorithm>
 
 
 std::vector<Transaction*> _Transactions;
@@ -190,4 +191,44 @@ void Transaction::apply(bool undo /*= false*/)
 void Transaction::undo()
 {
 	apply(true);
+}
+
+bool transSorter(Transaction* pA, Transaction* pB)
+{
+	if (pA->getTimestamp().wYear > pB->getTimestamp().wYear) {
+		return false;
+	}
+
+	if (pA->getTimestamp().wYear < pB->getTimestamp().wYear) {
+		return true;
+	}
+
+	if (pA->getTimestamp().wMonth > pB->getTimestamp().wMonth) {
+		return false;
+	}
+
+	if (pA->getTimestamp().wMonth < pB->getTimestamp().wMonth) {
+		return true;
+	}
+
+	if (pA->getTimestamp().wDay > pB->getTimestamp().wDay) {
+		return false;
+	}
+
+	if (pA->getTimestamp().wDay < pB->getTimestamp().wDay) {
+		return true;
+	}
+
+	// equal
+	return false;
+
+
+
+
+}
+
+
+void Transaction::sortAllTransactions()
+{
+	std::sort(_Transactions.begin(), _Transactions.end(), transSorter);
 }
