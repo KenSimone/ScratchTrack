@@ -19,20 +19,42 @@ int ExcelSerializer::serialize(const char* szFile, std::vector<AccountBase*>& to
 {
 	std::map<unsigned int, std::string> accountIdToCellRef;
 
+	int ret = ERROR_SUCCESS;
+
 	lxw_workbook* workbook = workbook_new(szFile);
 
 	lxw_worksheet* pBudgetSheet = serializeFrontSheet(workbook, topLevelItems);
-	serializeAccounts(workbook, topLevelItems, accountIdToCellRef);
-	serializeIncomes(workbook, topLevelItems, accountIdToCellRef);
-	serializeCategories(workbook, topLevelItems, accountIdToCellRef);
-	serializeTransactions(workbook, topLevelItems, accountIdToCellRef);
-	serializeSettings(workbook, topLevelItems, accountIdToCellRef);
-	writeFrontSheetBudget(workbook, pBudgetSheet, topLevelItems);
+	ret = serializeAccounts(workbook, topLevelItems, accountIdToCellRef);
+	if (ret != ERROR_SUCCESS ) {
+		goto end;
+	}
+	ret = serializeIncomes(workbook, topLevelItems, accountIdToCellRef);
+	if (ret != ERROR_SUCCESS) {
+		goto end;
+	}
+	ret = serializeCategories(workbook, topLevelItems, accountIdToCellRef);
+	if (ret != ERROR_SUCCESS) {
+		goto end;
+	}
+	ret = serializeTransactions(workbook, topLevelItems, accountIdToCellRef);
+	if (ret != ERROR_SUCCESS) {
+		goto end;
+	}
+	ret = serializeSettings(workbook, topLevelItems, accountIdToCellRef);
+	if (ret != ERROR_SUCCESS) {
+		goto end;
+	}
+	ret = writeFrontSheetBudget(workbook, pBudgetSheet, topLevelItems);
+	if (ret != ERROR_SUCCESS) {
+		goto end;
+	}
 
-	workbook_close(workbook);
+end:
+	if (workbook) {
+		workbook_close(workbook);
+	}
 
-
-	return ERROR_CALL_NOT_IMPLEMENTED;
+	return ret;
 }
 
 std::string ExcelSerializer::accountTypeToString(AccountBase* pAccount)
@@ -705,10 +727,9 @@ int ExcelSerializer::deserialize(const char* szFile, std::vector<AccountBase*>& 
 		goto end;
 	}
 
-	AccountBase::stopDeserialize();
 
 end:
-
+	AccountBase::stopDeserialize();
 	return ret;
 }
 

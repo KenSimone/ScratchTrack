@@ -16,6 +16,9 @@
     <ClCompile Include="..\ScratchTrack\TransactionImporter.cpp">
       <Filter>ScratchTrackFiles</Filter>
     </ClCompile>
+    <ClCompile Include="..\ScratchTrack\ExcelSerializer.cpp">
+      <Filter>ScratchTrackFiles</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

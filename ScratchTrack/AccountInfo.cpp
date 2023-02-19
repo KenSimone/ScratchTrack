@@ -172,8 +172,6 @@ AccountBase* AccountItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 
 int deserialize(const char* szFilename, std::vector<AccountBase*>& topLevelItems)
 {
-	//testWorkbook();
-
 	tinyxml2::XMLDocument doc;
 	if (XML_SUCCESS != doc.LoadFile(szFilename)) {
 		return -1;
@@ -426,6 +424,10 @@ unsigned int AccountBase::_curId = 0;
 
 void AccountBase::stopDeserialize()
 {
+	if (_curId != ACCOUNT_ID_INVALID){
+		return;
+	}
+
 	// Find our biggest ID and set the seed to that +1
 	unsigned int biggestId = 0;
 	for (auto itr = _idToItem.begin(); itr != _idToItem.end(); itr++) {

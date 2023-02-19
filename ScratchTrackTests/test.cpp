@@ -2,6 +2,7 @@
 #include "AccountInfo.h"
 #include "Transaction.h"
 #include "TransactionImporter.h"
+#include "ExcelSerializer.h"
 #include "Utils.h"
 #include <vector>
 
@@ -41,9 +42,13 @@ void doCreateAccounts()
 	pAccount3->addBalance(300);
 }
 
-int doSerializeAccounts()
+int doSerializeAccounts(bool xlslx)
 {
 	std::vector<AccountBase*> accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
+	if (xlslx) {
+		return ExcelSerializer::serialize("test.xlsx", accounts);
+	}
+
 	return serialize(accounts, "test.xml");
 }
 
@@ -80,13 +85,14 @@ TEST(TestAccounts, TestSerializeAccount) {
 	EXPECT_EQ(3, accounts.size());
 
 	// Test serialize
-	EXPECT_EQ(ERROR_SUCCESS, doSerializeAccounts());
+	EXPECT_EQ(ERROR_SUCCESS, doSerializeAccounts(false));
+	EXPECT_EQ(ERROR_SUCCESS, doSerializeAccounts(true));
 
 	deleteAllAccounts();
 }
 
-TEST(TestAccounts, TestDeserializeAccounts) {
-
+void doDeserializeTest(bool xlsx)
+{
 	// Test deserialize
 	deleteAllAccounts();
 	std::vector<AccountBase*> accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
@@ -102,13 +108,18 @@ TEST(TestAccounts, TestDeserializeAccounts) {
 
 	EXPECT_EQ(3, accountIds.size());
 
-	EXPECT_EQ(ERROR_SUCCESS, doSerializeAccounts());
+	EXPECT_EQ(ERROR_SUCCESS, doSerializeAccounts(xlsx));
 	deleteAllAccounts();
 
 	accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
 	EXPECT_TRUE(accounts.empty());
 
-	EXPECT_EQ(ERROR_SUCCESS, deserialize("test.xml", accounts));
+	if (xlsx) {
+		EXPECT_EQ(ERROR_SUCCESS, ExcelSerializer::deserialize("test.xlsx", accounts));
+	}
+	else {
+		EXPECT_EQ(ERROR_SUCCESS, deserialize("test.xml", accounts));
+	}
 	accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
 	EXPECT_EQ(3, accounts.size());
 
@@ -128,14 +139,19 @@ TEST(TestAccounts, TestDeserializeAccounts) {
 	EXPECT_EQ(200, pAccount2->getBalance());
 	EXPECT_EQ(300, pAccount3->getBalance());
 
-	EXPECT_TRUE(pAccount1->getId() < 10);
-	EXPECT_TRUE(pAccount2->getId() < 10);
-	EXPECT_TRUE(pAccount3->getId() < 10);
+	EXPECT_TRUE(pAccount1->getId() < 100);
+	EXPECT_TRUE(pAccount2->getId() < 100);
+	EXPECT_TRUE(pAccount3->getId() < 100);
 
 	deleteAllAccounts();
 
 	accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
 	EXPECT_TRUE(accounts.empty());
+}
+
+TEST(TestAccounts, TestDeserializeAccounts) {
+	doDeserializeTest(true);
+	doDeserializeTest(false);
 }
 
 TEST(TestAccounts, TestDeposit) {
