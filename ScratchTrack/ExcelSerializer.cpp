@@ -800,7 +800,7 @@ int ExcelSerializer::deserializeIncomes(OpenXLSX::XLWorkbook& workbook, std::vec
 		AccountGroup* pGroup = new AccountGroup;
 		pGroup->setName(Utils::multiByteToWide(name.c_str()).c_str());
 		pGroup->setId(id);
-		pGroup->addBalance(pennies);
+		pGroup->setExpenseLimit(-pennies);
 		pGroup->setHidden(Utils::stringToBool(hidden.c_str()));
 		pGroup->setReadOnly(Utils::stringToBool(hidden.c_str()));
 
