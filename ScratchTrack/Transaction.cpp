@@ -195,36 +195,7 @@ void Transaction::undo()
 
 bool transSorter(Transaction* pA, Transaction* pB)
 {
-	if (pA->getTimestamp().wYear > pB->getTimestamp().wYear) {
-		return false;
-	}
-
-	if (pA->getTimestamp().wYear < pB->getTimestamp().wYear) {
-		return true;
-	}
-
-	if (pA->getTimestamp().wMonth > pB->getTimestamp().wMonth) {
-		return false;
-	}
-
-	if (pA->getTimestamp().wMonth < pB->getTimestamp().wMonth) {
-		return true;
-	}
-
-	if (pA->getTimestamp().wDay > pB->getTimestamp().wDay) {
-		return false;
-	}
-
-	if (pA->getTimestamp().wDay < pB->getTimestamp().wDay) {
-		return true;
-	}
-
-	// equal
-	return false;
-
-
-
-
+	return Utils::compareDates(pA->getTimestamp(), pB->getTimestamp()) == -1;
 }
 
 

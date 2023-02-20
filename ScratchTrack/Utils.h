@@ -22,6 +22,10 @@ public:
 
 // Date stuff
 	static unsigned int daysDiff(const SYSTEMTIME& t1, const SYSTEMTIME& t2);
+	static std::wstring formatDate(SYSTEMTIME ts);
+
+	// -1 a < b, 0 if a == b, 1 if a > b
+	static int compareDates(SYSTEMTIME a, SYSTEMTIME b);
 
 // Money stuff
 	static std::wstring penniesToDollarsString(int money, bool formatted = true);

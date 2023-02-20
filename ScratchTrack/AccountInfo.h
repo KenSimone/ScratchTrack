@@ -244,7 +244,10 @@ protected:
 class Account : public AccountBase
 {
 public:
-	Account() : AccountBase(ACCOUNT), _isBudgeted(true), _isCCAccount(false) {};
+	Account() : AccountBase(ACCOUNT), _isBudgeted(true), _isCCAccount(false) 
+	{
+		GetLocalTime(&_lastImportDate);
+	};
 
 	bool getContributesToBudget() { return _isBudgeted;  }
 	void setContributesToBudget(bool budgeted) { _isBudgeted = budgeted; }
@@ -268,6 +271,9 @@ public:
 
 	// The item-type (account/group/expense)
 	virtual accountItemType getType() { return AccountBase::ACCOUNT; }
+
+	void setLastImportDate(SYSTEMTIME importDate) { _lastImportDate = importDate; }
+	SYSTEMTIME getLastImportDate() { return _lastImportDate; }
 
 	virtual int initItemFromXmlElement(tinyxml2::XMLElement* pAccount);
 	virtual int serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement);
@@ -301,6 +307,7 @@ public:
 protected:
 	bool _isBudgeted;
 	bool _isCCAccount;
+	SYSTEMTIME _lastImportDate;
 
 }; // class Account
 

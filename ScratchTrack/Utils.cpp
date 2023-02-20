@@ -742,6 +742,32 @@ void Utils::doBackups()
 
 }
 
+int Utils::compareDates(SYSTEMTIME a, SYSTEMTIME b)
+{
+	double d1, d2;
+	SystemTimeToVariantTime(const_cast<SYSTEMTIME*>(&a), &d1);
+	SystemTimeToVariantTime(const_cast<SYSTEMTIME*>(&b), &d2);
+
+	if (d1 < d2) {
+		return -1;
+	}
+
+	if (d1 == d2) {
+		return 0;
+	}
+
+	return 1;
+}
+
+std::wstring Utils::formatDate(SYSTEMTIME ts)
+{
+	wchar_t szBuff[1024] = { 0 };
+	GetDateFormatEx(LOCALE_NAME_USER_DEFAULT, DATE_SHORTDATE, &ts, nullptr, szBuff, 1024, nullptr);
+
+	std::wstring ret(szBuff);
+	return ret;
+}
+
 unsigned int Utils::daysDiff(const SYSTEMTIME& t1, const SYSTEMTIME& t2)
 {
 	double d1, d2;

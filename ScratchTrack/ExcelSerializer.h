@@ -7,6 +7,7 @@
 
 struct lxw_workbook;
 struct lxw_worksheet;
+struct lxw_format;
 
 namespace OpenXLSX
 {
@@ -46,6 +47,10 @@ protected:
 	static int deserializeSettings(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId);
 	static int deserializeTransactions(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId);
 	static int deserializeCategories(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId);
+
+	// Handy helpers
+	static void writeDate(SYSTEMTIME date, lxw_worksheet* worksheet, int row, int col, lxw_format* pFormat);
+	static SYSTEMTIME readDate(OpenXLSX::XLWorksheet& worksheet, int row, int col);
 
 	inline static const char* ACCOUNT_WORKSHEET_NAME = "Accounts";
 	inline static const char* FOLDER_WORKSHEET_NAME = "Folders";

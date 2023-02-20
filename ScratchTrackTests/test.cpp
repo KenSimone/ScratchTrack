@@ -315,3 +315,46 @@ TEST(TestUtils, TestDateParse) {
 	EXPECT_EQ(2025, sys.wYear);
 
 }
+
+TEST(TestUtils, TestDateCompare) {
+	SYSTEMTIME a = { 0 }, b = { 0 };
+
+	// Diff by one year
+	a.wYear = 2023;
+	a.wMonth = 1;
+	a.wDay = 1;
+
+	b.wYear = 2022;
+	b.wMonth = 1;
+	b.wDay = 1;
+
+	EXPECT_EQ(1, Utils::compareDates(a, b));
+	EXPECT_EQ(-1, Utils::compareDates(b, a));
+	EXPECT_EQ(0, Utils::compareDates(a, a));
+	EXPECT_EQ(0, Utils::compareDates(b, b));
+
+	EXPECT_EQ(365, Utils::daysDiff(a, b));
+
+	// Off by one day
+	a.wYear = 2022;
+	a.wDay = 2;
+
+	EXPECT_EQ(1, Utils::compareDates(a, b));
+	EXPECT_EQ(-1, Utils::compareDates(b, a));
+	EXPECT_EQ(0, Utils::compareDates(a, a));
+	EXPECT_EQ(0, Utils::compareDates(b, b));
+
+	EXPECT_EQ(1, Utils::daysDiff(a, b));
+
+	// Off by one hour
+	a.wYear = 2022;
+	a.wDay = 1;
+	a.wHour = 1;
+
+	EXPECT_EQ(1, Utils::compareDates(a, b));
+	EXPECT_EQ(-1, Utils::compareDates(b, a));
+	EXPECT_EQ(0, Utils::compareDates(a, a));
+	EXPECT_EQ(0, Utils::compareDates(b, b));
+
+	EXPECT_EQ(0, Utils::daysDiff(a, b));
+}

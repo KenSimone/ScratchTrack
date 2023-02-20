@@ -15,6 +15,7 @@ extern TransactionImporter g_transactionImporter;
 TransactionImportDlg::TransactionImportDlg(Account* pAccount, std::vector<ImportedTransactionInfo>& transactions) : _transactions(transactions),
     _pAccount(pAccount)
 {
+    memset(&_maxImportDate, 0, sizeof(_maxImportDate));
 }
 
 TransactionImportDlg::~TransactionImportDlg()
@@ -45,6 +46,10 @@ void TransactionImportDlg::enableDisableUi(HWND hDlg)
         _pAccount->getName(), newBal.c_str());
 
     SetDlgItemText(hDlg, IDC_STATIC_BALANCE, szBuff);
+
+    std::wstring dateAsText = Utils::formatDate(_pAccount->getLastImportDate());
+    swprintf(szBuff, 1024, L"Last import date: %ls", dateAsText.c_str());
+    SetDlgItemText(hDlg, IDC_STATIC_LAST_IMPORT, szBuff);
 }
 
 bool TransactionImportDlg::ShowDialog()
@@ -64,6 +69,7 @@ INT_PTR CALLBACK TransactionImportDlg::TransactionImportDlgProc(HWND hDlg, UINT 
     size_t columnCount = 0;
     LVCOLUMN column = { 0 };
     LPNMHDR pHeader = nullptr;;
+    double lastImportDate = 0;
 
     switch (message)
     {
@@ -130,8 +136,21 @@ INT_PTR CALLBACK TransactionImportDlg::TransactionImportDlgProc(HWND hDlg, UINT 
         column.pszText = const_cast<wchar_t*>(L"Amount");
         ListView_InsertColumn(hListView, columnCount++, &column);
 
+        SYSTEMTIME lastImportTime = PTHIS->_pAccount->getLastImportDate();
+        SystemTimeToVariantTime(&lastImportTime, &lastImportDate);
+
         for (size_t i = 0; i < PTHIS->_transactions.size(); i++) {
             ImportedTransactionInfo& info = PTHIS->_transactions[i];
+
+            if (Utils::compareDates(info._date, PTHIS->_maxImportDate) == 1) {
+                PTHIS->_maxImportDate = info._date;
+            }
+
+            // Figure out if this transaction predates our last import
+            double transDate;            
+            SystemTimeToVariantTime(const_cast<SYSTEMTIME*>(&info._date), &transDate);
+
+            bool oldTransaction = transDate <= lastImportDate;
 
             Transaction* pDup = g_transactionImporter.findDuplicate(PTHIS->_pAccount, info._payee.c_str(),
                 info._amount, info._date, 5);
@@ -163,7 +182,7 @@ INT_PTR CALLBACK TransactionImportDlg::TransactionImportDlgProc(HWND hDlg, UINT 
             std::wstring amount = Utils::penniesToDollarsString(info._amount);
             ListView_SetItemText(hListView, iIndex, 4, const_cast<wchar_t*>(amount.c_str()));
 
-            ListView_SetCheckState(hListView, iIndex, pDup ? false : true);
+            ListView_SetCheckState(hListView, iIndex, (pDup || oldTransaction) ? false : true);
         } // for each transaction
 
         for (size_t i = 0; i < 5; i++) {

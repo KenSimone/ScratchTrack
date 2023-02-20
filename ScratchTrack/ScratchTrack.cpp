@@ -945,6 +945,13 @@ void doImportTransactions(Account* pAccount)
                     Transaction* pTransaction = Transaction::addTransaction(Transaction::EXPENSE, transactionsNew[i]._amount, 
                         pAccount->getId(), ACCOUNT_ID_INVALID, transactionsNew[i]._expenseId, payee.c_str(), nullptr, &transactionsNew[i]._date);
                     pTransaction->apply();
+
+                    // If the max imported date is greater than our current last import date, update it
+                    SYSTEMTIME maxImport = dlg.maxImportedDate();
+                    if (Utils::compareDates(maxImport, pAccount->getLastImportDate()) == 1) {
+                        pAccount->setLastImportDate(maxImport);
+                    }
+
                 } // for each new transaction
 
                 Transaction::sortAllTransactions();

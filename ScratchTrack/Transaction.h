@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "TinyXml2.h"
+#include "Utils.h"
 
 class AccountBase;
 
@@ -59,10 +60,7 @@ public:
 		//SYSTEMTIME localTime = { 0 };
 		//SystemTimeToTzSpecificLocalTime(NULL, &_timestamp, &localTime);
 
-		wchar_t szBuff[1024] = { 0 };
-		GetDateFormatEx(LOCALE_NAME_USER_DEFAULT, DATE_SHORTDATE, &_timestamp, nullptr, szBuff, 1024, nullptr);
-
-		result = szBuff;
+		result = Utils::formatDate(_timestamp);
 	}
 
 	virtual int serialize(tinyxml2::XMLElement* pParent);

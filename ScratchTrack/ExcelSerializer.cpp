@@ -140,6 +140,7 @@ int ExcelSerializer::serializeAccounts(lxw_workbook* workbook, std::vector<Accou
 	worksheet_write_string(worksheet, curRow, 2, "Balance", formatHeader);
 	worksheet_write_string(worksheet, curRow, 3, "InBudget", formatHeader);
 	worksheet_write_string(worksheet, curRow, 4, "Hidden", formatHeader);
+	worksheet_write_string(worksheet, curRow, 5, "Last import", formatHeader);
 	worksheet_set_column(worksheet, 0, 8, 15, nullptr);
 	curRow++;
 
@@ -156,6 +157,7 @@ int ExcelSerializer::serializeAccounts(lxw_workbook* workbook, std::vector<Accou
 		worksheet_write_number(worksheet, curRow, 2, _wtof(Utils::penniesToDollarsString(p->getBalance(), false).c_str()), formatMoney);
 		worksheet_write_string(worksheet, curRow, 3, p->getContributesToBudget() ? "yes" : "no", formatLeft);
 		worksheet_write_string(worksheet, curRow, 4, p->getHidden() ? "yes" : "no", formatLeft);
+		writeDate(p->getLastImportDate(), worksheet, curRow, 5, formatDate);
 
 		char szBuff[1024] = { 0 };
 		sprintf_s(szBuff, "=Accounts!A%d", curRow+1);
@@ -372,12 +374,8 @@ int ExcelSerializer::serializeTransactions(lxw_workbook* workbook, std::vector<A
 	for (auto i = transactions.rbegin(); i != transactions.rend(); i++)
 	{
 		Transaction* pTrans = *i;
-		lxw_datetime dt;
-		ZeroMemory(&dt, sizeof(dt));
-		dt.year = pTrans->getTimestamp().wYear;
-		dt.month = pTrans->getTimestamp().wMonth;
-		dt.day = pTrans->getTimestamp().wDay;
-		worksheet_write_datetime(worksheet, curRow, 0, &dt, formatDate);
+
+		writeDate(pTrans->getTimestamp(), worksheet, curRow, 0, formatDate);
 		worksheet_write_string(worksheet, curRow, 1, Utils::wideToMultibyte(pTrans->getPayee()).c_str(), formatLeft);
 		worksheet_write_number(worksheet, curRow, 2, _wtof(Utils::penniesToDollarsString(pTrans->getAmount(), false).c_str()), formatMoney);
 
@@ -763,6 +761,8 @@ int ExcelSerializer::deserializeAccounts(OpenXLSX::XLWorkbook& workbook, std::ve
 		// Hidden
 		std::string hidden = worksheet.cell(row, 5).value();
 
+		// Date
+		SYSTEMTIME lastImport = readDate(worksheet, row, 6);
 		
 		Account* pAccount = new Account;
 		pAccount->setName(Utils::multiByteToWide(name.c_str()).c_str());
@@ -771,6 +771,7 @@ int ExcelSerializer::deserializeAccounts(OpenXLSX::XLWorkbook& workbook, std::ve
 		pAccount->addBalance(pennies);
 		pAccount->setContributesToBudget(Utils::stringToBool(inBudget.c_str()));
 		pAccount->setHidden(Utils::stringToBool(hidden.c_str()));
+		pAccount->setLastImportDate(lastImport);
 		addAccountLocationToMap(row, 1, worksheet, pAccount, cellRefToAccountId);
 
 		topLevelItems.push_back(pAccount);
@@ -974,36 +975,16 @@ int ExcelSerializer::deserializeTransactions(OpenXLSX::XLWorkbook& workbook, std
 
 	OpenXLSX::XLWorksheet worksheet = workbook.worksheet(TRANSACTIONS_WORKSHEET_NAME);
 
+	static const SYSTEMTIME noTime = { 0 };
+
 	int row = 2;
 	while (true) {
-
 		// Date
-		SYSTEMTIME ts = { 0 };
-		double time = 0;
-		try {
-			XLCellValue valRaw = worksheet.cell(row, 1).value();
-			switch (valRaw.type())
-			{
-			case XLValueType::Integer:
-				time = (double)valRaw.get<int>();
-				break;
-			case XLValueType::Float:
-				time = valRaw.get<double>();
-				break;
-			}
-
-			if (!time) {
-				break;
-			}
-
-			int day = 0, month = 0, year = 0;
-			excelSerialDateToDMY((int)time, day, month, year);
-			ts.wYear = year;
-			ts.wMonth = month;
-			ts.wDay = day;
+		SYSTEMTIME ts = readDate(worksheet, row, 1);
+		if ( memcmp(&ts, &noTime, sizeof(SYSTEMTIME)) == 0 ) {
+			break;
 		}
-		catch (...) { break; }
-		
+
 		// Name
 		std::string payee = worksheet.cell(row, 2).value();
 
@@ -1101,4 +1082,44 @@ int ExcelSerializer::pennyValueFromCell(int row, int col, OpenXLSX::XLWorksheet&
 const char* ExcelSerializer::libxslErrorToText(int error)
 {
 	return lxw_strerror((lxw_error)error);
+}
+
+void ExcelSerializer::writeDate(SYSTEMTIME date, lxw_worksheet* worksheet, int row, int col, lxw_format* pFormat)
+{
+	lxw_datetime dt;
+	ZeroMemory(&dt, sizeof(dt));
+	dt.year = date.wYear;
+	dt.month = date.wMonth;
+	dt.day = date.wDay;
+	worksheet_write_datetime(worksheet, row, col, &dt, pFormat);
+}
+
+SYSTEMTIME ExcelSerializer::readDate(OpenXLSX::XLWorksheet& worksheet, int row, int col)
+{
+	// Date
+	SYSTEMTIME ts = { 0 };
+	double time = 0;
+	try {
+		XLCellValue valRaw = worksheet.cell(row, col).value();
+		switch (valRaw.type())
+		{
+		case XLValueType::Integer:
+			time = (double)valRaw.get<int>();
+			break;
+		case XLValueType::Float:
+			time = valRaw.get<double>();
+			break;
+		}
+
+		if (time) {
+			int day = 0, month = 0, year = 0;
+			excelSerialDateToDMY((int)time, day, month, year);
+			ts.wYear = year;
+			ts.wMonth = month;
+			ts.wDay = day;
+		}
+	}
+	catch (...) { }
+
+	return ts;
 }
