@@ -936,3 +936,4 @@ void killTreeToolTips()
         g_isToolTipActive = false;
     }
 }
+

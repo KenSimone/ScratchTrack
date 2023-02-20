@@ -504,7 +504,7 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
     }
 
     if (dwCommand >= ID_ROOT_EXPENSE_MOVE_TO_START && dwCommand < ID_ROOT_EXPENSE_MOVE_TO_END) {
-        // This is a move
+        // This is a move to new parent
         AccountGroup* pDestGroup = dynamic_cast<AccountGroup*>(AccountBase::lookupById(dwCommand - ID_ROOT_EXPENSE_MOVE_TO_START));
         AccountGroup* pOrigGroup = dynamic_cast<AccountGroup*>(pItem->getParent());
         HTREEITEM hNewParent = treeItemFromAccount(pDestGroup);
@@ -515,6 +515,58 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
             addTreeItem(hNewParent, pItem);
             didSomething = true;
         }
+    }
+
+    if (dwCommand >= ID_ROOT_MOVE_SIBLING_AFTER_START && dwCommand < ID_ROOT_MOVE_SIBLING_AFTER_END)
+    {
+        // This is a move to a new sibling spot (after)
+        AccountBase* pNewAfter = AccountBase::lookupById(dwCommand - ID_ROOT_MOVE_SIBLING_AFTER_START);
+        if (pNewAfter && pItem) {
+            AccountBase* pParent = pItem->getParent();
+            if (pParent) {
+                pParent->removeChild(pItem);
+                pParent->addChild(pItem, pNewAfter);
+            }
+
+            HTREEITEM hNewAfter = treeItemFromAccount(pNewAfter);
+            TreeView_DeleteItem(g_hwndTV, hItem);
+            HTREEITEM hParent = TreeView_GetParent(g_hwndTV, hNewAfter);
+            if (!hParent) {
+                hParent = TVI_ROOT;
+            }
+            addTreeItem(hParent, pItem, hNewAfter);
+            didSomething = true;
+        }
+    }
+
+    if (dwCommand >= ID_ROOT_MOVE_SIBLING_BEFORE_START && dwCommand < ID_ROOT_MOVE_SIBLING_BEFORE_END)
+    {
+        // This is a move to a new sibling spot (before)
+        AccountBase* pNewBefore = AccountBase::lookupById(dwCommand - ID_ROOT_MOVE_SIBLING_BEFORE_START);
+        if (pNewBefore && pItem) {
+            // Everything is built around insert after, so figure out who we want to insert after
+            HTREEITEM hBeforeItem = treeItemFromAccount(pNewBefore);
+            HTREEITEM hAfterItem = TreeView_GetPrevSibling(g_hwndTV, hBeforeItem);
+            if (hAfterItem == nullptr) {
+                hAfterItem = TVI_FIRST;
+            }
+
+            AccountBase* pParent = pItem->getParent();
+            AccountBase* pNewAfter = hAfterItem != TVI_FIRST ? accountFromTreeItem(hAfterItem) : nullptr;
+            if (pParent) {
+                pParent->removeChild(pItem);
+                pParent->addChild(pItem, pNewAfter);
+            }
+
+            HTREEITEM hParent = TreeView_GetParent(g_hwndTV, hItem);
+            TreeView_DeleteItem(g_hwndTV, hItem);
+            if (!hParent) {
+                hParent = TVI_ROOT;
+            }
+            addTreeItem(hParent, pItem, hAfterItem);
+            didSomething = true;
+        }
+
     }
 
     switch (dwCommand)
@@ -823,6 +875,7 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
 
 void doTreeDrag(LPNMTREEVIEW nmTreeItem)
 {
+#ifdef ALLOW_TREE_DRAG
     AccountBase* pItem = accountFromTreeItem(nmTreeItem->itemNew.hItem);
     if (!pItem || (pItem && pItem->getId() == ACCOUNT_ID_PAY_CC)) {
         return;
@@ -842,8 +895,7 @@ void doTreeDrag(LPNMTREEVIEW nmTreeItem)
     ShowCursor(FALSE);
     SetCapture(GetParent(g_hwndTV));
     g_btDragDetails._dragging = nmTreeItem->itemNew.hItem;
-
-    return;
+#endif
 }
 
 void editAccount(Account* pAccount)
@@ -1337,11 +1389,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
                         bool addMove = !pItem->getReadOnly() && pItem->getId() != ACCOUNT_ID_PAY_CC;
 
-                        if (addMove) {
-                            hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_EXPENSE_MENU));
-                            hSubMenu = GetSubMenu(hMenu, 0);
+                        if (!addMove) {
                         }
                         else {
+                            hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_EXPENSE_MENU));
+                            hSubMenu = GetSubMenu(hMenu, 0);
+
                             bool added = false;
                             std::vector<AccountBase*> groups = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
                             HMENU groupMenu = CreatePopupMenu();
@@ -1356,30 +1409,73 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                                 AppendMenu(hSubMenu, MF_MENUBREAK, 0, 0);
                                 AppendMenu(hSubMenu, MF_POPUP, (UINT_PTR)groupMenu, L"Move to group...");
                             }
-                            //// Add the "move to account" option
-                            //groups = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
-                            //HMENU accountMenu = CreatePopupMenu();
-                            //for (size_t i = 0; i < groups.size(); i++) {
-                            //    if (pParentItem && groups[i]->getId() != pParentItem->getId()) {
-                            //        added = true;
-                            //        AppendMenu(accountMenu, MF_STRING, ID_ROOT_EXPENSE_MOVE_TO_START + groups[i]->getId(), groups[i]->getName());
-                            //    }
-                            //}
-                            //if (added) {
-                            //    AppendMenu(hMenu, MF_POPUP, (UINT_PTR)accountMenu, L"Move to account...");
-                            //}
                         } // if adding move options
 
-                    }
+                    } // if expense
 
                     if (hSubMenu) {
+
+                        // Add sibling move
+                        bool addedAfter = false;
+                        bool addedBefore = false;
+                        HTREEITEM hParent = TreeView_GetParent(g_hwndTV, hItem);
+                        if (!hParent) {
+                            hParent = TVI_ROOT;
+                        }
+
+                        HTREEITEM hCur = TreeView_GetChild(g_hwndTV, hParent);
+                        HMENU siblingAfterMenu = CreatePopupMenu();
+                        HMENU siblingBeforeMenu = CreatePopupMenu();
+                        bool foundOurSelf = false;
+                        while ( hCur )
+                        {
+                            if (hCur == hItem) {
+                                foundOurSelf = true;
+                            }
+                            else if (!foundOurSelf) {
+                                AccountBase* pCurItem = accountFromTreeItem(hCur);
+                                if (pCurItem) {
+                                    AppendMenu(siblingBeforeMenu, MF_STRING, ID_ROOT_MOVE_SIBLING_BEFORE_START + pCurItem->getId(), pCurItem->getName());
+                                    addedBefore = true;
+                                }
+                            }
+                            else if (foundOurSelf) {
+                                AccountBase* pCurItem = accountFromTreeItem(hCur);
+                                if (pCurItem) {
+                                    AppendMenu(siblingAfterMenu, MF_STRING, ID_ROOT_MOVE_SIBLING_AFTER_START + pCurItem->getId(), pCurItem->getName());
+                                    addedAfter = true;
+                                }
+                            }
+
+                            hCur = TreeView_GetNextItem(g_hwndTV, hCur, TVGN_NEXT);
+
+                        }
+
+                        if (addedAfter || addedBefore) {
+                            AppendMenu(hSubMenu, MF_MENUBREAK, 0, 0);
+                            if (addedBefore) {
+                                AppendMenu(hSubMenu, MF_POPUP, (UINT_PTR)siblingBeforeMenu, L"Move before...");
+                            }
+                            if (addedAfter) {
+                                AppendMenu(hSubMenu, MF_POPUP, (UINT_PTR)siblingAfterMenu, L"Move after...");
+                            }
+                        }
+
+
                         DWORD dwCode = TrackPopupMenu(hSubMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hWnd, NULL);
                         DestroyMenu(hMenu);
+                        DestroyMenu(hSubMenu);
+                        if (siblingBeforeMenu) {
+                            DestroyMenu(siblingBeforeMenu);
+                        }
+                        if (siblingAfterMenu){
+                            DestroyMenu(siblingAfterMenu);
+                        }
                         if (dwCode) {
                             processContextMenu(dwCode, hItem, pItem);
                         }
-                    }
-                }
+                    } // if submenu
+                } // if item
             }
         }
         else if (pHeader->idFrom == IDC_SIMPLEBUDGET_TRANSACTION_LIST)

@@ -146,6 +146,13 @@
 #define ID_ROOT_HIDEACCOUNT             33028
 #define ID_ROOT_HIDEACCOUNT33029        33029
 #define ID_ROOT_IMPORTTRANSACTIONS      33030
+#define ID_ROOT_MOVEUP                  33031
+#define ID_ROOT_MOVEDOWN                33032
+#define ID_ROOT_MOVE_SIBLING_AFTER_START		33100
+#define ID_ROOT_MOVE_SIBLING_AFTER_END			33500
+#define ID_ROOT_MOVE_SIBLING_BEFORE_START		33501
+#define ID_ROOT_MOVE_SIBLING_BEFORE_END			33900
+
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -154,7 +161,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        174
-#define _APS_NEXT_COMMAND_VALUE         33031
+#define _APS_NEXT_COMMAND_VALUE         33901
 #define _APS_NEXT_CONTROL_VALUE         1053
 #define _APS_NEXT_SYMED_VALUE           113
 #endif
