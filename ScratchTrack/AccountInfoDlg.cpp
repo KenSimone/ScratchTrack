@@ -49,7 +49,7 @@ void AccountInfoDlg::doUnhidePopup()
 
     AppendMenu(hPopup, MF_STRING | MF_POPUP, (UINT_PTR)hAcctMenu, L"Accounts");
     AppendMenu(hPopup, MF_STRING | MF_POPUP, (UINT_PTR)hFolderMenu, L"Folders");
-    AppendMenu(hPopup, MF_STRING | MF_POPUP, (UINT_PTR)hEnvMenu, L"Categories");
+    AppendMenu(hPopup, MF_STRING | MF_POPUP, (UINT_PTR)hEnvMenu, L"Expenses");
 
     // A return code of zero from trackpopup means nothing was selected, so we can't
     // use accounts IDs, which are zero based.
@@ -301,6 +301,11 @@ void AccountInfoDlg::printMasterSummary()
         }
     }
     appendText(szCaption, isError ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL, false, false, TEXT_SIZE);
+
+    if (!accounts.empty() || !categories.empty() || !folders.empty()) {
+        appendText(L"\nTIP: ", TEXT_COLOR_NORMAL, true, false, TEXT_SIZE);
+        appendText(L"Right click accounts, folders, expenses and transactions for more options", TEXT_COLOR_NORMAL, false, false, TEXT_SIZE);
+    }
 }
 
 

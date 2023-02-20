@@ -131,7 +131,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 int setupPaymentExpenseForAccount(Account* pAccount)
 {
-    std::wstring expenseName = L"Credit card payment";
+    std::wstring expenseName = L"Monhly credit card charges";
 
     AccountExpense* pExpense = dynamic_cast<AccountExpense*>(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
 
@@ -144,7 +144,7 @@ int setupPaymentExpenseForAccount(Account* pAccount)
         // Ensure we have a folder for CC payment
         AccountGroup* pFolder = nullptr;
         HTREEITEM hItemFolder = nullptr;
-        std::wstring folderName = L"CC Payments";
+        std::wstring folderName = L"Credit cards";
 
         for (size_t i = 0; i < folders.size(); i++)
         {
@@ -523,6 +523,18 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
     {
         if (Utils::confirmHide(pItem)) {
             pItem->setHidden(true);
+            if (pItem->getType() == AccountBase::EXPENSE) {
+                pItem->addBalance(-pItem->getBalance());
+            }
+            else if (pItem->getType() == AccountBase::GROUP) {
+                AccountGroup* pGroup = dynamic_cast<AccountGroup*>(pItem);
+                auto children = pGroup->getChildren();
+                for (size_t i = 0; i < children.size(); i++) {
+                    children[i]->setHidden(true);
+                    children[i]->addBalance(-children[i]->getBalance());
+                }
+
+            }
             TreeView_DeleteItem(g_hwndTV, hItem);
             didSomething = true;
         }
@@ -1088,6 +1100,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 else if (af == Account::HIDE) {
                     if (Utils::confirmHide(pHitAccount)) {
                         pHitAccount->setHidden(true);
+                        pHitAccount->setContributesToBudget(false);
                         ListView_DeleteItem(g_hwndAccountLV, index);
                         serializeState();
 
@@ -1162,6 +1175,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     {
                         if (Utils::confirmHide(pAccount)) {
                             pAccount->setHidden(true);
+                            pAccount->setContributesToBudget(false);
                             ListView_DeleteItem(g_hwndAccountLV, lvhi.iItem);
                             serializeState();
                         }
@@ -1323,13 +1337,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
                         bool addMove = !pItem->getReadOnly() && pItem->getId() != ACCOUNT_ID_PAY_CC;
 
-                        if (!pItem->getReadOnly()) {
+                        if (addMove) {
                             hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_EXPENSE_MENU));
                             hSubMenu = GetSubMenu(hMenu, 0);
                         }
-
-                        // Add the "move to group" option
-                        if (addMove) {
+                        else {
                             bool added = false;
                             std::vector<AccountBase*> groups = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
                             HMENU groupMenu = CreatePopupMenu();

@@ -721,9 +721,9 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             if (!pExpense->getReadOnly()) {
 #ifdef ICON_HIDE_ITEM
                 rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szHide, ENV_HIDE, rightEdge, rcText.top);
+#endif
                 rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditExpense, ENV_EXPENSE_EDIT, rightEdge, rcText.top);
                 rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddMoney, ENV_MONEY_ADD, rightEdge, rcText.top);
-#endif
 
                 if (pExpense->getId() != ACCOUNT_ID_PAY_CC) {
                     rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddTransaction, ENV_TRANS_ADD, rightEdge, rcText.top);
@@ -736,9 +736,9 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             if (!pItem->getReadOnly()) {
 #ifdef ICON_HIDE_ITEM
                 rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szHide, GRP_FOLDER_HIDE, rightEdge, rcText.top);
+#endif
                 rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditExpense, GRP_FOLDER_EDIT, rightEdge, rcText.top);
                 rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddMoney, GRP_FUND_CHILDREN, rightEdge, rcText.top);
-#endif
                 rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddExpense, GRP_EXPENSE_ADD, rightEdge, rcText.top);
             }
             break;

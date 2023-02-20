@@ -27,19 +27,19 @@ bool ExpenseDialog::ShowDialog()
     PTHIS = this;
 
     g_accountInfoDlg.saveText();
-    g_accountInfoDlg.appendText(L"About Categories\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
+    g_accountInfoDlg.appendText(L"About Expense Categories\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
 
-    g_accountInfoDlg.appendText(L"In ScratchTrack funds are assigned to spending categories. When expenses are recorded in a expense, funds in that expense are reduced by the epxense amount. "
-        L"When a expense is out of money, spending in that expense should stop until more funds are added.\n\n",
+    g_accountInfoDlg.appendText(L"Expense categories are used to plan and track how money is spent. Examples of expense categories include 'Dining out', 'Utilities', and 'Car payment'. "
+        L"Expense categories have a budget. This is a best guess of how much you'll spend in a month. You can adjust this value at any time by editing the expense category.\n\n",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
-    g_accountInfoDlg.appendText(L"Examples of categories include 'Dining out', 'Utilities', and 'Car payment'. "
-        L"Categories have a budget. This is a best guess of how much you'll spend in a month. Don't worry if you're not sure. You can adjust this value later as needed.\n\n",
+    g_accountInfoDlg.appendText(L"In ScratchTrack funds are assigned to expense categories. When transactions are recorded against a category, funds assigned to that category are reduced by the transaction amount. "
+        L"When a category is out of money, spending in that category should stop until more funds are added.\n\n",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
-    g_accountInfoDlg.appendText(L"Expenses are paid from categories through the expense's action icon or right click menu. If a expense's "
-        L"expense is the same ever time (i.e. a car payment), you can set those values here. When you "
-        L"create a transaction in this expense, the settings will be filled in for you (but you can change them as needed).",
+    g_accountInfoDlg.appendText(L"Transactions are recorded by clicking the 'record expense' icon next to the category, or through the right click menu. If the details of transactions in an expense "
+        L"are often the same (i.e. a car payment), you can set those values here. When you "
+        L"create a transaction in this expense category the settings will be filled in for you. You can adjust them as needed when recording new transactions.",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
 

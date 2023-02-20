@@ -508,15 +508,25 @@ LRESULT Utils::customDrawListViewAlternatingColors(NMLVCUSTOMDRAW* pCustomDrawIt
 bool Utils::confirmHide(AccountBase* pAccount)
 {
 	wchar_t szBuff[1024] = { 0 };
-	swprintf(szBuff, 1024, L"Are you sure you want to hide '%ls'?", pAccount->getName());
+
+	switch (pAccount->getType()) {
+	case AccountBase::ACCOUNT:
+		swprintf(szBuff, 1024, L"Hiding an account will mark it as 'off budget' and remove it from view. Are you sure you want to hide '%ls'?", pAccount->getName());
+		break;
+	case AccountBase::EXPENSE:
+		swprintf(szBuff, 1024, L"Any funds assigned to hidden expense categories will be returned to available funds. Are you sure you want to hide '%ls'?", pAccount->getName());
+		break;
+	case AccountBase::GROUP:
+		swprintf(szBuff, 1024, L"Hiding a folder will also hide expense categories in the folder. Any funds assigned to hidden categories will be returned to available funds. Are you sure you want to hide '%ls'?", pAccount->getName());
+		break;
+	}
 
 #ifndef SCRATCHTRACK_TESTS
 	g_accountInfoDlg.saveText();
 	g_accountInfoDlg.appendText(L"About hiding things\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
 
-	g_accountInfoDlg.appendText(L"In ScratchTrack there is no delete, at least not yet. If you want something gone from your view you "
-		L"can hide it. As of now, hidden items are simply not displayed. No money moves, nothing is assigned or unassigned. If you hide an "
-		L"expense with money in it, those funds will be hidden as well. You can always unhide things with the unhide button.",
+	g_accountInfoDlg.appendText(L"In ScratchTrack there is no delete. If you want an item out-of-view, "
+		L"hide it. Hiding accounts mark them as off budget. Hiding expenses returns any assigned funds.",
 		RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 	if (IDYES == MessageBox(g_hTopWindow, szBuff, L"Confirm Hide", MB_YESNO)) {
 		return true;
@@ -547,7 +557,6 @@ bool Utils::isSingleInstance()
 	}
 
 	return true;
-
 }
 
 unsigned __stdcall Utils::monitorFileChangeThreadFunc(void* parg)
