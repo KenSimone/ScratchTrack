@@ -21,7 +21,7 @@ bool FundExpensesDlg::ShowDialog()
         L"When a expense is out of money, spending in that expense should stop until more funds are added.\n\n",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
-    g_accountInfoDlg.appendText(L"This dialog box allows you to assign money to all categories in a income. It's important to note that money stays in its account when assigned to categories. "
+    g_accountInfoDlg.appendText(L"This dialog box allows you to assign money to all categories in a folder. It's important to note that money stays in its account when assigned to categories. "
         L"When money is assigned, you'll have less budgetable dollars available to place in other categories, but no money actually moves. Think of categories as a way to view and organize "
         L"the money in your account(s).",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);

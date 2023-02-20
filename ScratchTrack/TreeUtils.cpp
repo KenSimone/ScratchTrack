@@ -5,8 +5,8 @@
 #include <map>
 void setGuiFont(HWND hCtrl);
 
-const wchar_t* szIncomeOpen = L"\U0001F5C1 ";
-const wchar_t* szIncomeClosed = L"\U0001F5C0 ";
+const wchar_t* szFolderOpen = L"\U0001F5C1 ";
+const wchar_t* szFolderClosed = L"\U0001F5C0 ";
 const wchar_t* szExpense = L"\U0001F95B ";
 
 extern HINSTANCE g_hInst;
@@ -14,7 +14,7 @@ extern HWND g_hTopWindow;
 extern HWND g_hwndTV;
 extern HWND g_hwndTreeHeader;
 extern HWND g_hwndAccountLV;
-extern HTREEITEM g_hAddNewIncomeItem;
+extern HTREEITEM g_hAddNewFolderItem;
 
 BUDGET_TREE_DRAG_DETAILS g_btDragDetails;
 
@@ -59,7 +59,7 @@ LRESULT CALLBACK treeViewSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 void calcColumnSpots()
 {
     HFONT hFont = (HFONT)SendMessage(g_hwndTV, WM_GETFONT, 0, 0);
-    static const wchar_t* szMaxNameLength = L"INDENT__BIG INCOME NAME__ICONS";
+    static const wchar_t* szMaxNameLength = L"INDENT__BIG FOLDER NAME__ICONS";
     static const wchar_t* szMaxValueLength = L"DIFFERENCE";
 
     HDC dc = GetDC(g_hwndTV);
@@ -268,8 +268,8 @@ HTREEITEM addTreeItem(HTREEITEM hParentItem, AccountBase* pAccount, HTREEITEM hI
     }
 
     if (hInsertAfter == TVI_LAST ) {
-        if (g_hAddNewIncomeItem != TVI_LAST) {
-            hInsertAfter = TreeView_GetPrevSibling(g_hwndTV, g_hAddNewIncomeItem);
+        if (g_hAddNewFolderItem != TVI_LAST) {
+            hInsertAfter = TreeView_GetPrevSibling(g_hwndTV, g_hAddNewFolderItem);
             if (!hInsertAfter) {
                 hInsertAfter = TVI_FIRST;
             }
@@ -440,16 +440,16 @@ bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
                 swprintf(szBuffer, 1024, L"Assign money to the '%ls' expense", pHitItem->getName());
                 break;
             case GRP_EXPENSE_ADD:
-                swprintf(szBuffer, 1024, L"Add a new expense to the '%ls' income", pHitItem->getName());
+                swprintf(szBuffer, 1024, L"Add a new expense to the '%ls' folder", pHitItem->getName());
                 break;
-            case GRP_INCOME_EDIT:
-                swprintf(szBuffer, 1024, L"Edit the '%ls' income", pHitItem->getName());
+            case GRP_FOLDER_EDIT:
+                swprintf(szBuffer, 1024, L"Edit the '%ls' folder", pHitItem->getName());
                 break;
             case GRP_FUND_CHILDREN:
-                swprintf(szBuffer, 1024, L"Assign money to the categories in the '%ls' income", pHitItem->getName());
+                swprintf(szBuffer, 1024, L"Assign money to the categories in the '%ls' folder", pHitItem->getName());
                 break;
-            case GLB_ADD_INCOME:
-                swprintf(szBuffer, 1024, L"Add monthly income");
+            case GLB_ADD_FOLDER:
+                swprintf(szBuffer, 1024, L"Add folder");
                 break;
             }
             g_toolTip.lpszText = szBuffer;
@@ -642,13 +642,13 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             name = item.pszText;
         }
         else if (TreeView_GetItemState(g_hwndTV, hItem, TVIF_STATE) & TVIS_EXPANDED) {
-            name = szIncomeOpen;
+            name = szFolderOpen;
         }
         else if (itemType == AccountBase::EXPENSE) {
             //name = szExpense;
         }
         else {
-            name = szIncomeClosed;
+            name = szFolderClosed;
         }
 
         RECT rText = { 0 };
@@ -721,9 +721,9 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             if (!pExpense->getReadOnly()) {
 #ifdef ICON_HIDE_ITEM
                 rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szHide, ENV_HIDE, rightEdge, rcText.top);
-#endif
                 rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditExpense, ENV_EXPENSE_EDIT, rightEdge, rcText.top);
                 rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddMoney, ENV_MONEY_ADD, rightEdge, rcText.top);
+#endif
 
                 if (pExpense->getId() != ACCOUNT_ID_PAY_CC) {
                     rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddTransaction, ENV_TRANS_ADD, rightEdge, rcText.top);
@@ -735,10 +735,10 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
         case AccountBase::GROUP:
             if (!pItem->getReadOnly()) {
 #ifdef ICON_HIDE_ITEM
-                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szHide, GRP_INCOME_HIDE, rightEdge, rcText.top);
-#endif
-                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditExpense, GRP_INCOME_EDIT, rightEdge, rcText.top);
+                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szHide, GRP_FOLDER_HIDE, rightEdge, rcText.top);
+                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditExpense, GRP_FOLDER_EDIT, rightEdge, rcText.top);
                 rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddMoney, GRP_FUND_CHILDREN, rightEdge, rcText.top);
+#endif
                 rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddExpense, GRP_EXPENSE_ADD, rightEdge, rcText.top);
             }
             break;
@@ -761,7 +761,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             //SetTextColor(pCustomDrawItem->nmcd.hdc, selected ? SEL_LINK_COLOR : LINK_COLOR);
             SetTextColor(pCustomDrawItem->nmcd.hdc, LINK_COLOR);
 
-            g_budgetTreeLinkSpots[GLB_ADD_INCOME] = rText;
+            g_budgetTreeLinkSpots[GLB_ADD_FOLDER] = rText;
         }
         else {
             setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 1, selected, false);
@@ -837,7 +837,7 @@ void budgetTreeCreateTreeControl()
     // Create tree
     HDITEM item = { 0 };
     item.cxy = g_columnSizes._name;
-    item.pszText = const_cast<wchar_t*>(L"Expense / Income");
+    item.pszText = const_cast<wchar_t*>(L"Expense / Folder");
     item.mask = HDI_TEXT | HDI_WIDTH;
     Header_InsertItem(g_hwndTreeHeader, 99, &item);
 

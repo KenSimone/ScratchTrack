@@ -170,7 +170,7 @@
     <ClInclude Include="DepositDlg.h" />
     <ClInclude Include="ExpenseDlg.h" />
     <ClInclude Include="ExcelSerializer.h" />
-    <ClInclude Include="IncomeDlg.h" />
+    <ClInclude Include="FolderDlg.h" />
     <ClInclude Include="FundExpenseDlg.h" />
     <ClInclude Include="FundExpensesDlg.h" />
     <ClInclude Include="ImportMapDlg.h" />
@@ -198,7 +198,7 @@
     <ClCompile Include="DepositDlg.cpp" />
     <ClCompile Include="ExcelSerializer.cpp" />
     <ClCompile Include="ExpenseDlg.cpp" />
-    <ClCompile Include="IncomeDlg.cpp" />
+    <ClCompile Include="FolderDlg.cpp" />
     <ClCompile Include="FundExpenseDlg.cpp" />
     <ClCompile Include="FundExpensesDlg.cpp" />
     <ClCompile Include="ImportMapDlg.cpp" />
@@ -220,15 +220,15 @@
   <ItemGroup>
     <Image Include="..\..\..\..\downloads\icon1.ico" />
     <Image Include="..\..\..\..\Downloads\icons8-account-16.ico" />
-    <Image Include="..\..\..\..\Downloads\icons8-income-16.ico" />
-    <Image Include="..\..\..\..\Downloads\icons8-income-16.png" />
+    <Image Include="..\..\..\..\Downloads\icons8-folder-16.ico" />
+    <Image Include="..\..\..\..\Downloads\icons8-folder-16.png" />
     <Image Include="..\..\..\..\Downloads\icons8-open-expense-16.ico" />
     <Image Include="..\..\..\..\Downloads\icons8-open-expense-16.png" />
     <Image Include="..\Website\assets\ScratchTrack.png" />
     <Image Include="account-16.ico" />
     <Image Include="addmoney.ico" />
     <Image Include="expense-16.ico" />
-    <Image Include="income-16.ico" />
+    <Image Include="folder-16.ico" />
     <Image Include="icon1.ico" />
     <Image Include="ScratchTrack.bmp" />
     <Image Include="SimpleBudget.ico" />

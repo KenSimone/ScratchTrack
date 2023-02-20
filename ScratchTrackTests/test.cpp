@@ -24,6 +24,8 @@ void deleteAllAccounts()
 	for (size_t i = 0; i < accounts.size(); i++) {
 		delete accounts[i];
 	}
+
+	AccountBase::calcNextAccountId();
 }
 
 void doCreateAccounts()

@@ -109,7 +109,7 @@ INT_PTR CALLBACK AccountDlg::AccountDlgProc(HWND hDlg, UINT message, WPARAM wPar
         }
 
         if (HIWORD(wParam) == BN_CLICKED){
-            // Income or expense
+            // Folder or expense
             PTHIS->enableDisableUi(hDlg);
         }
 

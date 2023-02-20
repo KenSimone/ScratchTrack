@@ -43,14 +43,14 @@ enum BUDGET_TREE_LINK_ITEM_TYPE
     // Group operations
     GRP_FIRST,
     GRP_EXPENSE_ADD = GRP_FIRST,
-    GRP_INCOME_EDIT,
+    GRP_FOLDER_EDIT,
     GRP_FUND_CHILDREN,
     GRP_LAST = GRP_FUND_CHILDREN,
 
     // Global / unknownm
     GLB_FIRST,
-    GLB_ADD_INCOME = GLB_FIRST,
-    GLB_LAST = GLB_ADD_INCOME
+    GLB_ADD_FOLDER = GLB_FIRST,
+    GLB_LAST = GLB_ADD_FOLDER
 };
 
 AccountBase* accountFromTreeItem(HTREEITEM item);

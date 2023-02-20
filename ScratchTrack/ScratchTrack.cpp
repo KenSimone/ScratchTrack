@@ -24,7 +24,7 @@
 #include "PayCCDlg.h"
 #include "ExpenseDlg.h"
 #include "AccountDlg.h"
-#include "IncomeDlg.h"
+#include "FolderDlg.h"
 #include "FundExpenseDlg.h"
 #include "FundExpensesDlg.h"
 #include "TransactionImportDlg.h"
@@ -61,7 +61,7 @@ extern BUDGET_TREE_COLUMN_SIZES g_columnSizes;
 extern BUDGET_TREE_DRAG_DETAILS g_btDragDetails;
 
 extern HIMAGELIST _il;
-HTREEITEM g_hAddNewIncomeItem = TVI_LAST;
+HTREEITEM g_hAddNewFolderItem = TVI_LAST;
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -137,35 +137,35 @@ int setupPaymentExpenseForAccount(Account* pAccount)
 
     if (!pExpense) {
 
-#define CC_IN_INCOME
-#ifdef CC_IN_INCOME
-        auto incomes = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
+#define CC_IN_FOLDER
+#ifdef CC_IN_FOLDER
+        auto folders = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
 
-        // Ensure we have a income for CC payment
-        AccountGroup* pIncome = nullptr;
-        HTREEITEM hItemIncome = nullptr;
-        std::wstring incomeName = L"CC Payments";
+        // Ensure we have a folder for CC payment
+        AccountGroup* pFolder = nullptr;
+        HTREEITEM hItemFolder = nullptr;
+        std::wstring folderName = L"CC Payments";
 
-        for (size_t i = 0; i < incomes.size(); i++)
+        for (size_t i = 0; i < folders.size(); i++)
         {
-            if (_wcsicmp(incomeName.c_str(), incomes[i]->getName()) == 0) {
-                pIncome = (AccountGroup*)incomes[i];
-                pIncome->setReadOnly(true);
-                hItemIncome = treeItemFromAccount(pIncome);
+            if (_wcsicmp(folderName.c_str(), folders[i]->getName()) == 0) {
+                pFolder = (AccountGroup*)folders[i];
+                pFolder->setReadOnly(true);
+                hItemFolder = treeItemFromAccount(pFolder);
             }
         }
 
-        if (!pIncome)
+        if (!pFolder)
         {
-            pIncome = new AccountGroup;
-            pIncome->setName(incomeName.c_str());
-            pIncome->setReadOnly(true);
+            pFolder = new AccountGroup;
+            pFolder->setName(folderName.c_str());
+            pFolder->setReadOnly(true);
 
-            hItemIncome = addTreeItem(TVI_ROOT, pIncome, TVI_LAST);
+            hItemFolder = addTreeItem(TVI_ROOT, pFolder, TVI_LAST);
         }
-        else if (pIncome->getHidden()) {
-            pIncome->setHidden(false);
-            addTreeItem(TVI_ROOT, pIncome);
+        else if (pFolder->getHidden()) {
+            pFolder->setHidden(false);
+            addTreeItem(TVI_ROOT, pFolder);
         }
 
 
@@ -176,8 +176,8 @@ int setupPaymentExpenseForAccount(Account* pAccount)
         pExpense->setIsExpense(true);
         pExpense->setIsVirtualAccount(true);
 
-        pIncome->addChild(pExpense);
-        addTreeItem(hItemIncome, pExpense);
+        pFolder->addChild(pExpense);
+        addTreeItem(hItemFolder, pExpense);
     }
     else
     {
@@ -185,18 +185,18 @@ int setupPaymentExpenseForAccount(Account* pAccount)
         pExpense->setName(expenseName.c_str());
 
         // Ensure we're not hidden
-        AccountBase* pIncome = pExpense->getParent();
-        pIncome->setHidden(false);
+        AccountBase* pFolder = pExpense->getParent();
+        pFolder->setHidden(false);
         pExpense->setHidden(false);
 
-        HTREEITEM hIncome = treeItemFromAccount(pIncome);
-        if (!hIncome) {
-            hIncome = addTreeItem(TVI_ROOT, pIncome);
+        HTREEITEM hFolder = treeItemFromAccount(pFolder);
+        if (!hFolder) {
+            hFolder = addTreeItem(TVI_ROOT, pFolder);
         }
 
         HTREEITEM hExpense = treeItemFromAccount(pExpense);
         if (!hExpense) {
-            addTreeItem(hIncome, pExpense);
+            addTreeItem(hFolder, pExpense);
         }
 
     }
@@ -349,15 +349,15 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    //    serializeState();
    //}
 
-   // Add bottom tree item to add new income folders
+   // Add bottom tree item to add new folder folders
    TVINSERTSTRUCT tvi = { 0 };
    tvi.itemex.mask = TVIF_TEXT | TVIF_PARAM;
-   tvi.itemex.pszText = const_cast<wchar_t*>(L"Add monthly income group");
+   tvi.itemex.pszText = const_cast<wchar_t*>(L"Add folder");
    tvi.hParent = TVI_ROOT;
    tvi.itemex.lParam = 0;
    tvi.hInsertAfter = TVI_LAST;
 
-   g_hAddNewIncomeItem = TreeView_InsertItem(g_hwndTV, &tvi);
+   g_hAddNewFolderItem = TreeView_InsertItem(g_hwndTV, &tvi);
    //ShowWindow(g_hwndTV, SW_SHOW);
 
    // Fix up selection / paint
@@ -411,9 +411,9 @@ bool getOneText(std::wstring& result)
     return result[0] ? true : false;
 }
 
-bool editIncome(AccountGroup* pGroup)
+bool editFolder(AccountGroup* pGroup)
 {
-    IncomeDlg dlg(pGroup->getName(), pGroup->getExpenseLimit());
+    FolderDlg dlg(pGroup->getName(), pGroup->getExpenseLimit());
 
     if (dlg.ShowDialog())
     {
@@ -548,9 +548,9 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
             didSomething = true;
         }
         break;
-    case IDM_EDIT_INCOME:
+    case IDM_EDIT_FOLDER:
     {
-        didSomething = editIncome((AccountGroup*)pItem);
+        didSomething = editFolder((AccountGroup*)pItem);
         break;
     }
     case ID_ROOT_FUNDCATEGORIES:
@@ -860,7 +860,7 @@ void editAccount(Account* pAccount)
             // Find the CC payment expense
             AccountExpense* pExpense = dynamic_cast<AccountExpense * >(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
 
-            // If there aren't any other CC accounts, hide the payment incomes
+            // If there aren't any other CC accounts, hide the payment folders
             auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
             bool allHidden = true;
             for (size_t i = 0; i < accounts.size(); i++) {
@@ -909,9 +909,9 @@ void doAddAccountDlg()
     }
 }
 
-void doAddIncome()
+void doAddFolder()
 {
-    IncomeDlg dlg(L"", 0);
+    FolderDlg dlg(L"", 0);
     if (dlg.ShowDialog()) {
         AccountGroup* pGroup = new AccountGroup;
         pGroup->setName(dlg.getName());
@@ -1006,7 +1006,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             break;
         }
         case ID_FILE_ADDEXPENSE:
-            doAddIncome();
+            doAddFolder();
             break;
         default:
             return DefWindowProc(hWnd, message, wParam, lParam);
@@ -1033,9 +1033,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 doAddAccountDlg();
 
             }
-            else if (pHeader->code == AccountInfoDlg::NM_ACCOUNT_DIALOG_ADD_INCOME)
+            else if (pHeader->code == AccountInfoDlg::NM_ACCOUNT_DIALOG_ADD_FOLDER)
             {
-                doAddIncome();
+                doAddFolder();
             }
 
         }
@@ -1247,14 +1247,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 {
                     processContextMenu(ID_ROOT_EDITEXPENSE, hItem, accountFromTreeItem(hItem));
                 }
-                else if (hItem && type == GRP_INCOME_EDIT) {
-                    processContextMenu(IDM_EDIT_INCOME, hItem, accountFromTreeItem(hItem));
+                else if (hItem && type == GRP_FOLDER_EDIT) {
+                    processContextMenu(IDM_EDIT_FOLDER, hItem, accountFromTreeItem(hItem));
                 }
                 else if (hItem && (type == GRP_FUND_CHILDREN)) {
                     processContextMenu(ID_ROOT_FUNDCATEGORIES, hItem, accountFromTreeItem(hItem));
                 }
-                else if (hItem && (type == GLB_ADD_INCOME)) {
-                    doAddIncome();
+                else if (hItem && (type == GLB_ADD_FOLDER)) {
+                    doAddFolder();
                 }
                 else
                 {
@@ -1564,7 +1564,7 @@ void populateTransactions()
         Transaction* pCurTransaction = *itr;
 
         int iAmount = pTransaction->getAmount();
-        bool isIncome = pTransaction->getAccountToId() != ACCOUNT_ID_INVALID && pTransaction->getType() != Transaction::CCPAYMENT;
+        bool isFolder = pTransaction->getAccountToId() != ACCOUNT_ID_INVALID && pTransaction->getType() != Transaction::CCPAYMENT;
         iAmount = abs(iAmount);
         std::wstring amount = Utils::penniesToDollarsString(iAmount);
 
@@ -1639,7 +1639,7 @@ void populateTransactions()
 
         // Description
         ListView_SetItemText(g_hwndTransactionLV, 0, 3, const_cast<wchar_t*>(pTransaction->getDescription()));
-        ListView_SetItemText(g_hwndTransactionLV, 0, isIncome ? 5 : 4, const_cast<wchar_t*>(amount.c_str()));
+        ListView_SetItemText(g_hwndTransactionLV, 0, isFolder ? 5 : 4, const_cast<wchar_t*>(amount.c_str()));
     }
 
     for (size_t i = 0; i < 6; i++) {
@@ -1665,7 +1665,7 @@ int serializeState()
         topItems.push_back(pAccount);
     }
 
-    // Collect incomes from the UI
+    // Collect folders from the UI
     HTREEITEM hItem = TreeView_GetChild(g_hwndTV, TVI_ROOT);
     while (hItem){
         AccountBase* item = accountFromTreeItem(hItem);
@@ -1683,7 +1683,7 @@ int serializeState()
         }
     }
 
-    // Collect hidden incomes
+    // Collect hidden folders
     accts = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
     for (size_t i = 0; i < accts.size(); i++) {
         if (accts[i]->getHidden()) {

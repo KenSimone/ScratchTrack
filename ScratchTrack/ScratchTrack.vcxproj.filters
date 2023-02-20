@@ -54,7 +54,7 @@
     <ClInclude Include="ExpenseDlg.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
-    <ClInclude Include="IncomeDlg.h">
+    <ClInclude Include="FolderDlg.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="PayCCDlg.h">
@@ -125,7 +125,7 @@
     <ClCompile Include="DepositDlg.cpp">
       <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
-    <ClCompile Include="IncomeDlg.cpp">
+    <ClCompile Include="FolderDlg.cpp">
       <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
     <ClCompile Include="PayCCDlg.cpp">
@@ -201,10 +201,10 @@
     <Image Include="..\..\..\..\Downloads\icons8-open-expense-16.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="..\..\..\..\Downloads\icons8-income-16.png">
+    <Image Include="..\..\..\..\Downloads\icons8-folder-16.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="..\..\..\..\Downloads\icons8-income-16.ico">
+    <Image Include="..\..\..\..\Downloads\icons8-folder-16.ico">
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="..\..\..\..\downloads\icon1.ico">
@@ -219,7 +219,7 @@
     <Image Include="expense-16.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="income-16.ico">
+    <Image Include="folder-16.ico">
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="account-16.ico">

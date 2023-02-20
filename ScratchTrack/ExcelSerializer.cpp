@@ -28,7 +28,7 @@ int ExcelSerializer::serialize(const char* szFile, std::vector<AccountBase*>& to
 	if (ret != ERROR_SUCCESS ) {
 		goto end;
 	}
-	ret = serializeIncomes(workbook, topLevelItems, accountIdToCellRef);
+	ret = serializeFolders(workbook, topLevelItems, accountIdToCellRef);
 	if (ret != ERROR_SUCCESS) {
 		goto end;
 	}
@@ -68,7 +68,7 @@ std::string ExcelSerializer::accountTypeToString(AccountBase* pAccount)
 	switch (pAccount->getType())
 	{
 	case AccountBase::GROUP:
-		ret = "income";
+		ret = "folder";
 		break;
 	case AccountBase::EXPENSE:
 		ret = "expense";
@@ -93,7 +93,7 @@ AccountBase::accountItemType ExcelSerializer::accountTypeFromString(const char* 
 
 	if (_stricmp(szAccountType, "account") == 0)
 		return AccountBase::ACCOUNT;
-	if (_stricmp(szAccountType, "income") == 0)
+	if (_stricmp(szAccountType, "folder") == 0)
 		return AccountBase::GROUP;
 	if (_stricmp(szAccountType, "expense") == 0)
 		return AccountBase::EXPENSE;
@@ -167,9 +167,9 @@ int ExcelSerializer::serializeAccounts(lxw_workbook* workbook, std::vector<Accou
 	return ERROR_SUCCESS;
 }
 
-int ExcelSerializer::serializeIncomes(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems, std::map<unsigned int, std::string>& accountIdToCellRef)
+int ExcelSerializer::serializeFolders(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems, std::map<unsigned int, std::string>& accountIdToCellRef)
 {
-	lxw_worksheet* worksheet = workbook_add_worksheet(workbook, INCOME_WORKSHEET_NAME);
+	lxw_worksheet* worksheet = workbook_add_worksheet(workbook, FOLDER_WORKSHEET_NAME);
 
 	uint16_t curRow = 0;
 
@@ -194,9 +194,9 @@ int ExcelSerializer::serializeIncomes(lxw_workbook* workbook, std::vector<Accoun
 	formatMoney->text_h_align = LXW_ALIGN_CENTER;
 	formatMoney->bg_color = RGB(238, 238, 238);
 
-	// Write incomes
-	worksheet_write_string(worksheet, curRow, 0, "Income name", formatHeader);
-	worksheet_write_string(worksheet, curRow, 1, "Income", formatHeader);
+	// Write folders
+	worksheet_write_string(worksheet, curRow, 0, "Folder name", formatHeader);
+	worksheet_write_string(worksheet, curRow, 1, "Folder", formatHeader);
 	worksheet_write_string(worksheet, curRow, 2, "Hidden", formatHeader);
 	worksheet_write_string(worksheet, curRow, 3, "Read Only", formatHeader);
 	worksheet_set_column(worksheet, 0, 8, 15, nullptr);
@@ -216,7 +216,7 @@ int ExcelSerializer::serializeIncomes(lxw_workbook* workbook, std::vector<Accoun
 		worksheet_write_string(worksheet, curRow, 3, p->getReadOnly() ? "yes" : "no", formatLeft);
 
 		char szBuff[1024] = { 0 };
-		sprintf_s(szBuff, "=Incomes!A%d", curRow + 1);
+		sprintf_s(szBuff, "=Folders!A%d", curRow + 1);
 		accountIdToCellRef[p->getId()] = szBuff;
 
 		curRow++;
@@ -255,7 +255,7 @@ int ExcelSerializer::serializeCategories(lxw_workbook* workbook, std::vector<Acc
 
 	// Write categories
 	worksheet_write_string(worksheet, curRow, 0, "Expense name", formatHeader);
-	worksheet_write_string(worksheet, curRow, 1, "Income Id", formatHeader);
+	worksheet_write_string(worksheet, curRow, 1, "Folder Id", formatHeader);
 	worksheet_write_string(worksheet, curRow, 2, "Budgeted", formatHeader);
 	worksheet_write_string(worksheet, curRow, 3, "Balance", formatHeader);
 	worksheet_write_string(worksheet, curRow, 4, "Hidden", formatHeader);
@@ -525,7 +525,7 @@ int ExcelSerializer::writeFrontSheetBudget(lxw_workbook* workbook, lxw_worksheet
 	formatHeader->bold = true;
 	formatHeader->font_color = RGB(36,100,245);
 	worksheet_merge_range(worksheet, CELL("B8"), CELL("E9"), "Monthly Budget", formatHeader);
-	worksheet_merge_range(worksheet, CELL("H8"), CELL("K9"), "Monthly Income", formatHeader);
+	worksheet_merge_range(worksheet, CELL("H8"), CELL("K9"), "Monthly Folder", formatHeader);
 
 	lxw_format* formatHeader2 = workbook_add_format(workbook);
 	formatHeader2->font_size = 17;
@@ -535,7 +535,7 @@ int ExcelSerializer::writeFrontSheetBudget(lxw_workbook* workbook, lxw_worksheet
 	//format_set_bottom(formatHeader2, LXW_BORDER_THIN);
 	//format_set_border_color(formatHeader2, RGB(100, 70, 50));
 	worksheet_merge_range(worksheet, CELL("B12"), CELL("F13"), "Expenses", formatHeader2);
-	worksheet_merge_range(worksheet, CELL("H12"), CELL("L13"), "Income", formatHeader2);
+	worksheet_merge_range(worksheet, CELL("H12"), CELL("L13"), "Folder", formatHeader2);
 
 	std::vector<AccountBase*> expenses = AccountBase::getAllAccountsOfType(AccountBase::EXPENSE);
 
@@ -619,11 +619,11 @@ int ExcelSerializer::writeFrontSheetBudget(lxw_workbook* workbook, lxw_worksheet
 	worksheet_conditional_format_range(worksheet, totalsRow, 5, totalsRow, 5, &formatMoneyConditional);
 
 
-// Income
+// Folder
 	std::vector<AccountBase*> groups = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
 
 	worksheet_write_string(worksheet, CELL("H15"), "Budgeted", formatHeader3);
-	worksheet_write_formula_str(worksheet, CELL("I15"), "=SUM(Incomes!B:B)", formatMoney, "");
+	worksheet_write_formula_str(worksheet, CELL("I15"), "=SUM(Folders!B:B)", formatMoney, "");
 
 	worksheet_write_string(worksheet, CELL("H16"), "Actual", formatHeader3);
 	sprintf_s(szBuf, "=SUMIFS(Transactions!C:C, Transactions!H:H, \"Deposit\", Transactions!A:A, \">= \" & DATE(D11, D10, 1), Transactions!A:A, \"< \" & EDATE(DATE(D11, D10, 1), 1))");
@@ -706,7 +706,7 @@ int ExcelSerializer::deserialize(const char* szFile, std::vector<AccountBase*>& 
 		goto end;
 	}
 
-	err = deserializeIncomes(wb, topLevelItems, cellRefToAccountId);
+	err = deserializeFolders(wb, topLevelItems, cellRefToAccountId);
 	if (err != ERROR_SUCCESS) {
 		goto end;
 	}
@@ -785,13 +785,13 @@ int ExcelSerializer::deserializeAccounts(OpenXLSX::XLWorkbook& workbook, std::ve
 	return ERROR_SUCCESS;
 }
 
-int ExcelSerializer::deserializeIncomes(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId)
+int ExcelSerializer::deserializeFolders(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId)
 {
-	if (!workbook.worksheetExists(INCOME_WORKSHEET_NAME)) {
+	if (!workbook.worksheetExists(FOLDER_WORKSHEET_NAME)) {
 		return ERROR_INVALID_DATA;
 	}
 
-	OpenXLSX::XLWorksheet worksheet = workbook.worksheet(INCOME_WORKSHEET_NAME);
+	OpenXLSX::XLWorksheet worksheet = workbook.worksheet(FOLDER_WORKSHEET_NAME);
 
 	int row = 2;
 	while (true) {

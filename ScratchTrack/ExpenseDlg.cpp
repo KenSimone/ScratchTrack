@@ -126,7 +126,7 @@ INT_PTR CALLBACK ExpenseDialog::ExpenseDialogProc(HWND hDlg, UINT message, WPARA
         {
             if (LOWORD(wParam) == IDOK)
             {
-                bool income = SendDlgItemMessage(hDlg, IDC_RADIO_INCOME, BM_GETCHECK, 0, 0);
+                bool folder = SendDlgItemMessage(hDlg, IDC_RADIO_FOLDER, BM_GETCHECK, 0, 0);
 
                 if (PTHIS) {
                     // Name

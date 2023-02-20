@@ -420,13 +420,8 @@ AccountExpense* AccountExpense::getOrCreateCCExpense()
 unsigned int AccountBase::_curId = 0;
 
 
-
-void AccountBase::stopDeserialize()
+void AccountBase::calcNextAccountId()
 {
-	if (_curId != ACCOUNT_ID_INVALID){
-		return;
-	}
-
 	// Find our biggest ID and set the seed to that +1
 	unsigned int biggestId = 0;
 	for (auto itr = _idToItem.begin(); itr != _idToItem.end(); itr++) {
@@ -437,4 +432,13 @@ void AccountBase::stopDeserialize()
 	}
 
 	_curId = biggestId + 1;
+}
+
+void AccountBase::stopDeserialize()
+{
+	if (_curId != ACCOUNT_ID_INVALID){
+		return;
+	}
+
+	calcNextAccountId();
 }

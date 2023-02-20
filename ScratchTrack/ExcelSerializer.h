@@ -31,7 +31,7 @@ protected:
 
 	static lxw_worksheet* serializeFrontSheet(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems);
 	static int serializeAccounts(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems, std::map<unsigned int, std::string>& accountIdToCellRef);
-	static int serializeIncomes(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems, std::map<unsigned int, std::string>& accountIdToCellRef);
+	static int serializeFolders(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems, std::map<unsigned int, std::string>& accountIdToCellRef);
 	static int serializeSettings(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems, std::map<unsigned int, std::string>& accountIdToCellRef);
 	static int serializeTransactions(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems, std::map<unsigned int, std::string>& accountIdToCellRef);
 	static int serializeCategories(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems, std::map<unsigned int, std::string>& accountIdToCellRef);
@@ -41,14 +41,14 @@ protected:
 
 	// Deserialize stuff
 	static int deserializeAccounts(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId);
-	static int deserializeIncomes(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId);
+	static int deserializeFolders(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId);
 
 	static int deserializeSettings(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId);
 	static int deserializeTransactions(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId);
 	static int deserializeCategories(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId);
 
 	inline static const char* ACCOUNT_WORKSHEET_NAME = "Accounts";
-	inline static const char* INCOME_WORKSHEET_NAME = "Incomes";
+	inline static const char* FOLDER_WORKSHEET_NAME = "Folders";
 	inline static const char* EXPENSE_WORKSHEET_NAME = "Categories";
 	inline static const char* SETTINGS_WORKSHEET_NAME = "Settings";
 	inline static const char* FRONT_WORKSHEET_NAME = "Budget";

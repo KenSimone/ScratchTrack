@@ -82,7 +82,7 @@ public:
 	virtual int initItemFromXmlElement(tinyxml2::XMLElement* pAccount);
 
 	static void startDeserialize() { _curId = ACCOUNT_ID_INVALID; }
-
+	static void calcNextAccountId(); // No real need to do this, but it helps unit testing
 	static void stopDeserialize();
 
 //protected:
@@ -102,7 +102,7 @@ private:
 
 };
 
-// Group / income class and implementation
+// Group / folder class and implementation
 class AccountGroup : public AccountBase
 {
 public:

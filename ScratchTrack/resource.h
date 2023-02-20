@@ -19,7 +19,7 @@
 #define IDR_MENU1                       130
 #define IDR_MENU_TREEVIEW               130
 #define IDI_EXPENSE                    136
-#define IDI_INCOME                      138
+#define IDI_FOLDER                      138
 #define IDI_ACCOUNT                     141
 #define IDR_GROUP_MENU                  142
 #define IDR_EXPENSE_MENU               143
@@ -35,7 +35,7 @@
 #define IDD_DEPOSIT_DIALOG              158
 #define IDD_TRANSFER_DIALOG             159
 #define IDD_PAYCC_DIALOG                160
-#define IDD_INCOME_DIALOG               161
+#define IDD_FOLDER_DIALOG               161
 #define IDD_FILL_CATEGORIES_DIALOG      163
 #define IDD_FUND_GROUP_DIALOG           165
 #define IDB_BITMAP1                     171
@@ -45,7 +45,7 @@
 #define IDC_ONE_INPUT_TEXT              1000
 #define IDC_EDIT_Transaction_AMOUNT     1001
 #define IDC_RADIO1                      1002
-#define IDC_RADIO_INCOME                1002
+#define IDC_RADIO_FOLDER                1002
 #define IDC_SET_ANY_RADIO               1002
 #define IDC_RADIO_ADD_TO_EXISTING_BALANCE 1002
 #define IDC_RADIO_EXPENSE               1003
@@ -73,7 +73,7 @@
 #define IDC_BUTTON_APPLY_TRANSACTION_FILTER 1021
 #define IDC_BUTTON_ADD_ACCOUNT          1022
 #define IDC_CHECK_SHOW_TRANSACTION_LIST 1022
-#define IDC_BUTTON_ADD_INCOME           1023
+#define IDC_BUTTON_ADD_FOLDER           1023
 #define IDC_CHECK_FILTER_TO_ACCOUNT     1023
 #define IDC_RICHEDIT_SUMMARY            1024
 #define IDC_EDIT_DEPOSIT_AMOUNT         1025
@@ -83,7 +83,7 @@
 #define IDC_EDIT_ACCOUNT                1028
 #define IDC_EDIT_EXPENSE               1029
 #define IDC_COMBO_ACCOUNT_FROM          1030
-#define IDC_EDIT_INCOME_NAME            1031
+#define IDC_EDIT_FOLDER_NAME            1031
 #define IDC_EDIT_EXPENSE_LIMIT          1032
 #define IDC_ADD_TO_TOP_RADIO            1035
 #define IDC_ADD_BUDGETED_RADIO          1036
@@ -104,7 +104,7 @@
 #define IDC_STATIC_BALANCE              1051
 #define YEAR                            2023
 #define ID_ROOT_ADD_GROUP               32771
-#define IDM_EDIT_INCOME                 32772
+#define IDM_EDIT_FOLDER                 32772
 #define ID_ROOT_SETBALANCE              32773
 #define ID_ROOT_DELETEITEM              32776
 #define ID_Menu                         32777
