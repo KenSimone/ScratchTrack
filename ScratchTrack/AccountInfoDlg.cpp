@@ -303,8 +303,8 @@ void AccountInfoDlg::printMasterSummary()
     appendText(szCaption, isError ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL, false, false, TEXT_SIZE);
 
     if (!accounts.empty() || !categories.empty() || !folders.empty()) {
-        appendText(L"\nTIP: ", TEXT_COLOR_NORMAL, true, false, TEXT_SIZE);
-        appendText(L"Right click accounts, folders, expenses and transactions for more options", TEXT_COLOR_NORMAL, false, false, TEXT_SIZE);
+        appendText(L"TIP: ", TEXT_COLOR_NORMAL, true, false, TEXT_SIZE);
+        appendText(L"Right click accounts, folders, expenses and transactions for more options\n\n", TEXT_COLOR_NORMAL, false, false, TEXT_SIZE);
     }
 }
 
