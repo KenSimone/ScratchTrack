@@ -5,14 +5,14 @@
 
 class AccountGroup;
 
-class FundExpensesDlg
+class FundEnvelopesDlg
 {
 public:
-	FundExpensesDlg(AccountGroup* pGroups) : _pGroup(pGroups), _resetBalance(false)
+	FundEnvelopesDlg(AccountGroup* pGroups) : _pGroup(pGroups), _resetBalance(false)
 	{
 	};
 
-	~FundExpensesDlg() {};
+	~FundEnvelopesDlg() {};
 
 	bool ShowDialog();
 
@@ -21,7 +21,7 @@ public:
 	bool getResetBalance() { return _resetBalance; }
 
 protected:
-	static INT_PTR CALLBACK FundExpensesDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
+	static INT_PTR CALLBACK FundEnvelopesDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 
 	void updateUi(HWND hDlg);
 
@@ -29,6 +29,6 @@ protected:
 	AccountGroup* _pGroup;
 	bool _resetBalance;
 
-	static FundExpensesDlg* PTHIS;
+	static FundEnvelopesDlg* PTHIS;
 
-}; // class FundExpensesDlg
+}; // class FundEnvelopesDlg

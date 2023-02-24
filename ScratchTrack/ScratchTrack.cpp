@@ -22,11 +22,11 @@
 #include "DepositDlg.h"
 #include "TransferDlg.h"
 #include "PayCCDlg.h"
-#include "ExpenseDlg.h"
+#include "EnvelopeDlg.h"
 #include "AccountDlg.h"
 #include "FolderDlg.h"
-#include "FundExpenseDlg.h"
-#include "FundExpensesDlg.h"
+#include "FundEnvelopeDlg.h"
+#include "FundEnvelopesDlg.h"
 #include "TransactionImportDlg.h"
 
 #include <commctrl.h>
@@ -77,7 +77,7 @@ void calcColumnSpots();
 void addAccount(Account* pAccount);
 void setGuiFont(HWND hCtrl);
 bool doFundCategories(AccountGroup* pGroup);
-bool addExpense(HTREEITEM hItem);
+bool addEnvelope(HTREEITEM hItem);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -129,13 +129,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     return (int) msg.wParam;
 }
 
-int setupPaymentExpenseForAccount(Account* pAccount)
+int setupPaymentEnvelopeForCCAccount(Account* pAccount)
 {
-    std::wstring expenseName = L"Monhly credit card charges";
+    std::wstring envelopeName = L"Credit card charges";
 
-    AccountExpense* pExpense = dynamic_cast<AccountExpense*>(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
+    AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
 
-    if (!pExpense) {
+    if (!pEnvelope) {
 
 #define CC_IN_FOLDER
 #ifdef CC_IN_FOLDER
@@ -169,51 +169,51 @@ int setupPaymentExpenseForAccount(Account* pAccount)
         }
 
 
-        // No existing expense. Make one.
-        pExpense = AccountExpense::getOrCreateCCExpense();
-        pExpense->setName(expenseName.c_str());
-        pExpense->setDefaultTransactionPayToAccount(pAccount);
-        pExpense->setIsExpense(true);
-        pExpense->setIsVirtualAccount(true);
+        // No existing envelope. Make one.
+        pEnvelope = AccountEnvelope::getOrCreateCCEnvelope();
+        pEnvelope->setName(envelopeName.c_str());
+        pEnvelope->setDefaultTransactionPayToAccount(pAccount);
+        pEnvelope->setIsExpense(true);
+        pEnvelope->setIsVirtualAccount(true);
 
-        pFolder->addChild(pExpense);
-        addTreeItem(hItemFolder, pExpense);
+        pFolder->addChild(pEnvelope);
+        addTreeItem(hItemFolder, pEnvelope);
     }
     else
     {
-        // We do have a expense, update it's name as appropriate
-        pExpense->setName(expenseName.c_str());
+        // We do have a envelope, update it's name as appropriate
+        pEnvelope->setName(envelopeName.c_str());
 
         // Ensure we're not hidden
-        AccountBase* pFolder = pExpense->getParent();
+        AccountBase* pFolder = pEnvelope->getParent();
         pFolder->setHidden(false);
-        pExpense->setHidden(false);
+        pEnvelope->setHidden(false);
 
         HTREEITEM hFolder = treeItemFromAccount(pFolder);
         if (!hFolder) {
             hFolder = addTreeItem(TVI_ROOT, pFolder);
         }
 
-        HTREEITEM hExpense = treeItemFromAccount(pExpense);
-        if (!hExpense) {
-            addTreeItem(hFolder, pExpense);
+        HTREEITEM henvelope = treeItemFromAccount(pEnvelope);
+        if (!henvelope) {
+            addTreeItem(hFolder, pEnvelope);
         }
 
     }
 #else
-        pExpense = AccountExpense::getOrCreateCCExpense();
-        pExpense->setName(expenseName.c_str());
-        pExpense->setDefaultTransactionPayToAccount(pAccount);
-        pExpense->setIsExpense(true);
-        pExpense->setIsVirtualAccount(true);
+        pEnvelope = AccountEnvelope::getOrCreateCCEnvelope();
+        pEnvelope->setName(envelopeName.c_str());
+        pEnvelope->setDefaultTransactionPayToAccount(pAccount);
+        pEnvelope->setIsExpense(true);
+        pEnvelope->setIsVirtualAccount(true);
 
         pAccount->setIsCCAccount(true);
-        addTreeItem(TVI_ROOT, pExpense);
+        addTreeItem(TVI_ROOT, pEnvelope);
 
     }
 #endif
 
-    return pExpense->getId();
+    return pEnvelope->getId();
 }
 
 void createTransactionListControl()
@@ -242,7 +242,7 @@ void createTransactionListControl()
     column.pszText = const_cast<wchar_t*>(L"Payee");
     ListView_InsertColumn(g_hwndTransactionLV, 1, &column);
 
-    column.pszText = const_cast<wchar_t*>(L"Expense");
+    column.pszText = const_cast<wchar_t*>(L"Envelope");
     ListView_InsertColumn(g_hwndTransactionLV, 2, &column);
 
     column.pszText = const_cast<wchar_t*>(L"Description");
@@ -344,7 +344,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    //    addTreeItem(TVI_ROOT, pAccount);
 
    //    AccountGroup* pGroup = new AccountGroup;
-   //    pGroup->setName(L"Monthly Expenses");
+   //    pGroup->setName(L"Monthly Envelopes");
    //    addTreeItem(TVI_ROOT, pGroup);
    //    serializeState();
    //}
@@ -427,21 +427,21 @@ bool editFolder(AccountGroup* pGroup)
     return false;
 }
 
-bool editExpense(AccountExpense* pExpense)
+bool editEnvelope(AccountEnvelope* pEnvelope)
 {
-    ExpenseDialog dlg;
-    dlg.setBudget(pExpense->getBudgeted());
-    dlg.setExpenseName(pExpense->getName());
-    dlg.setDefaultTransactionPayFromAccount(pExpense->getDefaultTransactionPayFromAccount());
-    dlg.setDefaultTransactionAmount(pExpense->getDefaultTransactionAmount());
-    dlg.setDefaultTransactionPayee(pExpense->getDefaultTransactionPayee());
+    EnvelopeDialog dlg;
+    dlg.setBudget(pEnvelope->getBudgeted());
+    dlg.setEnvelopeName(pEnvelope->getName());
+    dlg.setDefaultTransactionPayFromAccount(pEnvelope->getDefaultTransactionPayFromAccount());
+    dlg.setDefaultTransactionAmount(pEnvelope->getDefaultTransactionAmount());
+    dlg.setDefaultTransactionPayee(pEnvelope->getDefaultTransactionPayee());
     if (dlg.ShowDialog())
     {
-        pExpense->setBudgeted(dlg.getBudget());
-        pExpense->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
-        pExpense->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
-        pExpense->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
-        pExpense->setName(dlg.getExpenseName());
+        pEnvelope->setBudgeted(dlg.getBudget());
+        pEnvelope->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
+        pEnvelope->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
+        pEnvelope->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
+        pEnvelope->setName(dlg.getEnvelopeName());
         
         updateGuiValues();
 
@@ -450,23 +450,23 @@ bool editExpense(AccountExpense* pExpense)
     return false;
 }
 
-bool doExpenseAdd(AccountGroup* pParent, HTREEITEM hParent)
+bool doEnvelopeAdd(AccountGroup* pParent, HTREEITEM hParent)
 {
     bool ret = false;
-    ExpenseDialog dlg;
+    EnvelopeDialog dlg;
     if (pParent && dlg.ShowDialog()) {
-        AccountExpense* pExpense = new AccountExpense;
-        pExpense->setName(dlg.getExpenseName());
-        pExpense->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
-        pExpense->setDefaultTransactionPayToAccount(nullptr);
-        pExpense->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
-        pExpense->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
-        pExpense->setIsExpense(true);
-        pExpense->setIsVirtualAccount(true);
-        pExpense->setBudgeted(dlg.getBudget());
+        AccountEnvelope* pEnvelope = new AccountEnvelope;
+        pEnvelope->setName(dlg.getEnvelopeName());
+        pEnvelope->setDefaultTransactionPayFromAccount(dlg.getDefaultTransactionPayFromAccount());
+        pEnvelope->setDefaultTransactionPayToAccount(nullptr);
+        pEnvelope->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
+        pEnvelope->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
+        pEnvelope->setIsExpense(true);
+        pEnvelope->setIsVirtualAccount(true);
+        pEnvelope->setBudgeted(dlg.getBudget());
 
-        pParent->addChild(pExpense);
-        addTreeItem(hParent, pExpense);
+        pParent->addChild(pEnvelope);
+        addTreeItem(hParent, pEnvelope);
         ret = true;
     }
     return ret;
@@ -474,18 +474,18 @@ bool doExpenseAdd(AccountGroup* pParent, HTREEITEM hParent)
 
 bool doFundCategories(AccountGroup* pGroup)
 {
-    FundExpensesDlg dlg(pGroup);
+    FundEnvelopesDlg dlg(pGroup);
     bool ret = dlg.ShowDialog();
     if (ret) {
         auto children = pGroup->getChildren();
         for (size_t i = 0; i < children.size(); i++) {
-            AccountExpense* pExpense = dynamic_cast<AccountExpense*>(children[i]);
-            if (pExpense) {
+            AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(children[i]);
+            if (pEnvelope) {
                 if (dlg.getResetBalance()) {
-                    pExpense->addBalance(-pExpense->getBalance() + -pExpense->getBudgeted());
+                    pEnvelope->addBalance(-pEnvelope->getBalance() + -pEnvelope->getBudgeted());
                 }
                 else {
-                    pExpense->addBalance(-pExpense->getBudgeted());
+                    pEnvelope->addBalance(-pEnvelope->getBudgeted());
                 }
             }
         }
@@ -503,9 +503,9 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
         pParentGroup = (AccountGroup*)pItem;
     }
 
-    if (dwCommand >= ID_ROOT_EXPENSE_MOVE_TO_START && dwCommand < ID_ROOT_EXPENSE_MOVE_TO_END) {
+    if (dwCommand >= ID_ROOT_ENVELOPE_MOVE_TO_START && dwCommand < ID_ROOT_ENVELOPE_MOVE_TO_END) {
         // This is a move to new parent
-        AccountGroup* pDestGroup = dynamic_cast<AccountGroup*>(AccountBase::lookupById(dwCommand - ID_ROOT_EXPENSE_MOVE_TO_START));
+        AccountGroup* pDestGroup = dynamic_cast<AccountGroup*>(AccountBase::lookupById(dwCommand - ID_ROOT_ENVELOPE_MOVE_TO_START));
         AccountGroup* pOrigGroup = dynamic_cast<AccountGroup*>(pItem->getParent());
         HTREEITEM hNewParent = treeItemFromAccount(pDestGroup);
 
@@ -571,11 +571,11 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
 
     switch (dwCommand)
     {
-    case ID_ROOT_HIDEEXPENSE:
+    case ID_ROOT_HIDEENVELOPE:
     {
         if (Utils::confirmHide(pItem)) {
             pItem->setHidden(true);
-            if (pItem->getType() == AccountBase::EXPENSE) {
+            if (pItem->getType() == AccountBase::ENVELOPE) {
                 pItem->addBalance(-pItem->getBalance());
             }
             else if (pItem->getType() == AccountBase::GROUP) {
@@ -593,18 +593,18 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
 
         break;
     }
-    case ID_EXPENSE_RESERVE_FUNDS:
+    case ID_ENVELOPE_RESERVE_FUNDS:
     {
-        AccountExpense* pExpense = dynamic_cast<AccountExpense*>(pItem);
-        FundExpenseDlg dlg(pExpense);
-        if (pExpense && dlg.ShowDialog()) {
-            pExpense->addBalance(-pExpense->getBalance() + dlg.getNewBalance());
+        AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(pItem);
+        FundEnvelopeDlg dlg(pEnvelope);
+        if (pEnvelope && dlg.ShowDialog()) {
+            pEnvelope->addBalance(-pEnvelope->getBalance() + dlg.getNewBalance());
             didSomething = true;
         }
         break;
     }
-    case ID_ROOT_EDITEXPENSE:
-        didSomething = editExpense((AccountExpense*)pItem);
+    case ID_ROOT_EDITENVELOPE:
+        didSomething = editEnvelope((AccountEnvelope*)pItem);
         break;
     case ID_ROOT_SETBUDGETEDAMOUNT:
         if (pItem && getOneText(temp)) {
@@ -622,14 +622,14 @@ bool processContextMenu(DWORD dwCommand, HTREEITEM hItem, AccountBase* pItem)
         didSomething = doFundCategories((AccountGroup*)pItem);
         break;
     }
-    case ID_ROOT_ADDEXPENSE:
+    case ID_ROOT_ADDENVELOPE:
     {
-        didSomething = doExpenseAdd(pParentGroup, hItem);
+        didSomething = doEnvelopeAdd(pParentGroup, hItem);
         break;
     }
     case ID_ROOT_ADDTransaction:
     {
-        didSomething = addExpense(hItem);
+        didSomething = addEnvelope(hItem);
         break;
     }
     }
@@ -661,8 +661,8 @@ void updateTransactionUiAndSave(Transaction* pTransaction, int listviewItemIndex
     }
     ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 1, const_cast<wchar_t*>(payee.c_str()));
 
-    // Expense
-    AccountBase* ati = AccountBase::lookupById(pTransaction->getExpenseId());
+    // Envelope
+    AccountBase* ati = AccountBase::lookupById(pTransaction->getEnvelopeId());
     if (ati) {
         ListView_SetItemText(g_hwndTransactionLV, listviewItemIndex, 2, const_cast<wchar_t*>(ati->getName()));
     }
@@ -722,7 +722,7 @@ void editTransfer(Transaction* pTransaction, int listviewItemIndex)
         if (dlg.ShowDialog()) {
 
             pTransaction->undo();
-            pTransaction->setDetails(dlg.getAmount(), pTransaction->getPayee(), dlg.getDescription(), pTransaction->getExpenseId(), dlg.getAccountFromId(), dlg.getAccountToId());
+            pTransaction->setDetails(dlg.getAmount(), pTransaction->getPayee(), dlg.getDescription(), pTransaction->getEnvelopeId(), dlg.getAccountFromId(), dlg.getAccountToId());
             pTransaction->apply();
 
             updateTransactionUiAndSave(pTransaction, listviewItemIndex);
@@ -749,7 +749,7 @@ void editDeposit(Transaction* pTransaction, int listviewItemIndex)
         DepositDlg dlg(pAcct, pTransaction->getAmount(), pTransaction->getPayee(), pTransaction->getDescription());
         if (dlg.ShowDialog()) {
             pTransaction->undo();
-            pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), pTransaction->getExpenseId(), pTransaction->getAccountFromId(), dlg.getAccount()->getId());
+            pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), pTransaction->getEnvelopeId(), pTransaction->getAccountFromId(), dlg.getAccount()->getId());
             pTransaction->apply();
             updateTransactionUiAndSave(pTransaction, listviewItemIndex);
         }
@@ -791,41 +791,41 @@ void editPayCC(Transaction* pTransaction, int listviewItemIndex)
         PayCCDlg dlg(pAcct, pTransaction->getAmount(), pTransaction->getAccountFromId(), pTransaction->getDescription());
         if (dlg.ShowDialog()) {
             pTransaction->undo();
-            // Apply new balance to the expense
-            pTransaction->setDetails(dlg.getAmount(), pTransaction->getPayee(), dlg.getDescription(), pTransaction->getExpenseId(), pTransaction->getAccountFromId(), pTransaction->getAccountToId());
+            // Apply new balance to the folder
+            pTransaction->setDetails(dlg.getAmount(), pTransaction->getPayee(), dlg.getDescription(), pTransaction->getEnvelopeId(), pTransaction->getAccountFromId(), pTransaction->getAccountToId());
             pTransaction->apply();
             updateTransactionUiAndSave(pTransaction, listviewItemIndex);
         }
     }
 }
 
-bool addExpense(HTREEITEM hItem)
+bool addEnvelope(HTREEITEM hItem)
 {
     bool didSimonthing = false;
     AccountBase* pItem = accountFromTreeItem(hItem);
     TransactionDialog transactionDlg(true);
-    transactionDlg.setExpenseId(pItem->getId());
-    AccountExpense* pExpense = nullptr;
-    if (pItem->getType() == AccountBase::EXPENSE) {
-        pExpense = (AccountExpense*)pItem;
-        transactionDlg.setPayee(pExpense->getDefaultTransactionPayee());
-        transactionDlg.setAmount(pExpense->getDefaultTransactionAmount());
+    transactionDlg.setenvelopeId(pItem->getId());
+    AccountEnvelope* pEnvelope = nullptr;
+    if (pItem->getType() == AccountBase::ENVELOPE) {
+        pEnvelope = (AccountEnvelope*)pItem;
+        transactionDlg.setPayee(pEnvelope->getDefaultTransactionPayee());
+        transactionDlg.setAmount(pEnvelope->getDefaultTransactionAmount());
 
-        if (pExpense->getDefaultTransactionPayFromAccount()) {
-            transactionDlg.setAccountFromId(pExpense->getDefaultTransactionPayFromAccount()->getId());
+        if (pEnvelope->getDefaultTransactionPayFromAccount()) {
+            transactionDlg.setAccountFromId(pEnvelope->getDefaultTransactionPayFromAccount()->getId());
         }
         else {
             transactionDlg.setAccountFromId(ACCOUNT_ID_INVALID);
         }
 
-        if (pExpense->getDefaultTransactionPayFromAccount()) {
-            transactionDlg.setAccountFromId(pExpense->getDefaultTransactionPayFromAccount()->getId());
+        if (pEnvelope->getDefaultTransactionPayFromAccount()) {
+            transactionDlg.setAccountFromId(pEnvelope->getDefaultTransactionPayFromAccount()->getId());
         }
     }
 
     if (transactionDlg.ShowDialog())
     {
-        Transaction* pTransaction = Transaction::addTransaction(Transaction::EXPENSE, transactionDlg.getAmount(), transactionDlg.getAccountFromId(), ACCOUNT_ID_INVALID, transactionDlg.getExpenseId(), transactionDlg.getPayee(), transactionDlg.getDescription());
+        Transaction* pTransaction = Transaction::addTransaction(Transaction::ENVELOPE, transactionDlg.getAmount(), transactionDlg.getAccountFromId(), ACCOUNT_ID_INVALID, transactionDlg.getEnvelopeId(), transactionDlg.getPayee(), transactionDlg.getDescription());
         pTransaction->apply();
 
         updateGuiValues();
@@ -835,7 +835,7 @@ bool addExpense(HTREEITEM hItem)
     return didSimonthing;
 }
 
-void editExpense(Transaction* pTransaction, int listviewItemIndex)
+void editEnvelope(Transaction* pTransaction, int listviewItemIndex)
 {
     TransactionDialog dlg(false /* turn off validation in edit. Undo logic needs to be considered */);
 
@@ -843,12 +843,12 @@ void editExpense(Transaction* pTransaction, int listviewItemIndex)
     dlg.setPayee(pTransaction->getPayee());
     dlg.setDescription(pTransaction->getDescription());
     dlg.setAccountFromId(pTransaction->getAccountFromId());
-    dlg.setExpenseId(pTransaction->getExpenseId());
+    dlg.setenvelopeId(pTransaction->getEnvelopeId());
 
     if (dlg.ShowDialog())
     {
         pTransaction->undo();
-        pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), dlg.getExpenseId(), dlg.getAccountFromId(), ACCOUNT_ID_INVALID);
+        pTransaction->setDetails(dlg.getAmount(), dlg.getPayee(), dlg.getDescription(), dlg.getEnvelopeId(), dlg.getAccountFromId(), ACCOUNT_ID_INVALID);
         pTransaction->apply();
         updateTransactionUiAndSave(pTransaction, listviewItemIndex);
     }
@@ -861,8 +861,8 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
     case Transaction::CCPAYMENT:
         editPayCC(pTransaction, listviewItemIndex);
         break;
-    case Transaction::EXPENSE:
-        editExpense(pTransaction, listviewItemIndex);
+    case Transaction::ENVELOPE:
+        editEnvelope(pTransaction, listviewItemIndex);
         break;
     case Transaction::DEPOSIT:
         editDeposit(pTransaction, listviewItemIndex);
@@ -914,15 +914,15 @@ void editAccount(Account* pAccount)
         pAccount->setContributesToBudget(dlg.getBudgeted());
         if (dlg.getCreditCard()) {
             pAccount->setIsCCAccount(true);
-            setupPaymentExpenseForAccount(pAccount);
+            setupPaymentEnvelopeForCCAccount(pAccount);
         }
         else if (pAccount->isCCAccount())
         {
             // This account isn't a CC account anymore
             pAccount->setIsCCAccount(false);
 
-            // Find the CC payment expense
-            AccountExpense* pExpense = dynamic_cast<AccountExpense * >(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
+            // Find the CC payment envelope
+            AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope * >(AccountBase::lookupById(ACCOUNT_ID_PAY_CC));
 
             // If there aren't any other CC accounts, hide the payment folders
             auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
@@ -936,10 +936,10 @@ void editAccount(Account* pAccount)
             }
 
             if (allHidden) {
-                pExpense->addBalance(-pExpense->getBalance());
-                pExpense->setHidden(true);
-                HTREEITEM hExpense = treeItemFromAccount(pExpense);
-                HTREEITEM hParent = TreeView_GetParent(g_hwndTV, hExpense);
+                pEnvelope->addBalance(-pEnvelope->getBalance());
+                pEnvelope->setHidden(true);
+                HTREEITEM hEnvelope = treeItemFromAccount(pEnvelope);
+                HTREEITEM hParent = TreeView_GetParent(g_hwndTV, hEnvelope);
                 if (hParent) {
                     AccountBase* pParent = accountFromTreeItem(hParent);
                     pParent->setHidden(true);
@@ -966,7 +966,7 @@ void doAddAccountDlg()
         pAccount->setContributesToBudget(dlg.getBudgeted());
         if (dlg.getCreditCard()) {
             pAccount->setIsCCAccount(true);
-            setupPaymentExpenseForAccount(pAccount);
+            setupPaymentEnvelopeForCCAccount(pAccount);
         }
         addTreeItem(TVI_ROOT, pAccount);
         serializeState();
@@ -1006,8 +1006,8 @@ void doImportTransactions(Account* pAccount)
                 auto transactionsNew = dlg.transactionsOut();
                 for (size_t i = 0; i < transactionsNew.size(); i++) {
                     std::wstring payee = transactionsNew[i]._payeeMapped.empty() ? transactionsNew[i]._payee : transactionsNew[i]._payeeMapped;
-                    Transaction* pTransaction = Transaction::addTransaction(Transaction::EXPENSE, transactionsNew[i]._amount, 
-                        pAccount->getId(), ACCOUNT_ID_INVALID, transactionsNew[i]._expenseId, payee.c_str(), nullptr, &transactionsNew[i]._date);
+                    Transaction* pTransaction = Transaction::addTransaction(Transaction::ENVELOPE, transactionsNew[i]._amount, 
+                        pAccount->getId(), ACCOUNT_ID_INVALID, transactionsNew[i]._envelopeId, payee.c_str(), nullptr, &transactionsNew[i]._date);
                     pTransaction->apply();
 
                     // If the max imported date is greater than our current last import date, update it
@@ -1076,7 +1076,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             doAddAccountDlg();
             break;
         }
-        case ID_FILE_ADDEXPENSE:
+        case ID_FILE_ADDENVELOPE:
             doAddFolder();
             break;
         default:
@@ -1280,7 +1280,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             if (pHeader->code == TVN_SELCHANGED)
             {
-                if (g_transactionFilterDlg.filterToExpenseSelection()) {
+                if (g_transactionFilterDlg.filterToEnvelopeSelection()) {
                     populateTransactions();
                 }
             }
@@ -1310,15 +1310,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 }
                 else if (hItem && type == ENV_MONEY_ADD)
                 {
-                    processContextMenu(ID_EXPENSE_RESERVE_FUNDS, hItem, accountFromTreeItem(hItem));
+                    processContextMenu(ID_ENVELOPE_RESERVE_FUNDS, hItem, accountFromTreeItem(hItem));
                 }
-                else if (hItem && type == GRP_EXPENSE_ADD)
+                else if (hItem && type == GRP_ENVELOPE_ADD)
                 {
-                    processContextMenu(ID_ROOT_ADDEXPENSE, hItem, accountFromTreeItem(hItem));
+                    processContextMenu(ID_ROOT_ADDENVELOPE, hItem, accountFromTreeItem(hItem));
                 }
-                else if (hItem && type == ENV_EXPENSE_EDIT)
+                else if (hItem && type == ENV_ENVELOPE_EDIT)
                 {
-                    processContextMenu(ID_ROOT_EDITEXPENSE, hItem, accountFromTreeItem(hItem));
+                    processContextMenu(ID_ROOT_EDITENVELOPE, hItem, accountFromTreeItem(hItem));
                 }
                 else if (hItem && type == GRP_FOLDER_EDIT) {
                     processContextMenu(IDM_EDIT_FOLDER, hItem, accountFromTreeItem(hItem));
@@ -1351,8 +1351,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 auto acctBase = accountFromTreeItem(hItem);
                 if (acctBase && !acctBase->getReadOnly())
                 {
-                    AccountExpense* pExpense = dynamic_cast<AccountExpense*>(acctBase);
-                    if (pExpense && editExpense(pExpense) ){
+                    AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(acctBase);
+                    if (pEnvelope && editEnvelope(pEnvelope) ){
                         serializeState();
                     }
                     return true;
@@ -1385,14 +1385,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_GROUP_MENU));
                         hSubMenu = GetSubMenu(hMenu, 0);
                     }
-                    else if (pItem->getType() == AccountBase::EXPENSE) {
+                    else if (pItem->getType() == AccountBase::ENVELOPE) {
 
                         bool addMove = !pItem->getReadOnly() && pItem->getId() != ACCOUNT_ID_PAY_CC;
 
                         if (!addMove) {
                         }
                         else {
-                            hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_EXPENSE_MENU));
+                            hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_ENVELOPE_MENU));
                             hSubMenu = GetSubMenu(hMenu, 0);
 
                             bool added = false;
@@ -1400,7 +1400,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                             HMENU groupMenu = CreatePopupMenu();
                             for (size_t i = 0; i < groups.size(); i++) {
                                 if (pParentItem && groups[i]->getId() != pParentItem->getId() && !groups[i]->getReadOnly()) {
-                                    AppendMenu(groupMenu, MF_STRING, ID_ROOT_EXPENSE_MOVE_TO_START + groups[i]->getId(), groups[i]->getName());
+                                    AppendMenu(groupMenu, MF_STRING, ID_ROOT_ENVELOPE_MOVE_TO_START + groups[i]->getId(), groups[i]->getName());
                                     added = true;
                                 }
                             }
@@ -1411,7 +1411,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                             }
                         } // if adding move options
 
-                    } // if expense
+                    } // if envelope
 
                     if (hSubMenu) {
 
@@ -1651,8 +1651,8 @@ void populateTransactions()
     AccountBase* pItem = accountFromTreeItem(hItem);
     Account* pSelectedAccount = getSelectedAccount();
 
-    // Filter to expense if selected, otherwise all
-    std::vector<Transaction*> Transactions = g_transactionFilterDlg.filterToExpenseSelection() ? Transaction::getTransactionsForItem(pItem) : Transaction::getAllTransactions();
+    // Filter to envelope if selected, otherwise all
+    std::vector<Transaction*> Transactions = g_transactionFilterDlg.filterToEnvelopeSelection() ? Transaction::getTransactionsForItem(pItem) : Transaction::getAllTransactions();
 
     // Add them to the list view
     SendMessage(g_hwndTransactionLV, WM_SETREDRAW, FALSE, 0);
@@ -1691,7 +1691,7 @@ void populateTransactions()
             matched = matched || Utils::searchText(pCurTransaction->getPayee(), filterText.c_str());
             matched = matched || Utils::searchText(amount.c_str(), filterText.c_str());
 
-            AccountBase* pCat = AccountBase::lookupById(pCurTransaction->getExpenseId());
+            AccountBase* pCat = AccountBase::lookupById(pCurTransaction->getEnvelopeId());
             if (pCat) {
                 matched = matched || Utils::searchText(pCat->getName(), filterText.c_str());
             }
@@ -1710,7 +1710,7 @@ void populateTransactions()
         std::wstring payee = pTransaction->getPayee();
         AccountBase* pAccountTo = AccountBase::lookupById(pTransaction->getAccountToId());
 
-        if (pTransaction->getType() != Transaction::EXPENSE) {
+        if (pTransaction->getType() != Transaction::ENVELOPE) {
             AccountBase* pAccountFrom = AccountBase::lookupById(pTransaction->getAccountFromId());
             wchar_t szBuff[1024] = { 0 };
             if (pAccountFrom) {
@@ -1728,8 +1728,8 @@ void populateTransactions()
 
         ListView_SetItemText(g_hwndTransactionLV, 0, 1, const_cast<wchar_t*>(payee.c_str()));
 
-        // Expense
-        AccountBase* ati = AccountBase::lookupById(pTransaction->getExpenseId());
+        // Envelope
+        AccountBase* ati = AccountBase::lookupById(pTransaction->getEnvelopeId());
         if (ati) {
             ListView_SetItemText(g_hwndTransactionLV, 0, 2, const_cast<wchar_t*>(ati->getName()));
         }
@@ -1737,8 +1737,8 @@ void populateTransactions()
         {
             switch (pTransaction->getType())
             {
-            case Transaction::EXPENSE:
-                ListView_SetItemText(g_hwndTransactionLV, 0, 2, const_cast<wchar_t*>(L"--expense--"));
+            case Transaction::ENVELOPE:
+                ListView_SetItemText(g_hwndTransactionLV, 0, 2, const_cast<wchar_t*>(L"--envelope--"));
                 break;
             case Transaction::DEPOSIT:
                 ListView_SetItemText(g_hwndTransactionLV, 0, 2, const_cast<wchar_t*>(L"--deposit--"));
@@ -1874,7 +1874,7 @@ void positionControls()
     int accountListHeight = accountListBottom - top;
     SetWindowPos(g_hwndAccountLV, nullptr, leftEdge, top, leftWidth, accountListHeight, SWP_NOZORDER);
 
-    // Budget info pane (includes add account / add expense / unhide / state of the budget)
+    // Budget info pane (includes add account / add envelope / unhide / state of the budget)
     int budgetInfoTop = accountListBottom + 1;
     int budgetInfoHeight = 0, budgetInfotBottom = 0;
     if (showTransactionList) {
@@ -1906,18 +1906,18 @@ void positionControls()
     treeHeaderLayout.pwpos = &wpTreeHeaderSize; // This is the suggested size of the header. We care about the height.
     SendMessage(g_hwndTreeHeader, HDM_LAYOUT, 0, (LPARAM)&treeHeaderLayout);
 
-    // Expense tree header
+    // Envelope tree header
     SetWindowPos(g_hwndTreeHeader, wpTreeHeaderSize.hwndInsertAfter, middleEdge, top, rSideWidth, wpTreeHeaderSize.cy, wpTreeHeaderSize.flags | SWP_SHOWWINDOW);
 
-    // Expense tree control
-    int expenseTreeHeigth = 0;
+    // Envelope tree control
+    int envelopeTreeHeigth = 0;
     if (showTransactionList) {
-        expenseTreeHeigth = transactionFilterTop - rClient.top - wpTreeHeaderSize.cy;
+        envelopeTreeHeigth = transactionFilterTop - rClient.top - wpTreeHeaderSize.cy;
     } else{ 
-        expenseTreeHeigth = rClient.bottom - rClient.top - wpTreeHeaderSize.cy - transactionFilterHeight;
+        envelopeTreeHeigth = rClient.bottom - rClient.top - wpTreeHeaderSize.cy - transactionFilterHeight;
     }
 
-    SetWindowPos(g_hwndTV, nullptr, middleEdge, rTree.top, rSideWidth, expenseTreeHeigth, SWP_NOZORDER);
+    SetWindowPos(g_hwndTV, nullptr, middleEdge, rTree.top, rSideWidth, envelopeTreeHeigth, SWP_NOZORDER);
 
 
     for (size_t i = 0; i < 3; i++) {

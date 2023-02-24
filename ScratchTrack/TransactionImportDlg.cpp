@@ -107,9 +107,9 @@ INT_PTR CALLBACK TransactionImportDlg::TransactionImportDlgProc(HWND hDlg, UINT 
                     
                     ListView_SetItemText(hListView, hi.iItem, 2, const_cast<wchar_t*>(pInfo->_payeeMapped.c_str()));
 
-                    auto pExpense = AccountBase::lookupById(pInfo->_expenseId);
-                    if (pExpense) {
-                        ListView_SetItemText(hListView, hi.iItem, 3, const_cast<wchar_t*>(pExpense->getName()));
+                    auto pEnvelope = AccountBase::lookupById(pInfo->_envelopeId);
+                    if (pEnvelope) {
+                        ListView_SetItemText(hListView, hi.iItem, 3, const_cast<wchar_t*>(pEnvelope->getName()));
                     }
                 }
             }
@@ -130,7 +130,7 @@ INT_PTR CALLBACK TransactionImportDlg::TransactionImportDlgProc(HWND hDlg, UINT 
         column.pszText = const_cast<wchar_t*>(L"Payee (mapped)");
         ListView_InsertColumn(hListView, columnCount++, &column);
 
-        column.pszText = const_cast<wchar_t*>(L"Expense");
+        column.pszText = const_cast<wchar_t*>(L"Envelope");
         ListView_InsertColumn(hListView, columnCount++, &column);
 
         column.pszText = const_cast<wchar_t*>(L"Amount");
@@ -155,10 +155,10 @@ INT_PTR CALLBACK TransactionImportDlg::TransactionImportDlgProc(HWND hDlg, UINT 
             Transaction* pDup = g_transactionImporter.findDuplicate(PTHIS->_pAccount, info._payee.c_str(),
                 info._amount, info._date, 5);
 
-            g_transactionImporter.bestGuessAtPayeeAndCat(info._payee.c_str(), info._payeeMapped, info._expenseId);
-            AccountBase* pExpense = nullptr;
-            if (info._expenseId != ACCOUNT_ID_INVALID) {
-                pExpense = AccountBase::lookupById(info._expenseId);
+            g_transactionImporter.bestGuessAtPayeeAndCat(info._payee.c_str(), info._payeeMapped, info._envelopeId);
+            AccountBase* pEnvelope = nullptr;
+            if (info._envelopeId != ACCOUNT_ID_INVALID) {
+                pEnvelope = AccountBase::lookupById(info._envelopeId);
             }
             
             LVITEM item = { 0 };
@@ -175,8 +175,8 @@ INT_PTR CALLBACK TransactionImportDlg::TransactionImportDlgProc(HWND hDlg, UINT 
             ListView_SetItemText(hListView, iIndex, 1, const_cast<wchar_t*>(info._payee.c_str()));
             ListView_SetItemText(hListView, iIndex, 2, const_cast<wchar_t*>(info._payeeMapped.c_str()));
 
-            if (pExpense) {
-                ListView_SetItemText(hListView, iIndex, 3, const_cast<wchar_t*>(pExpense->getName()));
+            if (pEnvelope) {
+                ListView_SetItemText(hListView, iIndex, 3, const_cast<wchar_t*>(pEnvelope->getName()));
             }
 
             std::wstring amount = Utils::penniesToDollarsString(info._amount);
@@ -210,7 +210,7 @@ INT_PTR CALLBACK TransactionImportDlg::TransactionImportDlgProc(HWND hDlg, UINT 
                     if (ListView_GetCheckState(hListView, i)) {
                         ListView_GetItem(hListView, &item);
                         ImportedTransactionInfo* pInfo = (ImportedTransactionInfo*)item.lParam;
-                        g_transactionImporter.addMapping(pInfo->_payee.c_str(), pInfo->_payeeMapped, pInfo->_expenseId);
+                        g_transactionImporter.addMapping(pInfo->_payee.c_str(), pInfo->_payeeMapped, pInfo->_envelopeId);
                         PTHIS->_transactionsOut.push_back(*pInfo);
                     }
                 }

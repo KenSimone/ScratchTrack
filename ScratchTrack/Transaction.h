@@ -15,7 +15,7 @@ class Transaction
 public:
 	enum TRANSACTION_TYPE
 	{
-		EXPENSE,
+		ENVELOPE,
 		DEPOSIT,
 		TRANSFER,
 		CCPAYMENT
@@ -28,7 +28,7 @@ public:
 	void undo();	
 
 	// This creates a transaction, but doesn't actually apply it. Call apply on the resulting transaction to add it to the system
-	static Transaction* addTransaction(TRANSACTION_TYPE type, int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int expenseId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp = nullptr);
+	static Transaction* addTransaction(TRANSACTION_TYPE type, int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int envelopeId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp = nullptr);
 
 	static int deserialize(tinyxml2::XMLElement* pRoot);
 
@@ -36,19 +36,19 @@ public:
 	static std::vector<Transaction*> getAllTransactions();
 
 	int getAmount() { return _amount; }
-	unsigned int getExpenseId() { return _expenseId; }
+	unsigned int getEnvelopeId() { return _envelopeId; }
 	unsigned int getAccountFromId() { return _payFromAccountId; }
 	unsigned int getAccountToId() { return _payToAccountId; }
 	const wchar_t* getPayee() { return _payee.c_str(); }
 	const wchar_t* getDescription() { return _description.c_str(); }
 	TRANSACTION_TYPE getType() { return _type; }
 
-	void setDetails(int amount, const wchar_t* szPayee, const wchar_t* szDesc, int expenseId, int accountFromId, int accountToId)
+	void setDetails(int amount, const wchar_t* szPayee, const wchar_t* szDesc, int envelopeId, int accountFromId, int accountToId)
 	{
 		_amount = amount;
 		_payee = szPayee;
 		_description = szDesc;
-		_expenseId = expenseId;
+		_envelopeId = envelopeId;
 		_payToAccountId = accountToId;
 		_payFromAccountId = accountFromId;
 	}
@@ -69,7 +69,7 @@ public:
 	static void sortAllTransactions();
 
 protected:
-	Transaction(TRANSACTION_TYPE type, int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int expenseId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp = nullptr)
+	Transaction(TRANSACTION_TYPE type, int amount, unsigned int payFromAccountId, unsigned int payToAccountId, unsigned int envelopeId, const wchar_t* szPayee, const wchar_t* szDescription, SYSTEMTIME* pTimeStamp = nullptr)
 	{
 		if (pTimeStamp) {
 			_timestamp = *pTimeStamp;
@@ -79,7 +79,7 @@ protected:
 		}
 
 		_amount = amount;
-		_expenseId = expenseId;
+		_envelopeId = envelopeId;
 		_payFromAccountId = payFromAccountId;
 		_payToAccountId = payToAccountId;
 		_type = type;
@@ -94,7 +94,7 @@ protected:
 
 protected:
 	int _amount;
-	unsigned int _expenseId;
+	unsigned int _envelopeId;
 	unsigned int _payFromAccountId;
 	unsigned int _payToAccountId;
 	std::wstring _payee;

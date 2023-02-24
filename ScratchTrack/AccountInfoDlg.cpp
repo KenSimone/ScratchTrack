@@ -39,7 +39,7 @@ void AccountInfoDlg::doUnhidePopup()
 {
     // Get all items
     auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
-    auto categories = AccountBase::getAllAccountsOfType(AccountBase::EXPENSE);
+    auto envelopes = AccountBase::getAllAccountsOfType(AccountBase::ENVELOPE);
     auto folders = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
 
     HMENU hPopup = CreatePopupMenu();
@@ -49,7 +49,7 @@ void AccountInfoDlg::doUnhidePopup()
 
     AppendMenu(hPopup, MF_STRING | MF_POPUP, (UINT_PTR)hAcctMenu, L"Accounts");
     AppendMenu(hPopup, MF_STRING | MF_POPUP, (UINT_PTR)hFolderMenu, L"Folders");
-    AppendMenu(hPopup, MF_STRING | MF_POPUP, (UINT_PTR)hEnvMenu, L"Expenses");
+    AppendMenu(hPopup, MF_STRING | MF_POPUP, (UINT_PTR)hEnvMenu, L"Envelopes");
 
     // A return code of zero from trackpopup means nothing was selected, so we can't
     // use accounts IDs, which are zero based.
@@ -71,9 +71,9 @@ void AccountInfoDlg::doUnhidePopup()
         }
     }
 
-    // Add hidden categories
-    for (size_t i = 0; i < categories.size(); i++) {
-        AccountBase* pAcct = categories[i];
+    // Add hidden envelopes
+    for (size_t i = 0; i < envelopes.size(); i++) {
+        AccountBase* pAcct = envelopes[i];
         if (pAcct->getHidden()) {
             AppendMenu(hEnvMenu, MF_STRING | MF_POPUP, (UINT_PTR)pAcct->getId() + menuIdOffset, pAcct->getName());
         }
@@ -97,8 +97,8 @@ void AccountInfoDlg::doUnhidePopup()
             // Unhide the item
             pAcct->setHidden(false);
 
-            // Expense special work
-            if (pAcct->getType() == AccountBase::EXPENSE) {
+            // Envelope special work
+            if (pAcct->getType() == AccountBase::ENVELOPE) {
                 AccountBase* pParent = pAcct->getParent();
 
                 // If its parent is hidden, warn.
@@ -232,7 +232,7 @@ void AccountInfoDlg::printMasterSummary()
     bool isError = false;
     std::vector<AccountBase*> accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
     std::vector<AccountBase*> folders = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
-    std::vector<AccountBase*> categories = AccountBase::getAllAccountsOfType(AccountBase::EXPENSE);
+    std::vector<AccountBase*> envelopes = AccountBase::getAllAccountsOfType(AccountBase::ENVELOPE);
 
     wchar_t szCaption[1024] = { 0 };
 
@@ -242,17 +242,17 @@ void AccountInfoDlg::printMasterSummary()
         L"Click 'Add Account...' to add an account to ScratchTrack.\n\n");
     }
     else if (folders.empty()) {
-        swprintf(szCaption, 1024, L"You don't have any folders. Folders help organize expenses.\n\n"
+        swprintf(szCaption, 1024, L"You don't have any folders. Folders help organize envelopes.\n\n"
             L"A common strategy is to create a folder for each pay peried. For example, if you're paid on the 15th and 31st "
             L"you might create folders titled '15th' and '31st'.\n\n"
             L"Click 'Add Folder...' to add a folder to ScratchTrack.\n\n");
     }
-    else if (categories.empty()) {
-        swprintf(szCaption, 1024, L"You don't have any expense categories. Categories are used to reserve money "
-            L"for expenses. Categories have a name and a monthly budget.\n\n"
-            L"You'll add money to your categories and then pay expenses from those categories as needed. If your "
-            L"expense runs out of money you'll need to replenish that expense.\n\n"
-            L"Click the new expense icon next to a folder name to create a expense.\n\n");
+    else if (envelopes.empty()) {
+        swprintf(szCaption, 1024, L"You don't have any envelopes. Envelopes are used to reserve money "
+            L"for expenses. Envelopes have a name and a monthly budget.\n\n"
+            L"You'll add money to your envelopes and then pay expenses from those envelopes as needed. If your "
+            L"envelope runs out of money you'll need to replenish that envelope.\n\n"
+            L"Click the new envelope icon next to a folder name to create an envelope.\n\n");
     }
     else {
 
@@ -273,11 +273,11 @@ void AccountInfoDlg::printMasterSummary()
         }
 
         // Get all reserved dollars
-        for (size_t i = 0; i < categories.size(); i++) {
+        for (size_t i = 0; i < envelopes.size(); i++) {
             // This is a confusing operation. If a virtual account has a negative balance
             // we conceptually treat it as if it had a bigger balance since the whole thing is
             // a "how much do I deduct from what's available" operation. Hence the abs() here.
-            iReservedDollars += abs(categories[i]->getBalance());
+            iReservedDollars += abs(envelopes[i]->getBalance());
         }
 
         int iAvailable = iBalance - iReservedDollars;
@@ -290,8 +290,8 @@ void AccountInfoDlg::printMasterSummary()
 
         if (isError) {
             if (iReservedDollars != 0) {
-                swprintf(szCaption, 1024, L"You have %ls assigned to categories but only %ls in in-budget accounts. "
-                    L"Deposit %ls or remove funds from categories to correct this issue.\n\n",
+                swprintf(szCaption, 1024, L"You have %ls assigned to envelopes but only %ls in in-budget accounts. "
+                    L"Deposit %ls or remove funds from envelopes to correct this issue.\n\n",
                     reservedDollars.c_str(), totalDollars.c_str(), difference.c_str());
             }
         }
@@ -302,9 +302,9 @@ void AccountInfoDlg::printMasterSummary()
     }
     appendText(szCaption, isError ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL, false, false, TEXT_SIZE);
 
-    if (!accounts.empty() || !categories.empty() || !folders.empty()) {
+    if (!accounts.empty() || !envelopes.empty() || !folders.empty()) {
         appendText(L"TIP: ", TEXT_COLOR_NORMAL, true, false, TEXT_SIZE);
-        appendText(L"Right click accounts, folders, expenses and transactions for more options\n\n", TEXT_COLOR_NORMAL, false, false, TEXT_SIZE);
+        appendText(L"Right click accounts, folders, envelopes and transactions for more options\n\n", TEXT_COLOR_NORMAL, false, false, TEXT_SIZE);
     }
 }
 
@@ -367,27 +367,23 @@ void AccountInfoDlg::updateReport()
         }
     }
 
-    //appendText(L"\nExpense Status\n", TEXT_COLOR_NORMAL, true, true, HEADER_SIZE);
-    auto categories = AccountBase::getAllAccountsOfType(AccountBase::EXPENSE);
-    for (size_t i = 0; i < categories.size(); i++)
+    auto envelopes = AccountBase::getAllAccountsOfType(AccountBase::ENVELOPE);
+    for (size_t i = 0; i < envelopes.size(); i++)
     {
-        AccountExpense* expense = dynamic_cast<AccountExpense*>(categories[i]);
-        if (expense->getId() == ACCOUNT_ID_PAY_CC) {
+        AccountEnvelope* envelope = dynamic_cast<AccountEnvelope*>(envelopes[i]);
+        if (envelope->getId() == ACCOUNT_ID_PAY_CC) {
             continue;
         }
 
-        int ibudgeted = expense->getBudgeted();
-        int spent = expense->getCurrentMonthTransacationTotal();
+        int ibudgeted = envelope->getBudgeted();
+        int spent = envelope->getCurrentMonthTransacationTotal();
         std::wstring diff = Utils::penniesToDollarsString (abs(ibudgeted - spent));
         bool error = ibudgeted > spent;
         wchar_t szBuff[1024] = { 0 };
         if (error) {
-            swprintf(szBuff, 1024, L"Expense '%ls' - Monthly expenses are over budget by %ls\n\n", expense->getName(), diff.c_str());
+            swprintf(szBuff, 1024, L"Envelope '%ls' - Monthly expenses are over budget by %ls\n\n", envelope->getName(), diff.c_str());
             appendText(szBuff, error ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL, false, false, TEXT_SIZE);
         }
-        //else {
-        //    swprintf(szBuff, 1024, L"%ls - Monthly expenses are currently under budget by %ls\n", expense->getName(), diff.c_str());
-        //}
     }
 
 }

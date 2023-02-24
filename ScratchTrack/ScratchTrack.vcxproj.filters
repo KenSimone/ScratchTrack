@@ -51,7 +51,7 @@
     <ClInclude Include="DepositDlg.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
-    <ClInclude Include="ExpenseDlg.h">
+    <ClInclude Include="EnvelopeDlg.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="FolderDlg.h">
@@ -90,7 +90,7 @@
     <ClInclude Include="TransferDlg.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
-    <ClInclude Include="FundExpenseDlg.h">
+    <ClInclude Include="FundEnvelopeDlg.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="Version.h">
@@ -108,7 +108,7 @@
     <ClInclude Include="ExcelSerializer.h">
       <Filter>Header Files\Utility</Filter>
     </ClInclude>
-    <ClInclude Include="FundExpensesDlg.h">
+    <ClInclude Include="FundEnvelopesDlg.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
   </ItemGroup>
@@ -158,7 +158,7 @@
     <ClCompile Include="Utils.cpp">
       <Filter>Source Files\Utility</Filter>
     </ClCompile>
-    <ClCompile Include="FundExpenseDlg.cpp">
+    <ClCompile Include="FundEnvelopeDlg.cpp">
       <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
     <ClCompile Include="TransactionImporter.cpp">
@@ -173,10 +173,10 @@
     <ClCompile Include="ExcelSerializer.cpp">
       <Filter>Source Files\Utility</Filter>
     </ClCompile>
-    <ClCompile Include="ExpenseDlg.cpp">
+    <ClCompile Include="EnvelopeDlg.cpp">
       <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
-    <ClCompile Include="FundExpensesDlg.cpp">
+    <ClCompile Include="FundEnvelopesDlg.cpp">
       <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
   </ItemGroup>

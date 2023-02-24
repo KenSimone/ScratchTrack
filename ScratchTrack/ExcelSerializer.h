@@ -54,7 +54,7 @@ protected:
 
 	inline static const char* ACCOUNT_WORKSHEET_NAME = "Accounts";
 	inline static const char* FOLDER_WORKSHEET_NAME = "Folders";
-	inline static const char* EXPENSE_WORKSHEET_NAME = "Categories";
+	inline static const char* ENVELOPE_WORKSHEET_NAME = "Categories";
 	inline static const char* SETTINGS_WORKSHEET_NAME = "Settings";
 	inline static const char* FRONT_WORKSHEET_NAME = "Budget";
 	inline static const char* TRANSACTIONS_WORKSHEET_NAME = "Transactions";

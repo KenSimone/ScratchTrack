@@ -159,8 +159,8 @@ AccountBase* AccountItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	case AccountBase::GROUP:
 		pItem = new AccountGroup;
 		break;
-	case AccountBase::EXPENSE:
-		pItem = new AccountExpense;
+	case AccountBase::ENVELOPE:
+		pItem = new AccountEnvelope;
 		break;
 	}
 
@@ -264,7 +264,7 @@ int AccountBase::getCurrentMonthTransacationTotal()
 		if ((transactionTime.wYear == currentTime.wYear) &&
 			(transactionTime.wMonth == currentTime.wMonth))
 		{
-			if (accountIds.find((*itr)->getExpenseId()) != accountIds.end())
+			if (accountIds.find((*itr)->getEnvelopeId()) != accountIds.end())
 			{
 				ret += (*itr)->getAmount();
 			}
@@ -280,7 +280,7 @@ int AccountGroup::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement*
 	tinyxml2::XMLElement* pGroupElement = nullptr;
 	AccountBase::serialize(pParent, &pGroupElement);
 
-	// Expense limit
+	// Envelope limit
 	pGroupElement->SetAttribute("expenseLimit", getExpenseLimit());
 
 	// Serialize children
@@ -299,7 +299,6 @@ int AccountGroup::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 {
 	AccountBase::initItemFromXmlElement(pAccount);
 
-	// Expense limit
 	int limit = 0;
 	pAccount->QueryIntAttribute("expenseLimit", &limit);
 	setExpenseLimit(limit);
@@ -315,7 +314,7 @@ int AccountGroup::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	return ERROR_SUCCESS;
 }
 
-int AccountExpense::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
+int AccountEnvelope::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 {
 	AccountBase::initItemFromXmlElement(pAccount);
 
@@ -347,7 +346,7 @@ int AccountExpense::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	return ERROR_SUCCESS;
 }
 
-int AccountExpense::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement)
+int AccountEnvelope::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement)
 {
 	tinyxml2::XMLElement* pNewElement = nullptr;
 	if (!ppSerializedElement) {
@@ -383,7 +382,7 @@ int Account::initItemFromXmlElement(tinyxml2::XMLElement* pAccount)
 	pAccount->QueryBoolAttribute("isCCAccount", &_isCCAccount);
 
 	unsigned int temp = ACCOUNT_ID_INVALID;
-	pAccount->QueryUnsignedAttribute("paidFromExpenseId", &temp);
+	pAccount->QueryUnsignedAttribute("paidFromenvelopeId", &temp);
 	if (temp != ACCOUNT_ID_INVALID) {
 		_isCCAccount = true;
 	}
@@ -407,14 +406,14 @@ int Account::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppS
 	return ERROR_SUCCESS;
 }
 
-AccountExpense* AccountExpense::getOrCreateCCExpense()
+AccountEnvelope* AccountEnvelope::getOrCreateCCEnvelope()
 {
-	AccountExpense* pExpense = dynamic_cast<AccountExpense*>(lookupById(ACCOUNT_ID_PAY_CC));
-	if (!pExpense) {
-		pExpense = new AccountExpense;
-		pExpense->setId(ACCOUNT_ID_PAY_CC);
+	AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(lookupById(ACCOUNT_ID_PAY_CC));
+	if (!pEnvelope) {
+		pEnvelope = new AccountEnvelope;
+		pEnvelope->setId(ACCOUNT_ID_PAY_CC);
 	}
-	return pExpense;
+	return pEnvelope;
 }
 
 unsigned int AccountBase::_curId = 0;

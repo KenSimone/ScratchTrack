@@ -70,7 +70,7 @@ std::string ExcelSerializer::accountTypeToString(AccountBase* pAccount)
 	case AccountBase::GROUP:
 		ret = "folder";
 		break;
-	case AccountBase::EXPENSE:
+	case AccountBase::ENVELOPE:
 		ret = "expense";
 		break;
 	}
@@ -96,7 +96,7 @@ AccountBase::accountItemType ExcelSerializer::accountTypeFromString(const char* 
 	if (_stricmp(szAccountType, "folder") == 0)
 		return AccountBase::GROUP;
 	if (_stricmp(szAccountType, "expense") == 0)
-		return AccountBase::EXPENSE;
+		return AccountBase::ENVELOPE;
 	if (_stricmp(szAccountType, "credit card") == 0) {
 		isCC = true;
 		return AccountBase::ACCOUNT;
@@ -229,7 +229,7 @@ int ExcelSerializer::serializeFolders(lxw_workbook* workbook, std::vector<Accoun
 
 int ExcelSerializer::serializeCategories(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems, std::map<unsigned int, std::string>& accountIdToCellRef)
 {
-	lxw_worksheet* worksheet = workbook_add_worksheet(workbook, EXPENSE_WORKSHEET_NAME);
+	lxw_worksheet* worksheet = workbook_add_worksheet(workbook, ENVELOPE_WORKSHEET_NAME);
 	uint16_t curRow = 0;
 
 	lxw_format* formatHeader = workbook_add_format(workbook);
@@ -280,11 +280,11 @@ int ExcelSerializer::serializeCategories(lxw_workbook* workbook, std::vector<Acc
 		auto children = pGroup->getChildren();
 		for (int j = 0; j < (int)children.size(); j++)
 		{
-			if (children[j]->getType() != AccountBase::EXPENSE) {
+			if (children[j]->getType() != AccountBase::ENVELOPE) {
 				continue;
 			}
 
-			AccountExpense* p = dynamic_cast<AccountExpense*>(children[j]);
+			AccountEnvelope* p = dynamic_cast<AccountEnvelope*>(children[j]);
 
 			worksheet_write_string(worksheet, curRow, 0, Utils::wideToMultibyte(p->getName()).c_str(), formatLeft);
 
@@ -379,9 +379,9 @@ int ExcelSerializer::serializeTransactions(lxw_workbook* workbook, std::vector<A
 		worksheet_write_string(worksheet, curRow, 1, Utils::wideToMultibyte(pTrans->getPayee()).c_str(), formatLeft);
 		worksheet_write_number(worksheet, curRow, 2, _wtof(Utils::penniesToDollarsString(pTrans->getAmount(), false).c_str()), formatMoney);
 
-		auto itr = accountIdToCellRef.find(pTrans->getExpenseId());
+		auto itr = accountIdToCellRef.find(pTrans->getEnvelopeId());
 		if (itr != accountIdToCellRef.end()) {
-			//worksheet_write_number(worksheet, curRow, 3, pTrans->getExpenseId(), formatLeft);
+			//worksheet_write_number(worksheet, curRow, 3, pTrans->getEnvelopeId(), formatLeft);
 			worksheet_write_formula_str(worksheet, curRow, 3, itr->second.c_str(), formatLeft, "");
 		}
 		else {
@@ -455,7 +455,7 @@ int ExcelSerializer::serializeSettings(lxw_workbook* workbook, std::vector<Accou
 		worksheet_write_string(worksheet, curRow, 0, impName.c_str(), formatLeft);
 		worksheet_write_string(worksheet, curRow, 1, mapName.c_str(), formatLeft);
 
-		auto itrMap = accountIdToCellRef.find(itr->second._expenseId);
+		auto itrMap = accountIdToCellRef.find(itr->second._envelopeId);
 		if (itrMap != accountIdToCellRef.end()) {
 			//worksheet_write_number(worksheet, curRow, 2, catId, formatLeft);
 			worksheet_write_formula_str(worksheet, curRow, 2, itrMap->second.c_str(), formatLeft, "");
@@ -535,7 +535,7 @@ int ExcelSerializer::writeFrontSheetBudget(lxw_workbook* workbook, lxw_worksheet
 	worksheet_merge_range(worksheet, CELL("B12"), CELL("F13"), "Expenses", formatHeader2);
 	worksheet_merge_range(worksheet, CELL("H12"), CELL("L13"), "Folder", formatHeader2);
 
-	std::vector<AccountBase*> expenses = AccountBase::getAllAccountsOfType(AccountBase::EXPENSE);
+	std::vector<AccountBase*> expenses = AccountBase::getAllAccountsOfType(AccountBase::ENVELOPE);
 
 	char szBuf[1024] = { 0 };
 
@@ -568,7 +568,7 @@ int ExcelSerializer::writeFrontSheetBudget(lxw_workbook* workbook, lxw_worksheet
 	worksheet_write_number(worksheet, CELL("D10"), curTime.wMonth, nullptr);
 	worksheet_write_number(worksheet, CELL("D11"), curTime.wYear, nullptr);
 
-// Expenses
+// Envelopes
 	size_t expenseCount = expenses.size();
 
 	worksheet_merge_range(worksheet, 13, 1, 13, 2, "Category", formatHeader3);
@@ -639,7 +639,7 @@ std::string ExcelSerializer::transactionTypeToString(Transaction* pTransaction)
 {
 	switch (pTransaction->getType())
 	{
-	case Transaction::EXPENSE:
+	case Transaction::ENVELOPE:
 		return "Expense";
 	case Transaction::DEPOSIT:
 		return "Deposit";
@@ -656,7 +656,7 @@ std::string ExcelSerializer::transactionTypeToString(Transaction* pTransaction)
 Transaction::TRANSACTION_TYPE ExcelSerializer::transactionTypeFromString(const char* szTransactionType)
 {
 	if (_stricmp(szTransactionType, "Expense") == 0) {
-		return Transaction::EXPENSE;
+		return Transaction::ENVELOPE;
 	}
 	if (_stricmp(szTransactionType, "Deposit") == 0) {
 		return Transaction::DEPOSIT;
@@ -669,7 +669,7 @@ Transaction::TRANSACTION_TYPE ExcelSerializer::transactionTypeFromString(const c
 	}
 
 	assert(false);
-	return Transaction::EXPENSE;
+	return Transaction::ENVELOPE;
 }
 
 int ExcelSerializer::deserialize(const char* szFile, std::vector<AccountBase*>& topLevelItems)
@@ -779,7 +779,7 @@ int ExcelSerializer::deserializeAccounts(OpenXLSX::XLWorkbook& workbook, std::ve
 		row++;
 	}
 
-	//auto expenses = workbook.worksheet(EXPENSE_WORKSHEET_NAME);
+	//auto expenses = workbook.worksheet(ENVELOPE_WORKSHEET_NAME);
 	//XLFormula formula = expenses.cell(2, 9).formula();
 	//std::string formulaText = formula.get();
 
@@ -825,7 +825,7 @@ int ExcelSerializer::deserializeFolders(OpenXLSX::XLWorkbook& workbook, std::vec
 		row++;
 	}
 
-	auto expenses = workbook.worksheet(EXPENSE_WORKSHEET_NAME);
+	auto expenses = workbook.worksheet(ENVELOPE_WORKSHEET_NAME);
 	XLFormula formula = expenses.cell(2, 9).formula();
 	std::string formulaText = formula.get();
 
@@ -868,11 +868,11 @@ int ExcelSerializer::deserializeSettings(OpenXLSX::XLWorkbook& workbook, std::ve
 
 int ExcelSerializer::deserializeCategories(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId)
 {
-	if (!workbook.worksheetExists(EXPENSE_WORKSHEET_NAME)) {
+	if (!workbook.worksheetExists(ENVELOPE_WORKSHEET_NAME)) {
 		return ERROR_INVALID_DATA;
 	}
 
-	OpenXLSX::XLWorksheet worksheet = workbook.worksheet(EXPENSE_WORKSHEET_NAME);
+	OpenXLSX::XLWorksheet worksheet = workbook.worksheet(ENVELOPE_WORKSHEET_NAME);
 
 	int row = 2;
 	while (true) {
@@ -931,36 +931,36 @@ int ExcelSerializer::deserializeCategories(OpenXLSX::XLWorkbook& workbook, std::
 			defPayerId = itr->second;
 		}
 
-		AccountExpense* pExpense = new AccountExpense;
+		AccountEnvelope* pEnvelope = new AccountEnvelope;
 		if (flags & FLAG_PAYS_CCS) {
-			pExpense->setId(ACCOUNT_ID_PAY_CC);
+			pEnvelope->setId(ACCOUNT_ID_PAY_CC);
 		}
 
-		pExpense->setName(Utils::multiByteToWide(name.c_str()).c_str());
+		pEnvelope->setName(Utils::multiByteToWide(name.c_str()).c_str());
 
 		AccountGroup* pParent = dynamic_cast<AccountGroup*>(AccountBase::lookupById(parentId));
-		pParent->addChild(pExpense);
+		pParent->addChild(pEnvelope);
 
-		pExpense->setBudgeted(budgeted);
-		pExpense->setHidden(Utils::stringToBool(hidden.c_str()));
-		pExpense->setReadOnly(Utils::stringToBool(readOnly.c_str()));
+		pEnvelope->setBudgeted(budgeted);
+		pEnvelope->setHidden(Utils::stringToBool(hidden.c_str()));
+		pEnvelope->setReadOnly(Utils::stringToBool(readOnly.c_str()));
 
-		pExpense->setDefaultTransactionPayee(Utils::multiByteToWide(defaultPayee.c_str()).c_str());
-		pExpense->setDefaultTransactionAmount(defaultAmount);
-		pExpense->addBalance(balance);
-		pExpense->setIsVirtualAccount(true);
+		pEnvelope->setDefaultTransactionPayee(Utils::multiByteToWide(defaultPayee.c_str()).c_str());
+		pEnvelope->setDefaultTransactionAmount(defaultAmount);
+		pEnvelope->addBalance(balance);
+		pEnvelope->setIsVirtualAccount(true);
 
 		Account* pAccount = dynamic_cast<Account*>(AccountBase::lookupById(defPayerId));
 		if (pAccount) {
-			pExpense->setDefaultTransactionPayFromAccount(pAccount);
+			pEnvelope->setDefaultTransactionPayFromAccount(pAccount);
 		}
 
-		addAccountLocationToMap(row, 1, worksheet, pExpense, cellRefToAccountId);
+		addAccountLocationToMap(row, 1, worksheet, pEnvelope, cellRefToAccountId);
 
 		row++;
 	}
 
-	auto expenses = workbook.worksheet(EXPENSE_WORKSHEET_NAME);
+	auto expenses = workbook.worksheet(ENVELOPE_WORKSHEET_NAME);
 	XLFormula formula = expenses.cell(2, 9).formula();
 	std::string formulaText = formula.get();
 

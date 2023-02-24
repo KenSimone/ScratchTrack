@@ -7,23 +7,23 @@
 class AccountBase;
 class Account;
 
-class ExpenseDialog
+class EnvelopeDialog
 {
 public:
-	ExpenseDialog();
-	~ExpenseDialog();
+	EnvelopeDialog();
+	~EnvelopeDialog();
 
 	bool ShowDialog();
 
 	// Pre-show functions
-	void setExpenseName(const wchar_t* szExpense) { _name = szExpense;  }
+	void setEnvelopeName(const wchar_t* szEnvelope) { _name = szEnvelope;  }
 	void setBudget(int budget) { _budget = budget; }
 	void setDefaultTransactionAmount(int defTransAmt) { _amount = defTransAmt; }
 	void setDefaultTransactionPayFromAccount(Account* pDefaultAccount) { _pDefaultTransactionPayFromAccount = pDefaultAccount; }
 	void setDefaultTransactionPayee(const wchar_t* szPayee) { _payee = szPayee; }
 
 	// Post-show functions
-	const wchar_t* getExpenseName() { return _name.c_str(); }
+	const wchar_t* getEnvelopeName() { return _name.c_str(); }
 	int getBudget() { return _budget; }
 	int getDefaultTransactionAmount() { return _amount; }
 	Account* getDefaultTransactionPayFromAccount() { return _pDefaultTransactionPayFromAccount; }
@@ -37,9 +37,9 @@ protected:
 	int _amount;
 	int _budget;
 
-	static INT_PTR CALLBACK ExpenseDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
+	static INT_PTR CALLBACK EnvelopeDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 	void enableDisableUi(HWND hDlg);
 
-	static ExpenseDialog* PTHIS;
+	static EnvelopeDialog* PTHIS;
 };
 

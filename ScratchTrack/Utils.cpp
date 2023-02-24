@@ -513,11 +513,11 @@ bool Utils::confirmHide(AccountBase* pAccount)
 	case AccountBase::ACCOUNT:
 		swprintf(szBuff, 1024, L"Hiding an account will mark it as 'off budget' and remove it from view. Are you sure you want to hide '%ls'?", pAccount->getName());
 		break;
-	case AccountBase::EXPENSE:
-		swprintf(szBuff, 1024, L"Any funds assigned to hidden expense categories will be returned to available funds. Are you sure you want to hide '%ls'?", pAccount->getName());
+	case AccountBase::ENVELOPE:
+		swprintf(szBuff, 1024, L"Any funds assigned to hidden envelopes will be returned to available funds. Are you sure you want to hide '%ls'?", pAccount->getName());
 		break;
 	case AccountBase::GROUP:
-		swprintf(szBuff, 1024, L"Hiding a folder will also hide expense categories in the folder. Any funds assigned to hidden categories will be returned to available funds. Are you sure you want to hide '%ls'?", pAccount->getName());
+		swprintf(szBuff, 1024, L"Hiding a folder will also hide envelopes in the folder. Any funds assigned to hidden envelopes will be returned to available funds. Are you sure you want to hide '%ls'?", pAccount->getName());
 		break;
 	}
 
@@ -526,7 +526,7 @@ bool Utils::confirmHide(AccountBase* pAccount)
 	g_accountInfoDlg.appendText(L"About hiding things\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
 
 	g_accountInfoDlg.appendText(L"In ScratchTrack there is no delete. If you want an item out-of-view, "
-		L"hide it. Hiding accounts mark them as off budget. Hiding expenses returns any assigned funds.",
+		L"hide it. Hiding accounts mark them as off budget. Hiding envelopes returns any assigned funds.",
 		RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 	if (IDYES == MessageBox(g_hTopWindow, szBuff, L"Confirm Hide", MB_YESNO)) {
 		return true;

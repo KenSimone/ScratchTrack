@@ -1,4 +1,4 @@
-#include "FundExpenseDlg.h"
+#include "FundEnvelopeDlg.h"
 #include "resource.h"
 #include "Utils.h"
 #include "AccountInfo.h"
@@ -10,24 +10,24 @@ extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 extern AccountInfoDlg g_accountInfoDlg;
 
-bool FundExpenseDlg::ShowDialog()
+bool FundEnvelopeDlg::ShowDialog()
 {
     PTHIS = this;
 
     g_accountInfoDlg.saveText();
-    g_accountInfoDlg.appendText(L"About Expense Funding\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
+    g_accountInfoDlg.appendText(L"About Envelope Funding\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
 
-    g_accountInfoDlg.appendText(L"In ScratchTrack funds are assigned to spending categories. When expenses are recorded in a expense, funds in that expense are reduced by the epxense amount. "
-        L"When a expense is out of money, spending in that expense should stop until more funds are added.\n\n",
+    g_accountInfoDlg.appendText(L"In ScratchTrack funds are assigned to envelopes. When transactions are recorded, funds assigned to the selected envelope are reduced by the transaction amount. "
+        L"When an envelope is out of money, spending from that envelope should stop until more funds are added.\n\n",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
-    g_accountInfoDlg.appendText(L"This dialog box allows you to assign money to a expense. It's important to note that money stays in its account when assigned to a expense. "
-        L"When money is assigned, you'll have less budgetable dollars available to place in other categories, but no money actually moves. Think of categories as a way to view and organize "
+    g_accountInfoDlg.appendText(L"This dialog box allows you to assign money to an envelope. It's important to note that money stays in its account when assigned to an envelope. "
+        L"When money is assigned, you'll have less budgetable dollars available to place in other envelopes, but no money actually moves. Think of envelopes as a way to view and organize "
         L"the money in your account(s).",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
 
-    INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_FILL_CATEGORIES_DIALOG), g_hTopWindow, FundExpenseDlgProc);
+    INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_FILL_CATEGORIES_DIALOG), g_hTopWindow, FundEnvelopeDlgProc);
     PTHIS = nullptr;
 
     g_accountInfoDlg.restoreText();
@@ -35,16 +35,16 @@ bool FundExpenseDlg::ShowDialog()
     return result == IDOK;
 }
 
-void FundExpenseDlg::calcNewBalance(HWND hDlg)
+void FundEnvelopeDlg::calcNewBalance(HWND hDlg)
 {
     _newBalance = 0;
     if (SendDlgItemMessage(hDlg, IDC_ADD_BUDGETED_RADIO, BM_GETCHECK, 0, 0))
     {
-        _newBalance = _pExpense->getBalance() + abs(_pExpense->getBudgeted());
+        _newBalance = _pEnvelope->getBalance() + abs(_pEnvelope->getBudgeted());
     }
     else if (SendDlgItemMessage(hDlg, IDC_ADD_TO_TOP_RADIO, BM_GETCHECK, 0, 0))
     {
-        _newBalance = abs(_pExpense->getBudgeted());
+        _newBalance = abs(_pEnvelope->getBudgeted());
     }
     else if (SendDlgItemMessage(hDlg, IDC_SET_ANY_RADIO, BM_GETCHECK, 0, 0))
     {
@@ -53,29 +53,29 @@ void FundExpenseDlg::calcNewBalance(HWND hDlg)
 
 }
 
-void FundExpenseDlg::updateUi(HWND hDlg)
+void FundEnvelopeDlg::updateUi(HWND hDlg)
 {
     calcNewBalance(hDlg);
     Utils::setDlgItemDollarText(hDlg, IDC_EDIT_NEW_BALANCE, _newBalance);
 
 }
 
-INT_PTR CALLBACK FundExpenseDlg::FundExpenseDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK FundEnvelopeDlg::FundEnvelopeDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
     case WM_INITDIALOG:
-        if (FundExpenseDlg::PTHIS) {
-            AccountExpense* pExpense = PTHIS->_pExpense;
+        if (FundEnvelopeDlg::PTHIS) {
+            AccountEnvelope* pEnvelope = PTHIS->_pEnvelope;
 
             
-            Utils::setDlgItemDollarText(hDlg, IDC_EDIT_ADD_BUDGETED, abs(pExpense->getBudgeted()));
-            Utils::setDlgItemDollarText(hDlg, IDC_EDIT_FILL_TO_BUDGETED, abs(pExpense->getBudgeted()) - pExpense->getBalance());
+            Utils::setDlgItemDollarText(hDlg, IDC_EDIT_ADD_BUDGETED, abs(pEnvelope->getBudgeted()));
+            Utils::setDlgItemDollarText(hDlg, IDC_EDIT_FILL_TO_BUDGETED, abs(pEnvelope->getBudgeted()) - pEnvelope->getBalance());
             Utils::setDlgItemDollarText(hDlg, IDC_EDIT_SET_ARBITRARY, 0);
 
-            Utils::setDlgItemDollarText(hDlg, IDC_EDIT_CUR_BALANCE, pExpense->getBalance());
+            Utils::setDlgItemDollarText(hDlg, IDC_EDIT_CUR_BALANCE, pEnvelope->getBalance());
 
-            if (pExpense->getBudgeted()){
+            if (pEnvelope->getBudgeted()){
                 SendDlgItemMessage(hDlg, IDC_ADD_BUDGETED_RADIO, BM_SETCHECK, BST_CHECKED, 0);
             }
             else {
@@ -109,4 +109,4 @@ INT_PTR CALLBACK FundExpenseDlg::FundExpenseDlgProc(HWND hDlg, UINT message, WPA
     return (INT_PTR)FALSE;
 }
 
-FundExpenseDlg* FundExpenseDlg::PTHIS = nullptr;
+FundEnvelopeDlg* FundEnvelopeDlg::PTHIS = nullptr;

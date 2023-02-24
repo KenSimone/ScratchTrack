@@ -7,7 +7,7 @@ void setGuiFont(HWND hCtrl);
 
 const wchar_t* szFolderOpen = L"\U0001F5C1 ";
 const wchar_t* szFolderClosed = L"\U0001F5C0 ";
-const wchar_t* szExpense = L"\U0001F95B ";
+const wchar_t* szEnvelope = L"\U0001F95B ";
 
 extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
@@ -163,15 +163,15 @@ void handleDragDrop(HTREEITEM hDragSource, HTREEITEM hDragTarget)
         // Get the associated accounts and figure out the real target
         HTREEITEM hNewParent = nullptr, hInsertAfter = TVI_LAST;
 
-        if (dropSource->getType() == AccountBase::EXPENSE && dropTarget->getType() == AccountBase::EXPENSE)
+        if (dropSource->getType() == AccountBase::ENVELOPE && dropTarget->getType() == AccountBase::ENVELOPE)
         {
             // This is the most common case, re-ordering categories
-            // The real drop target is the parent of the target expense
+            // The real drop target is the parent of the target envelope
             AccountBase* pParent = dropTarget->getParent();
             hNewParent = treeItemFromAccount(pParent);
             hInsertAfter = hDragTarget;
         }
-        else if (dropSource->getType() == AccountBase::EXPENSE && dropTarget->getType() == AccountBase::GROUP)
+        else if (dropSource->getType() == AccountBase::ENVELOPE && dropTarget->getType() == AccountBase::GROUP)
         {
             // This is the second most common case, re-ordering categories, trying to get the item into the first spot
             hNewParent = hDragTarget;
@@ -184,10 +184,10 @@ void handleDragDrop(HTREEITEM hDragSource, HTREEITEM hDragTarget)
             hNewParent = TVI_ROOT;
             hInsertAfter = hDragTarget;
         }
-        else if ( dropSource->getType() == AccountBase::GROUP && dropTarget->getType() == AccountBase::EXPENSE)
+        else if ( dropSource->getType() == AccountBase::GROUP && dropTarget->getType() == AccountBase::ENVELOPE)
         {
-            // Someone has dropped a group on to a expense. Assume they want to move the group after the
-            // parent of the expense
+            // Someone has dropped a group on to a envelope. Assume they want to move the group after the
+            // parent of the envelope
             AccountBase* pParent = dropTarget->getParent();
             hNewParent = TVI_ROOT;
             hInsertAfter = treeItemFromAccount(pParent);
@@ -333,7 +333,7 @@ HTREEITEM treeViewHitTestLinks(LONG xCur, LONG yCur, BUDGET_TREE_LINK_ITEM_TYPE&
         for (auto itr = g_budgetTreeLinkSpots.begin(); itr != g_budgetTreeLinkSpots.end(); itr++)
         {
             // Weed out the wrong types
-            if (type == AccountBase::EXPENSE && (itr->first < ENV_FIRST || itr->first > ENV_LAST))
+            if (type == AccountBase::ENVELOPE && (itr->first < ENV_FIRST || itr->first > ENV_LAST))
             {
                 continue;
 
@@ -430,17 +430,17 @@ bool budgetTreeHandleMouseMove(LONG xCur, LONG yCur)
             wcscpy_s(szBuffer, 1024, L"No hint. File a bug.");
             switch (type) 
             {
-            case ENV_EXPENSE_EDIT:
-                swprintf(szBuffer, 1024, L"Edit the '%ls' expense", pHitItem->getName());
+            case ENV_ENVELOPE_EDIT:
+                swprintf(szBuffer, 1024, L"Edit the '%ls' envelope", pHitItem->getName());
                 break;
             case ENV_TRANS_ADD:
-                swprintf(szBuffer, 1024, L"Record expense in the '%ls' expense", pHitItem->getName());
+                swprintf(szBuffer, 1024, L"Record expense in the '%ls' envelope", pHitItem->getName());
                 break;
             case ENV_MONEY_ADD:
-                swprintf(szBuffer, 1024, L"Assign money to the '%ls' expense", pHitItem->getName());
+                swprintf(szBuffer, 1024, L"Assign money to the '%ls' envelope", pHitItem->getName());
                 break;
-            case GRP_EXPENSE_ADD:
-                swprintf(szBuffer, 1024, L"Add a new expense to the '%ls' folder", pHitItem->getName());
+            case GRP_ENVELOPE_ADD:
+                swprintf(szBuffer, 1024, L"Add a new envelope to the '%ls' folder", pHitItem->getName());
                 break;
             case GRP_FOLDER_EDIT:
                 swprintf(szBuffer, 1024, L"Edit the '%ls' folder", pHitItem->getName());
@@ -514,14 +514,14 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
     // static const wchar_t* szAddTransaction = L"\U0001F4B5"; // cash stack
     //static const wchar_t* szAddTransaction = L"\U0001F4B2"; // dollar sign
     //static const wchar_t* szAddTransaction = L"\U0001f4c9"; // downward graph
-    //static const wchar_t* szAddTransaction = L"\U0001F4E9"; // Expense in
+    //static const wchar_t* szAddTransaction = L"\U0001F4E9"; // envelope in
 
     
-    static const wchar_t* szEditExpense= L"\u270E";  // pencil
-    //static const wchar_t* szAddExpense = L"\u271A"; // plus sign
-    //static const wchar_t* szAddExpense = L"\U0001F95B"; // Expense
-    //static const wchar_t* szAddExpense = L"\U0001F195"; // Expense
-    static const wchar_t* szAddExpense = L"\U0001F7BC"; // Expense
+    static const wchar_t* szeditEnvelope= L"\u270E";  // pencil
+    //static const wchar_t* szaddEnvelope = L"\u271A"; // plus sign
+    //static const wchar_t* szaddEnvelope = L"\U0001F95B"; // envelope
+    //static const wchar_t* szaddEnvelope = L"\U0001F195"; // envelope
+    static const wchar_t* szaddEnvelope = L"\U0001F7BC"; // envelope
     
     static const wchar_t* szAddMoney = L"\U0001F4B2";
     //static const wchar_t* szHide = L"\U0001F576"; // sunglasses
@@ -529,7 +529,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
 
     static const COLORREF ACCOUNT_COLOR = RGB(230, 240, 250);
     static const COLORREF GROUP_COLOR = RGB(230, 240, 250);
-    static const COLORREF EXPENSE_COLOR = RGB(255, 255, 255);
+    static const COLORREF ENVELOPE_COLOR = RGB(255, 255, 255);
 
     static const COLORREF SEL_COLOR = GetSysColor(COLOR_HIGHLIGHT);
     static const COLORREF LINK_COLOR = GetSysColor(COLOR_HOTLIGHT);
@@ -558,7 +558,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
         // Figure out color based on account type
         if (itemType == AccountBase::UNKNOWN) {
             //COLORREF oldColor = SetTextColor(pCustomDrawItem->nmcd.hdc, selected ? SEL_LINK_COLOR : LINK_COLOR);
-            cr = EXPENSE_COLOR;
+            cr = ENVELOPE_COLOR;
         }
         else if (itemType == AccountBase::ACCOUNT) {
             cr = ACCOUNT_COLOR;
@@ -566,8 +566,8 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
         else if (itemType == AccountBase::GROUP) {
             cr = GROUP_COLOR;
         }
-        else if (itemType == AccountBase::EXPENSE) {
-            cr = EXPENSE_COLOR;
+        else if (itemType == AccountBase::ENVELOPE) {
+            cr = ENVELOPE_COLOR;
         }
 
         if (selected && itemType != AccountBase::UNKNOWN ) {
@@ -598,11 +598,11 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
         std::wstring balance = Utils::penniesToDollarsString(iBalance);
 
         // Amount budgeted for this item
-        int iBudget = !pItem ? 0 : pItem->getType() == AccountBase::EXPENSE ? pItem->getBudgeted() : pItem->budgetedToSubAccounts();
+        int iBudget = !pItem ? 0 : pItem->getType() == AccountBase::ENVELOPE ? pItem->getBudgeted() : pItem->budgetedToSubAccounts();
         std::wstring budgeted = Utils::penniesToDollarsString(abs(iBudget));
 
         // Money allocated to this item
-        int iCategories = !pItem ? 0 : pItem->getType() == AccountBase::EXPENSE ? pItem->getBalance() : pItem->allocatedToSubAccounts();
+        int iCategories = !pItem ? 0 : pItem->getType() == AccountBase::ENVELOPE ? pItem->getBalance() : pItem->allocatedToSubAccounts();
         std::wstring allocated = Utils::penniesToDollarsString(iCategories);
 
         // Sum of all transactions for this item
@@ -644,8 +644,8 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
         else if (TreeView_GetItemState(g_hwndTV, hItem, TVIF_STATE) & TVIS_EXPANDED) {
             name = szFolderOpen;
         }
-        else if (itemType == AccountBase::EXPENSE) {
-            //name = szExpense;
+        else if (itemType == AccountBase::ENVELOPE) {
+            //name = szEnvelope;
         }
         else {
             name = szFolderClosed;
@@ -674,10 +674,10 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
         }
 
         // Balance
-        if (itemType == AccountBase::EXPENSE)
+        if (itemType == AccountBase::ENVELOPE)
         {
-            AccountExpense* pExpense = (AccountExpense*)pItem;
-            if (pExpense->isVirtualAccount()) {
+            AccountEnvelope* pEnvelope = (AccountEnvelope*)pItem;
+            if (pEnvelope->isVirtualAccount()) {
                 setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iBalance, selected, true);
                 rText.left = balanceSpot; rText.right = infoSpot;
                 DrawText(pCustomDrawItem->nmcd.hdc, balance.c_str(), (int)balance.length(), &rText, dwDrawTextFlags);
@@ -715,17 +715,17 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
         int rightEdge = budgetedSpot;
         switch (itemType)
         {
-        case AccountBase::EXPENSE:
+        case AccountBase::ENVELOPE:
         {
-            AccountExpense* pExpense = dynamic_cast<AccountExpense*>(pItem);
-            if (!pExpense->getReadOnly()) {
+            AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(pItem);
+            if (!pEnvelope->getReadOnly()) {
 #ifdef ICON_HIDE_ITEM
                 rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szHide, ENV_HIDE, rightEdge, rcText.top);
 #endif
-                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditExpense, ENV_EXPENSE_EDIT, rightEdge, rcText.top);
+                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szeditEnvelope, ENV_ENVELOPE_EDIT, rightEdge, rcText.top);
                 rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddMoney, ENV_MONEY_ADD, rightEdge, rcText.top);
 
-                if (pExpense->getId() != ACCOUNT_ID_PAY_CC) {
+                if (pEnvelope->getId() != ACCOUNT_ID_PAY_CC) {
                     rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddTransaction, ENV_TRANS_ADD, rightEdge, rcText.top);
                 }
 
@@ -737,9 +737,9 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
 #ifdef ICON_HIDE_ITEM
                 rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szHide, GRP_FOLDER_HIDE, rightEdge, rcText.top);
 #endif
-                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szEditExpense, GRP_FOLDER_EDIT, rightEdge, rcText.top);
+                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szeditEnvelope, GRP_FOLDER_EDIT, rightEdge, rcText.top);
                 rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddMoney, GRP_FUND_CHILDREN, rightEdge, rcText.top);
-                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szAddExpense, GRP_EXPENSE_ADD, rightEdge, rcText.top);
+                rightEdge = addLinkText(hItem, pCustomDrawItem->nmcd.hdc, szaddEnvelope, GRP_ENVELOPE_ADD, rightEdge, rcText.top);
             }
             break;
 
@@ -837,7 +837,7 @@ void budgetTreeCreateTreeControl()
     // Create tree
     HDITEM item = { 0 };
     item.cxy = g_columnSizes._name;
-    item.pszText = const_cast<wchar_t*>(L"Expense / Folder");
+    item.pszText = const_cast<wchar_t*>(L"Envelope / Folder");
     item.mask = HDI_TEXT | HDI_WIDTH;
     Header_InsertItem(g_hwndTreeHeader, 99, &item);
 

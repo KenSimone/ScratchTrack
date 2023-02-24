@@ -27,13 +27,13 @@ bool FolderDlg::ShowDialog()
     g_accountInfoDlg.saveText();
     g_accountInfoDlg.appendText(L"About Folders\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
 
-    g_accountInfoDlg.appendText(L"Folders help organize expenses. The recommended approach is to create folders for each monthly income event. If you're paid twice a month, create "
+    g_accountInfoDlg.appendText(L"Folders help organize envelopes. The recommended approach is to create folders for each monthly income event. If you're paid twice a month, create "
         L"folders titled 'paycheck1' and 'paycheck2'. "
-        L"Use the paycheck to fund the categories in the folder when it arrives.\n\n", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
+        L"Use the paycheck to fund the envelopes in the folder when it arrives.\n\n", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
     g_accountInfoDlg.appendText(L"You can set expense limits for folders. This helps organize "
         L"the budget. If your folders are aligned with paychecks, set the expense limit to the usual paycheck amount. "
-        L"As expense categories are added to the folder, you'll be able to see how close you are to the limit.", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
+        L"As envelopes are added to the folder, you'll be able to see how close you are to the limit.", RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
     INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_FOLDER_DIALOG), g_hTopWindow, FolderDlgProc);
     PTHIS = nullptr;
@@ -47,7 +47,7 @@ INT_PTR CALLBACK FolderDlg::FolderDlgProc(HWND hDlg, UINT message, WPARAM wParam
     {
     case WM_INITDIALOG:
         if (FolderDlg::PTHIS) {
-            Utils::setDlgItemDollarText(hDlg, IDC_EDIT_EXPENSE_LIMIT, abs(PTHIS->_limit));
+            Utils::setDlgItemDollarText(hDlg, IDC_EDIT_ENVELOPE_LIMIT, abs(PTHIS->_limit));
             SetDlgItemText(hDlg, IDC_EDIT_FOLDER_NAME, PTHIS->_name.c_str());
         }
 
@@ -63,7 +63,7 @@ INT_PTR CALLBACK FolderDlg::FolderDlgProc(HWND hDlg, UINT message, WPARAM wParam
         {
             if (LOWORD(wParam) == IDOK)
             {
-                PTHIS->_limit = -Utils::getDlgItemDollarText(hDlg, IDC_EDIT_EXPENSE_LIMIT);
+                PTHIS->_limit = -Utils::getDlgItemDollarText(hDlg, IDC_EDIT_ENVELOPE_LIMIT);
                 PTHIS->_name = Utils::getDlgItemText(hDlg, IDC_EDIT_FOLDER_NAME);
             }
 

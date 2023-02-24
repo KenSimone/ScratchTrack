@@ -1,4 +1,4 @@
-#include "ExpenseDlg.h"
+#include "EnvelopeDlg.h"
 #include "resource.h"
 #include "AccountInfo.h"
 #include "Transaction.h"
@@ -12,38 +12,38 @@ extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 extern AccountInfoDlg g_accountInfoDlg;
 
-ExpenseDialog::ExpenseDialog() : _amount(0), _pDefaultTransactionPayFromAccount(nullptr), _budget(0)
+EnvelopeDialog::EnvelopeDialog() : _amount(0), _pDefaultTransactionPayFromAccount(nullptr), _budget(0)
 {
 
 }
 
-ExpenseDialog::~ExpenseDialog()
+EnvelopeDialog::~EnvelopeDialog()
 {
 
 }
 
-bool ExpenseDialog::ShowDialog()
+bool EnvelopeDialog::ShowDialog()
 {
     PTHIS = this;
 
     g_accountInfoDlg.saveText();
-    g_accountInfoDlg.appendText(L"About Expense Categories\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
+    g_accountInfoDlg.appendText(L"About Envelopes\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
 
-    g_accountInfoDlg.appendText(L"Expense categories are used to plan and track how money is spent. Examples of expense categories include 'Dining out', 'Utilities', and 'Car payment'. "
-        L"Expense categories have a budget. This is a best guess of how much you'll spend in a month. You can adjust this value at any time by editing the expense category.\n\n",
+    g_accountInfoDlg.appendText(L"Envelopes are used to plan and track how money is spent. Examples of envelopes include 'Dining out', 'Utilities', and 'Car payment'. "
+        L"Envelopes have a budget. This is a best guess of how much you'll spend in a month. You can adjust this value at any time by editing the Envelope.\n\n",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
-    g_accountInfoDlg.appendText(L"In ScratchTrack funds are assigned to expense categories. When transactions are recorded against a category, funds assigned to that category are reduced by the transaction amount. "
-        L"When a category is out of money, spending in that category should stop until more funds are added.\n\n",
+    g_accountInfoDlg.appendText(L"In ScratchTrack funds are assigned to envelopes. When transactions are recorded, funds assigned to the selected envelope are reduced by the transaction amount. "
+        L"When an envelope is out of money, spending in that envelope should stop until more funds are added.\n\n",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
-    g_accountInfoDlg.appendText(L"Transactions are recorded by clicking the 'record expense' icon next to the category, or through the right click menu. If the details of transactions in an expense "
+    g_accountInfoDlg.appendText(L"Transactions are recorded by clicking the 'record expense' icon next to the envelope, or through the right click menu. If the details of transactions in an envelope "
         L"are often the same (i.e. a car payment), you can set those values here. When you "
-        L"create a transaction in this expense category the settings will be filled in for you. You can adjust them as needed when recording new transactions.",
+        L"create a transaction in this envelope the settings will be filled in for you. You can adjust them as needed when recording new transactions.",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
 
-    INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_EXPENSE_DIALOG), g_hTopWindow, ExpenseDialogProc);
+    INT_PTR result = DialogBox(g_hInst, MAKEINTRESOURCE(IDD_ENVELOPE_DIALOG), g_hTopWindow, EnvelopeDialogProc);
     PTHIS = nullptr;
 
     g_accountInfoDlg.restoreText();
@@ -52,7 +52,7 @@ bool ExpenseDialog::ShowDialog()
 
 }
 
-void ExpenseDialog::enableDisableUi(HWND hDlg)
+void EnvelopeDialog::enableDisableUi(HWND hDlg)
 {
 
     bool enableOk = true;
@@ -64,7 +64,7 @@ void ExpenseDialog::enableDisableUi(HWND hDlg)
 }
 
 
-INT_PTR CALLBACK ExpenseDialog::ExpenseDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK EnvelopeDialog::EnvelopeDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     UNREFERENCED_PARAMETER(lParam);
     switch (message)
@@ -73,7 +73,7 @@ INT_PTR CALLBACK ExpenseDialog::ExpenseDialogProc(HWND hDlg, UINT message, WPARA
         if (PTHIS) {
 
             HWND hCatNameEdit = GetDlgItem(hDlg, IDC_EDIT_CAT_NAME);
-            SetWindowText(hCatNameEdit, const_cast<wchar_t*>(PTHIS->getExpenseName()));
+            SetWindowText(hCatNameEdit, const_cast<wchar_t*>(PTHIS->getEnvelopeName()));
 
             HWND hAccountCombo = GetDlgItem(hDlg, IDC_COMBO_CAT_ACCOUNT);
             auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
@@ -132,7 +132,7 @@ INT_PTR CALLBACK ExpenseDialog::ExpenseDialogProc(HWND hDlg, UINT message, WPARA
                     // Name
                     wchar_t szBuff[1024] = { 0 };
                     GetDlgItemText(hDlg, IDC_EDIT_CAT_NAME, szBuff, 1024);
-                    PTHIS->setExpenseName(szBuff);
+                    PTHIS->setEnvelopeName(szBuff);
 
                     // Account from
                     HWND hAccountCombo = GetDlgItem(hDlg, IDC_COMBO_CAT_ACCOUNT);
@@ -178,4 +178,4 @@ INT_PTR CALLBACK ExpenseDialog::ExpenseDialogProc(HWND hDlg, UINT message, WPARA
     return (INT_PTR)FALSE;
 }
 
-ExpenseDialog* ExpenseDialog::PTHIS = nullptr;
+EnvelopeDialog* EnvelopeDialog::PTHIS = nullptr;

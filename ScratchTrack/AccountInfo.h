@@ -18,8 +18,8 @@ public:
 	enum accountItemType
 	{
 		ACCOUNT, // Holds funds
-		GROUP, // Display-only method for dividing categories
-		EXPENSE, // A virtual account, essentially
+		GROUP, // Display-only method for dividing envelopes
+		ENVELOPE, // A virtual account, essentially
 		UNKNOWN
 	}; // enum accountItemType
 
@@ -27,7 +27,7 @@ public:
 	AccountBase(accountItemType type);
 	virtual ~AccountBase();
 
-	// The item-type (account/group/expense)
+	// The item-type (account/group/envelope)
 	virtual accountItemType getType() = 0;
 	static std::vector<AccountBase*> getAllAccountsOfType(accountItemType type);
 
@@ -45,11 +45,11 @@ public:
 	virtual void setName(const wchar_t* szName) { _name = szName; }
 
 	// How many dollars an item has or is holding. Th is is a direct
-	// value for accounts and categories, and is a calculated value for groups
+	// value for accounts and envelopes, and is a calculated value for groups
 	virtual int getBalance() { return _balance; }
 	virtual void addBalance(int balance) { _balance += balance; }
 
-	// The dollars budgeted to this item. This is a direct value for categories
+	// The dollars budgeted to this item. This is a direct value for envelopes
 	// and a calculated value for containers.
 	virtual int getBudgeted() { return _budgeted; }
 	virtual void setBudgeted(int budgeted) { _budgeted = budgeted; }
@@ -253,23 +253,23 @@ public:
 	void setContributesToBudget(bool budgeted) { _isBudgeted = budgeted; }
 
 	// If this is a credit card account, when an expense is charged to this account,
-	// funds will be taken from the expense expense and applied to '_paidFromExpenseId'.
-	// This allows "paying" for items via credit card (removing funds from a expense), and
-	// still properly tracking expenses.
+	// funds will be taken from the envelope and applied to '_paidFromEnvelopeId' envelope.
+	// This allows "paying" for items via credit card (removing funds from an envelope), and
+	// still properly tracking envelopes.
 	// 
 	// Example
-	// 1) Dining transaction expense has a balance of $50 dollars.
+	// 1) Dining transaction envelope has a balance of $50 dollars.
 	// 2) You spend $25 dollars at McDonalds, and pay with a credit card.
-	// 3) You record the transaction against the dining expense, paid with CC.
-	// 4) $25 dollars comes out of the dining expense and moves to the "pay cc" expense.
+	// 3) You record the transaction against the dining envelope, paid with CC.
+	// 4) $25 dollars comes out of the dining envelope and moves to the "pay cc" envelope.
 	// 5) The CC account balance is deducted by $25.
 	//
-	// Later, when the credit card is paid, record an expense transaction against that 
-	// expense.
+	// Later, when the credit card is paid, record a transaction against that 
+	// envelope.
 	unsigned int isCCAccount() { return _isCCAccount; }
 	void setIsCCAccount(bool isCC) { _isCCAccount = isCC; }
 
-	// The item-type (account/group/expense)
+	// The item-type (account/group/envelope)
 	virtual accountItemType getType() { return AccountBase::ACCOUNT; }
 
 	void setLastImportDate(SYSTEMTIME importDate) { _lastImportDate = importDate; }
@@ -311,14 +311,14 @@ protected:
 
 }; // class Account
 
-// Expense (expense) class and implementation
-class AccountExpense : public AccountBase
+// Envelope class and implementation
+class AccountEnvelope : public AccountBase
 {
 public:
-	AccountExpense() : AccountBase(EXPENSE), _pDefaultTransactionPayFromAccount(nullptr), _defaultTransactionAmount(0), 
+	AccountEnvelope() : AccountBase(ENVELOPE), _pDefaultTransactionPayFromAccount(nullptr), _defaultTransactionAmount(0), 
 		_isExpense(true), _isVirtualAccount(false), _pDefaultTransactionPayToAccount(nullptr){};
 
-	virtual accountItemType getType() { return AccountBase::EXPENSE; }
+	virtual accountItemType getType() { return AccountBase::ENVELOPE; }
 
 	// Transaction defaults
 	int getDefaultTransactionAmount() { return _defaultTransactionAmount; }
@@ -350,7 +350,7 @@ public:
 	virtual int initItemFromXmlElement(tinyxml2::XMLElement* pAccount);
 	virtual int serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppSerializedElement);
 
-	static AccountExpense* getOrCreateCCExpense();
+	static AccountEnvelope* getOrCreateCCEnvelope();
 
 protected:
 	std::wstring _defaultTransactionPayee;
@@ -359,7 +359,7 @@ protected:
 	int _defaultTransactionAmount;
 	bool _isExpense;
 	bool _isVirtualAccount;
-}; // class Expense
+}; // class AccountEnvelope
 
 int serialize(std::vector<AccountBase*>& topLevelItems, const char* szFilename);
 int deserialize(const char* szFilename, std::vector<AccountBase*>& topLevelItems);

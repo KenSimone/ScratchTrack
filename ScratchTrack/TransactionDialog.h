@@ -19,14 +19,14 @@ public:
 	void setAmount(int amount) { _amount = amount; }
 	void setPayee(const wchar_t* szPayee) { _payee = szPayee; }
 	void setDescription(const wchar_t* szDescription) { _description = szDescription; }
-	void setExpenseId(unsigned int expenseId) { _expenseId = expenseId; }
+	void setenvelopeId(unsigned int envelopeId) { _envelopeId = envelopeId; }
 	void setAccountFromId(unsigned int accountId) { _accountFromId = accountId; }
 
 	// Post-show functions
 	int getAmount() { return _amount; }
 	const wchar_t* getPayee() { return _payee.c_str(); }
 	const wchar_t* getDescription() { return _description.c_str(); }
-	unsigned int getExpenseId() { return _expenseId; }
+	unsigned int getEnvelopeId() { return _envelopeId; }
 	unsigned int getAccountFromId() { return _accountFromId; }
 
 protected:
@@ -39,7 +39,7 @@ protected:
 	std::wstring _description;
 
 	unsigned int _accountFromId;
-	unsigned int _expenseId;
+	unsigned int _envelopeId;
 	bool _doValidate;
 
 	static INT_PTR CALLBACK TransactionDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);

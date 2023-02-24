@@ -15,7 +15,7 @@ void deleteAllAccounts()
 		delete accounts[i];
 	}
 
-	accounts = AccountBase::getAllAccountsOfType(AccountBase::EXPENSE);
+	accounts = AccountBase::getAllAccountsOfType(AccountBase::ENVELOPE);
 	for (size_t i = 0; i < accounts.size(); i++) {
 		delete accounts[i];
 	}
@@ -194,13 +194,13 @@ TEST(TestAccounts, TestExpense) {
 	deleteAllAccounts();
 	Account* pAccount = new Account;
 	AccountGroup* pFolder = new AccountGroup;
-	AccountExpense* pExpense = new AccountExpense;
+	AccountEnvelope* pExpense = new AccountEnvelope;
 	pExpense->addBalance(100);
 	pFolder->addChild(pExpense);
 
 	pAccount->addBalance(500);
 
-	Transaction* pTrans = Transaction::addTransaction(Transaction::EXPENSE, -99, pAccount->getId(), ACCOUNT_ID_INVALID, pExpense->getId(), nullptr, nullptr);
+	Transaction* pTrans = Transaction::addTransaction(Transaction::ENVELOPE, -99, pAccount->getId(), ACCOUNT_ID_INVALID, pExpense->getId(), nullptr, nullptr);
 
 	EXPECT_EQ(500, pAccount->getBalance());
 	EXPECT_EQ(100, pExpense->getBalance());
@@ -219,7 +219,7 @@ TEST(TestAccounts, TestExpenseCC) {
 	Account* pAccount = new Account;
 	Account* pAccountCC = new Account;
 	AccountGroup* pFolder = new AccountGroup;
-	AccountExpense* pExpense = new AccountExpense;
+	AccountEnvelope* pExpense = new AccountEnvelope;
 	pExpense->addBalance(100);
 	pFolder->addChild(pExpense);
 
@@ -227,7 +227,7 @@ TEST(TestAccounts, TestExpenseCC) {
 	pAccountCC->setIsCCAccount(true);
 	pAccountCC->setName(L"CC Account");
 
-	Transaction* pTrans = Transaction::addTransaction(Transaction::EXPENSE, -99, pAccountCC->getId(), ACCOUNT_ID_INVALID, pExpense->getId(), nullptr, nullptr);
+	Transaction* pTrans = Transaction::addTransaction(Transaction::ENVELOPE, -99, pAccountCC->getId(), ACCOUNT_ID_INVALID, pExpense->getId(), nullptr, nullptr);
 
 	EXPECT_EQ(500, pAccount->getBalance());
 	EXPECT_EQ(0, pAccountCC->getBalance());
@@ -269,8 +269,8 @@ TEST(TestAccounts, TestExpenseCC) {
 TEST(TestAccounts, TestIDManipulations) {
 	deleteAllAccounts();
 
-	AccountExpense* pCat = AccountExpense::getOrCreateCCExpense();
-	std::vector<AccountBase*> accounts = AccountBase::getAllAccountsOfType(AccountBase::EXPENSE);
+	AccountEnvelope* pCat = AccountEnvelope::getOrCreateCCEnvelope();
+	std::vector<AccountBase*> accounts = AccountBase::getAllAccountsOfType(AccountBase::ENVELOPE);
 
 	EXPECT_EQ(1, accounts.size());
 }

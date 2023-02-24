@@ -11,7 +11,7 @@ extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 extern AccountInfoDlg g_accountInfoDlg;
 
-TransactionDialog::TransactionDialog(bool validate) : _amount(0), _accountFromId(ACCOUNT_ID_INVALID), _expenseId(ACCOUNT_ID_INVALID), _doValidate(validate)
+TransactionDialog::TransactionDialog(bool validate) : _amount(0), _accountFromId(ACCOUNT_ID_INVALID), _envelopeId(ACCOUNT_ID_INVALID), _doValidate(validate)
 {
 }
 
@@ -33,7 +33,7 @@ bool TransactionDialog::ShowDialog()
     g_accountInfoDlg.saveText();
     g_accountInfoDlg.appendText(L"About Transactions\n", RGB(0, 0, 0), false, true, AccountInfoDlg::HEADER_SIZE, true);
 
-    g_accountInfoDlg.appendText(L"A transaction is a record of an expense. Transactions are paid from accounts and tracked against categories. "
+    g_accountInfoDlg.appendText(L"A transaction is a record of an expense. Transactions are paid from accounts and tracked against envelopes. "
         L"You can edit transactions by double clicking them or through their right click menu.",
         RGB(0, 0, 0), false, false, AccountInfoDlg::TEXT_SIZE, false);
 
@@ -58,26 +58,26 @@ bool TransactionDialog::validateParams(HWND hDlg)
 
     bool ret = true;
     HWND hAccountsFrom = GetDlgItem(hDlg, IDC_COMBO_ACCOUNT);
-    HWND hCategories = GetDlgItem(hDlg, IDC_COMBO_EXPENSE);
+    HWND hCategories = GetDlgItem(hDlg, IDC_COMBO_ENVELOPE);
 
     wchar_t szBuff[1024] = { 0 };
     GetDlgItemText(hDlg, IDC_EDIT_Transaction_AMOUNT, szBuff, 1024);
     int amount = Utils::dollarsStringToPennies(szBuff) * -1;
 
     int iSel = ComboBox_GetCurSel(hCategories);
-    AccountExpense* pExpense = iSel >= 0 ? (AccountExpense*)ComboBox_GetItemData(hCategories, iSel) : nullptr;
+    AccountEnvelope* pEnvelope = iSel >= 0 ? (AccountEnvelope*)ComboBox_GetItemData(hCategories, iSel) : nullptr;
 
     // Set account from
     Account* pAccountFrom = dynamic_cast<Account*>(Account::lookupById(Utils::getAccountIdFromAccountCombo(hDlg, IDC_COMBO_ACCOUNT)));
 
-    if (pAccountFrom && pExpense) {
+    if (pAccountFrom && pEnvelope) {
 
-        int catBalance =pExpense->getBalance();
+        int catBalance =pEnvelope->getBalance();
         int acctBalance = pAccountFrom->getBalance();
 
         if ( (amount+catBalance) < 0 ) {
-            swprintf(szBuff, 1024, L"The '%ls' expense has a balance of %ls, which is less than the transaction amount of %ls. Record anyway?",
-                pExpense->getName(), Utils::penniesToDollarsString(catBalance).c_str(), Utils::penniesToDollarsString(abs(amount)).c_str());
+            swprintf(szBuff, 1024, L"The '%ls' envelope has a balance of %ls, which is less than the transaction amount of %ls. Record anyway?",
+                pEnvelope->getName(), Utils::penniesToDollarsString(catBalance).c_str(), Utils::penniesToDollarsString(abs(amount)).c_str());
             ret = MessageBox(hDlg, szBuff, L"Over Spent", MB_YESNO | MB_ICONWARNING) == IDYES;
         }
 
@@ -118,14 +118,14 @@ INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT messag
             // Account from
             Utils::populateAccountCombo(hDlg, IDC_COMBO_ACCOUNT, THIS_PTR->getAccountFromId());
 
-            // Categories
-            HWND hCategories = GetDlgItem(hDlg, IDC_COMBO_EXPENSE);
-            auto categories = AccountBase::getAllAccountsOfType(AccountBase::EXPENSE);
+            // Envelopes
+            HWND hCategories = GetDlgItem(hDlg, IDC_COMBO_ENVELOPE);
+            auto categories = AccountBase::getAllAccountsOfType(AccountBase::ENVELOPE);
             for (auto itr = categories.begin(); itr != categories.end(); itr++) {
                 int pos = (int)SendMessage(hCategories, CB_ADDSTRING, 0, (LPARAM)(*itr)->getName());
                 SendMessage(hCategories, CB_SETITEMDATA, pos, (LPARAM)*itr);
                 AccountBase* pAccount = *itr;
-                if (pAccount->getId() == THIS_PTR->getExpenseId()) {
+                if (pAccount->getId() == THIS_PTR->getEnvelopeId()) {
                     ComboBox_SetCurSel(hCategories, pos);
                 }
             }
@@ -133,10 +133,10 @@ INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT messag
             // Transactions
             Utils::populatePayeeCombo(hDlg, IDC_COMBO_PAYEE, THIS_PTR->getPayee());
 
-            // Set expense radio
+            // Set envelope radio
             int iAmount = THIS_PTR->getAmount() * -1;
 
-            // Set expense text
+            // Set envelope text
             std::wstring amount = Utils::penniesToDollarsString(iAmount);
             SetDlgItemText(hDlg, IDC_EDIT_Transaction_AMOUNT, amount.c_str());
             ComboBox_SetText(GetDlgItem(hDlg, IDC_COMBO_PAYEE), THIS_PTR->getPayee());
@@ -158,7 +158,7 @@ INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT messag
                     closeIt = THIS_PTR->validateParams(hDlg);
                     if (closeIt) {
                         HWND hAccountsFrom = GetDlgItem(hDlg, IDC_COMBO_ACCOUNT);
-                        HWND hCategories = GetDlgItem(hDlg, IDC_COMBO_EXPENSE);
+                        HWND hCategories = GetDlgItem(hDlg, IDC_COMBO_ENVELOPE);
 
                         // Set amount
                         wchar_t szBuff[1024] = { 0 };
@@ -169,11 +169,11 @@ INT_PTR CALLBACK TransactionDialog::TransactionDialogProc(HWND hDlg, UINT messag
                         GetDlgItemText(hDlg, IDC_COMBO_PAYEE, szBuff, 1024);
                         THIS_PTR->_payee = szBuff;
 
-                        // Set expense
+                        // Set envelope
                         int iSel = ComboBox_GetCurSel(hCategories);
                         if (iSel >= 0) {
-                            AccountExpense* pExpense = (AccountExpense*)ComboBox_GetItemData(hCategories, iSel);
-                            THIS_PTR->setExpenseId(pExpense->getId());
+                            AccountEnvelope* pEnvelope = (AccountEnvelope*)ComboBox_GetItemData(hCategories, iSel);
+                            THIS_PTR->setenvelopeId(pEnvelope->getId());
                         }
 
                         // Set description
