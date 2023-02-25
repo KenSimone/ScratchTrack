@@ -806,11 +806,12 @@ void Utils::drawSparkLink(HDC hdc, RECT rFullArea, int val, int maxVal, bool sel
 	static const COLORREF SEL_COLOR = GetSysColor(COLOR_HIGHLIGHT);
 	static const COLORREF SEL_TEXT_COLOR = GetSysColor(COLOR_HIGHLIGHTTEXT);
 	static const COLORREF TEXT_COLOR = GetSysColor(COLOR_MENUTEXT);
+	static const int MIN_BAR_WIDTH = 8;
 
 
 	if (szText && scaleToText ) {
 		SIZE size = { 0 };
-		GetTextExtentPoint32(hdc, szText, wcslen(szText), &size);
+		GetTextExtentPoint32(hdc, szText, (int)wcslen(szText), &size);
 		rFullArea.right = min(rFullArea.right, rFullArea.left + size.cx + 10);
 	}
 
@@ -818,8 +819,8 @@ void Utils::drawSparkLink(HDC hdc, RECT rFullArea, int val, int maxVal, bool sel
 
 	int width = rFullArea.right - rFullArea.left;
 	width = (int)(width * scale);
-	if (width < 8) {
-		width = 8;
+	if (width < MIN_BAR_WIDTH) {
+		width = MIN_BAR_WIDTH;
 	}
 
 	// Draw background rect

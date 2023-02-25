@@ -436,6 +436,7 @@ bool editEnvelope(AccountEnvelope* pEnvelope)
     dlg.setDefaultTransactionAmount(pEnvelope->getDefaultTransactionAmount());
     dlg.setDefaultTransactionPayee(pEnvelope->getDefaultTransactionPayee());
     dlg.setSavingsGoal(pEnvelope->getSavingsGoal());
+    dlg.setIsPayCCEnvelope(pEnvelope->getId() == ACCOUNT_ID_PAY_CC);
     if (dlg.ShowDialog())
     {
         pEnvelope->setBudgeted(dlg.getBudget());

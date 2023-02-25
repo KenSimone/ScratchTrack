@@ -31,6 +31,8 @@ public:
 	const wchar_t* getDefaultTransactionPayee() { return _payee.c_str(); }
 	int getSavingsGoal() { return _savingsGoal; }
 
+	void setIsPayCCEnvelope(bool isPayCC) { _isPayCCEnvelope = isPayCC;  }
+
 protected:
 	std::wstring _name;
 	Account* _pDefaultTransactionPayFromAccount;
@@ -39,6 +41,7 @@ protected:
 	int _amount;
 	int _budget;
 	int _savingsGoal;
+	bool _isPayCCEnvelope;
 
 	static INT_PTR CALLBACK EnvelopeDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 	void enableDisableUi(HWND hDlg);

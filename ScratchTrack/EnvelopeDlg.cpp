@@ -54,7 +54,6 @@ bool EnvelopeDialog::ShowDialog()
 
 void EnvelopeDialog::enableDisableUi(HWND hDlg)
 {
-
     bool enableOk = true;
     if (Utils::isDlgItemTextEmpty(hDlg, IDC_EDIT_CAT_NAME)) {
         enableOk = false;
@@ -66,6 +65,11 @@ void EnvelopeDialog::enableDisableUi(HWND hDlg)
     if (isSavingsGoal && enableOk ) {
         enableOk = !Utils::isDlgItemTextEmpty(hDlg, IDC_EDIT_SAVINGS_GOAL);
     }
+
+    if (_isPayCCEnvelope) {
+        EnableWindow(GetDlgItem(hDlg, IDC_CHECK_SAVINGS_GOAL), false);
+    }
+
     EnableWindow(GetDlgItem(hDlg, IDOK), enableOk);
 }
 
