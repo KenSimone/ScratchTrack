@@ -60,6 +60,12 @@ void EnvelopeDialog::enableDisableUi(HWND hDlg)
         enableOk = false;
     }
 
+    bool isSavingsGoal = SendDlgItemMessage(hDlg, IDC_CHECK_SAVINGS_GOAL, BM_GETCHECK, 0, 0);
+    EnableWindow(GetDlgItem(hDlg, IDC_EDIT_SAVINGS_GOAL), isSavingsGoal);
+
+    if (isSavingsGoal && enableOk ) {
+        enableOk = !Utils::isDlgItemTextEmpty(hDlg, IDC_EDIT_SAVINGS_GOAL);
+    }
     EnableWindow(GetDlgItem(hDlg, IDOK), enableOk);
 }
 
@@ -111,13 +117,25 @@ INT_PTR CALLBACK EnvelopeDialog::EnvelopeDialogProc(HWND hDlg, UINT message, WPA
 
             HWND hAmount = GetDlgItem(hDlg, IDC_EDIT_CAT_AMOUNT);
             SetWindowText(hAmount, Utils::penniesToDollarsString(iAmount).c_str());
+
+            // Savings goal
+            if (PTHIS->getSavingsGoal()) {
+                SendDlgItemMessage(hDlg, IDC_CHECK_SAVINGS_GOAL, BM_SETCHECK, BST_CHECKED, 0);
+                Utils::setDlgItemDollarText(hDlg, IDC_EDIT_SAVINGS_GOAL, PTHIS->getSavingsGoal());
+                EnableWindow(GetDlgItem(hDlg, IDC_EDIT_SAVINGS_GOAL), true);
+            }
+            else {
+                SendDlgItemMessage(hDlg, IDC_CHECK_SAVINGS_GOAL, BM_SETCHECK, BST_UNCHECKED, 0);
+                SetDlgItemText(hDlg, IDC_EDIT_SAVINGS_GOAL, L"");
+                EnableWindow(GetDlgItem(hDlg, IDC_EDIT_SAVINGS_GOAL), false);
+            }
         }
 
         PTHIS->enableDisableUi(hDlg);
         return (INT_PTR)TRUE;
 
     case WM_COMMAND:
-        if (HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == EN_CHANGE)
+        if (HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == EN_CHANGE || HIWORD(wParam) == BN_CLICKED)
         {
             PTHIS->enableDisableUi(hDlg);
         }
@@ -167,6 +185,16 @@ INT_PTR CALLBACK EnvelopeDialog::EnvelopeDialogProc(HWND hDlg, UINT message, WPA
 
                     PTHIS->setBudget(budgetedAmt);
                     PTHIS->setDefaultTransactionAmount(amt);
+
+                    // Savings goal
+                    bool isSavingsGoal = SendDlgItemMessage(hDlg, IDC_CHECK_SAVINGS_GOAL, BM_GETCHECK, 0, 0);
+                    if (isSavingsGoal) {
+                        PTHIS->setSavingsGoal(Utils::getDlgItemDollarText(hDlg, IDC_EDIT_SAVINGS_GOAL));
+                    }
+                    else {
+                        PTHIS->setSavingsGoal(0);
+                    }
+
                 }
             }
 

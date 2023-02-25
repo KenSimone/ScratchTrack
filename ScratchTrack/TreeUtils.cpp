@@ -685,12 +685,15 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
                 DrawText(pCustomDrawItem->nmcd.hdc, balance.c_str(), (int)balance.length(), &rText, dwDrawTextFlags);
 
                 // Draw spark line
-                if (pEnvelope->getBudgeted()) {
+                if (pEnvelope->getSavingsGoal()) {
                     rText.left = infoSpot; rText.right = infoSpot + g_columnSizes._info;
                     //int width = rText.right - rText.left;
                     //rText.right = rText.left + (width * .75);
 
-                    Utils::drawSparkLink(pCustomDrawItem->nmcd.hdc, rText, pEnvelope->getBalance(), abs(pEnvelope->getBudgeted()));
+                    setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 0, false, false);
+                    std::wstring savingsGoal = Utils::penniesToDollarsString(pEnvelope->getSavingsGoal());
+                    wnsprintf(szInfotText, 1024, L"%ls saved towards goal of %ls", balance.c_str(), savingsGoal.c_str());
+                    Utils::drawSparkLink(pCustomDrawItem->nmcd.hdc, rText, pEnvelope->getBalance(), pEnvelope->getSavingsGoal(), selected, szInfotText);
                 }
             }
         } 

@@ -316,7 +316,7 @@ class AccountEnvelope : public AccountBase
 {
 public:
 	AccountEnvelope() : AccountBase(ENVELOPE), _pDefaultTransactionPayFromAccount(nullptr), _defaultTransactionAmount(0), 
-		_isExpense(true), _isVirtualAccount(false), _pDefaultTransactionPayToAccount(nullptr){};
+		_isExpense(true), _isVirtualAccount(false), _pDefaultTransactionPayToAccount(nullptr), _savingsGoal(0){};
 
 	virtual accountItemType getType() { return AccountBase::ENVELOPE; }
 
@@ -333,6 +333,9 @@ public:
 
 	bool isExpense() { return _isExpense; }
 	bool isVirtualAccount() { return _isVirtualAccount; }
+
+	int getSavingsGoal() { return _savingsGoal; }
+	void setSavingsGoal(int savingsGoal) { _savingsGoal = savingsGoal;  }
 
 	virtual void addBalance(int balance) 
 	{ 
@@ -359,6 +362,8 @@ protected:
 	int _defaultTransactionAmount;
 	bool _isExpense;
 	bool _isVirtualAccount;
+
+	int _savingsGoal;
 }; // class AccountEnvelope
 
 int serialize(std::vector<AccountBase*>& topLevelItems, const char* szFilename);

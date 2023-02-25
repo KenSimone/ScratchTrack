@@ -18,17 +18,17 @@
 #define IDR_MAINFRAME                   128
 #define IDR_MENU1                       130
 #define IDR_MENU_TREEVIEW               130
-#define IDI_ENVELOPE                     136
+#define IDI_ENVELOPE                    136
 #define IDI_FOLDER                      138
 #define IDI_ACCOUNT                     141
 #define IDR_GROUP_MENU                  142
-#define IDR_ENVELOPE_MENU                143
+#define IDR_ENVELOPE_MENU               143
 #define IDD_TRANSACTION_DIALOG          144
 #define IDR_MENU_TRANSACTION            145
 #define IDI_ADD_MONEYICON               150
 #define IDI_SUBTRACT_MONEY_ICON         151
 #define IDR_MENU_ACCOUNT                152
-#define IDD_ENVELOPE_DIALOG              153
+#define IDD_ENVELOPE_DIALOG             153
 #define IDD_ACCOUNT_DIALOG              154
 #define IDD_TRANSACTION_FILTER_DIALOG   156
 #define IDD_BUDGET_INFO_DIALOG          157
@@ -48,10 +48,10 @@
 #define IDC_RADIO_FOLDER                1002
 #define IDC_SET_ANY_RADIO               1002
 #define IDC_RADIO_ADD_TO_EXISTING_BALANCE 1002
-#define IDC_RADIO_ENVELOPE               1003
+#define IDC_RADIO_ENVELOPE              1003
 #define IDC_EDIT_Transaction_DESCRIPTION 1004
 #define IDC_EDIT_Transaction_PAYEE      1005
-#define IDC_COMBO_ENVELOPE               1007
+#define IDC_COMBO_ENVELOPE              1007
 #define IDC_COMBO_ACCOUNT               1008
 #define IDC_COMBO_PAYEE                 1009
 #define IDC_EDIT_CAT_NAME               1009
@@ -62,13 +62,15 @@
 #define IDC_COMBO_CAT_ACCOUNT           1013
 #define IDC_EDIT_CAT_AMOUNT             1014
 #define IDC_EDIT_ACCOUNT_NAME           1015
+#define IDC_EDIT_CAT_NAME2              1015
+#define IDC_EDIT_SAVINGS_GOAL           1015
 #define IDC_CHECK_BUDGETED              1016
 #define IDC_EDIT_ACCOUNT_BALANCE        1017
 #define IDC_CHECK_VIRTUAL_ACCOUNT       1017
 #define IDC_CHECK_PAY_TO_ACCOUNT        1018
 #define IDC_CHECK_BUDGETED2             1018
 #define IDC_CHECK_CREDIT_CARD           1018
-#define IDC_CHECK_FILTER_TO_ENVELOPE     1019
+#define IDC_CHECK_FILTER_TO_ENVELOPE    1019
 #define IDC_EDIT_TRANSACTION_FILTER     1020
 #define IDC_BUTTON_APPLY_TRANSACTION_FILTER 1021
 #define IDC_BUTTON_ADD_ACCOUNT          1022
@@ -81,10 +83,10 @@
 #define IDC_EDIT_DESCRIPTION            1026
 #define IDC_EDIT_AMOUNT                 1027
 #define IDC_EDIT_ACCOUNT                1028
-#define IDC_EDIT_ENVELOPE                1029
+#define IDC_EDIT_ENVELOPE               1029
 #define IDC_COMBO_ACCOUNT_FROM          1030
 #define IDC_EDIT_FOLDER_NAME            1031
-#define IDC_EDIT_ENVELOPE_LIMIT          1032
+#define IDC_EDIT_ENVELOPE_LIMIT         1032
 #define IDC_ADD_TO_TOP_RADIO            1035
 #define IDC_ADD_BUDGETED_RADIO          1036
 #define IDC_EDIT_FILL_TO_BUDGETED       1037
@@ -103,14 +105,15 @@
 #define IDC_COMBO_NEW_PAYEE             1049
 #define IDC_STATIC_BALANCE              1051
 #define IDC_STATIC_LAST_IMPORT          1052
+#define IDC_CHECK_SAVINGS_GOAL          1053
 #define YEAR                            2023
 #define ID_ROOT_ADD_GROUP               32771
 #define IDM_EDIT_FOLDER                 32772
 #define ID_ROOT_SETBALANCE              32773
 #define ID_ROOT_DELETEITEM              32776
 #define ID_Menu                         32777
-#define ID_ROOT_ADDENVELOPE              32778
-#define ID_ROOT_ADDENVELOPE32779         32779
+#define ID_ROOT_ADDENVELOPE             32778
+#define ID_ROOT_ADDENVELOPE32779        32779
 #define ID_ROOT_RENAME                  32780
 #define ID_ROOT_FUNDFROMPARENT          32781
 #define ID_ROOT_RENAME32782             32782
@@ -122,8 +125,8 @@
 #define ID_ROOT_MOVETO                  32788
 #define ID_MOVETO_A                     32789
 #define ID_ROOT_ADDGROUP                32790
-#define ID_ROOT_ENVELOPE_MOVE_TO_START   32800
-#define ID_ROOT_ENVELOPE_MOVE_TO_END     32999
+#define ID_ROOT_ENVELOPE_MOVE_TO_START  32800
+#define ID_ROOT_ENVELOPE_MOVE_TO_END    32999
 #define ID_FILE_INCREASEFONTSIZE        33000
 #define ID_FILE_DECREASEFONTSIZE        33001
 #define ID_ROOT_SETBALANCE33011         33011
@@ -132,27 +135,26 @@
 #define ID_ACCOUNT_SETBALANCE           33014
 #define ID_ACCOUNT_RENAME               33015
 #define ID_FILE_ADDACCOUNT              33016
-#define ID_FILE_ADDENVELOPE              33017
+#define ID_FILE_ADDENVELOPE             33017
 #define ID_ROOT_EDITACCOUNT             33018
 #define IDR_MENU_ACCOUNT_CC             33018
-#define ID_ENVELOPE_RESERVE_FUNDS        33019
-#define ID_ROOT_EDITENVELOPE             33020
+#define ID_ENVELOPE_RESERVE_FUNDS       33019
+#define ID_ROOT_EDITENVELOPE            33020
 #define ID_ROOT_EDITACCOUNT33021        33021
 #define ID_ROOT_PAYCREDITCARD           33022
 #define ID_ROOT_TRANSFER                33023
 #define ID_ROOT_DEPOSIT                 33024
 #define ID_ROOT_FUNDCATEGORIES          33025
-#define ID_ROOT_HIDEENVELOPE             33026
+#define ID_ROOT_HIDEENVELOPE            33026
 #define ID_ROOT_HIDEACCOUNT             33028
 #define ID_ROOT_HIDEACCOUNT33029        33029
 #define ID_ROOT_IMPORTTRANSACTIONS      33030
 #define ID_ROOT_MOVEUP                  33031
 #define ID_ROOT_MOVEDOWN                33032
-#define ID_ROOT_MOVE_SIBLING_AFTER_START		33100
-#define ID_ROOT_MOVE_SIBLING_AFTER_END			33500
-#define ID_ROOT_MOVE_SIBLING_BEFORE_START		33501
-#define ID_ROOT_MOVE_SIBLING_BEFORE_END			33900
-
+#define ID_ROOT_MOVE_SIBLING_AFTER_START 33100
+#define ID_ROOT_MOVE_SIBLING_AFTER_END  33500
+#define ID_ROOT_MOVE_SIBLING_BEFORE_START 33501
+#define ID_ROOT_MOVE_SIBLING_BEFORE_END 33900
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -162,7 +164,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        174
 #define _APS_NEXT_COMMAND_VALUE         33901
-#define _APS_NEXT_CONTROL_VALUE         1053
+#define _APS_NEXT_CONTROL_VALUE         1054
 #define _APS_NEXT_SYMED_VALUE           113
 #endif
 #endif

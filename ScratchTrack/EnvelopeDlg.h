@@ -21,6 +21,7 @@ public:
 	void setDefaultTransactionAmount(int defTransAmt) { _amount = defTransAmt; }
 	void setDefaultTransactionPayFromAccount(Account* pDefaultAccount) { _pDefaultTransactionPayFromAccount = pDefaultAccount; }
 	void setDefaultTransactionPayee(const wchar_t* szPayee) { _payee = szPayee; }
+	void setSavingsGoal(int savingsGoal) { _savingsGoal = savingsGoal; }
 
 	// Post-show functions
 	const wchar_t* getEnvelopeName() { return _name.c_str(); }
@@ -28,6 +29,7 @@ public:
 	int getDefaultTransactionAmount() { return _amount; }
 	Account* getDefaultTransactionPayFromAccount() { return _pDefaultTransactionPayFromAccount; }
 	const wchar_t* getDefaultTransactionPayee() { return _payee.c_str(); }
+	int getSavingsGoal() { return _savingsGoal; }
 
 protected:
 	std::wstring _name;
@@ -36,6 +38,7 @@ protected:
 	std::wstring _expense;
 	int _amount;
 	int _budget;
+	int _savingsGoal;
 
 	static INT_PTR CALLBACK EnvelopeDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 	void enableDisableUi(HWND hDlg);

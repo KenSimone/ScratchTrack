@@ -32,7 +32,7 @@ int ExcelSerializer::serialize(const char* szFile, std::vector<AccountBase*>& to
 	if (ret != ERROR_SUCCESS) {
 		goto end;
 	}
-	ret = serializeCategories(workbook, topLevelItems, accountIdToCellRef);
+	ret = serializeEnvelopes(workbook, topLevelItems, accountIdToCellRef);
 	if (ret != ERROR_SUCCESS) {
 		goto end;
 	}
@@ -227,7 +227,7 @@ int ExcelSerializer::serializeFolders(lxw_workbook* workbook, std::vector<Accoun
 	return ERROR_SUCCESS;
 }
 
-int ExcelSerializer::serializeCategories(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems, std::map<unsigned int, std::string>& accountIdToCellRef)
+int ExcelSerializer::serializeEnvelopes(lxw_workbook* workbook, std::vector<AccountBase*>& topLevelItems, std::map<unsigned int, std::string>& accountIdToCellRef)
 {
 	lxw_worksheet* worksheet = workbook_add_worksheet(workbook, ENVELOPE_WORKSHEET_NAME);
 	uint16_t curRow = 0;
@@ -266,6 +266,7 @@ int ExcelSerializer::serializeCategories(lxw_workbook* workbook, std::vector<Acc
 	worksheet_write_string(worksheet, curRow, 7, "default Amount", formatHeader);
 	worksheet_write_string(worksheet, curRow, 8, "default Payer Id", formatHeader);
 	worksheet_write_string(worksheet, curRow, 9, "Flags", formatHeader);
+	worksheet_write_string(worksheet, curRow, 10, "Savings goal", formatHeader);
 	worksheet_set_column(worksheet, 0, 8, 15, nullptr);
 
 
@@ -317,6 +318,7 @@ int ExcelSerializer::serializeCategories(lxw_workbook* workbook, std::vector<Acc
 			}
 
 			worksheet_write_number(worksheet, curRow, 9, p->getId() == ACCOUNT_ID_PAY_CC ? FLAG_PAYS_CCS : FLAG_NO_FLAGS, formatLeft);
+			worksheet_write_number(worksheet, curRow, 10, _wtof(Utils::penniesToDollarsString(p->getSavingsGoal(), false).c_str()), formatMoney);
 
 			char szBuff[1024] = { 0 };
 			sprintf_s(szBuff, "=Categories!A%d", curRow + 1);
@@ -709,7 +711,7 @@ int ExcelSerializer::deserialize(const char* szFile, std::vector<AccountBase*>& 
 		goto end;
 	}
 
-	err = deserializeCategories(wb, topLevelItems, cellRefToAccountId);
+	err = deserializeEnvelopes(wb, topLevelItems, cellRefToAccountId);
 	if (err != ERROR_SUCCESS) {
 		goto end;
 	}
@@ -866,7 +868,7 @@ int ExcelSerializer::deserializeSettings(OpenXLSX::XLWorkbook& workbook, std::ve
 
 }
 
-int ExcelSerializer::deserializeCategories(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId)
+int ExcelSerializer::deserializeEnvelopes(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId)
 {
 	if (!workbook.worksheetExists(ENVELOPE_WORKSHEET_NAME)) {
 		return ERROR_INVALID_DATA;
@@ -931,6 +933,14 @@ int ExcelSerializer::deserializeCategories(OpenXLSX::XLWorkbook& workbook, std::
 			defPayerId = itr->second;
 		}
 
+		int savingsGoal = 0;
+		try {
+			savingsGoal = pennyValueFromCell(row, 11, worksheet);
+		}
+		catch (...) {
+			// Field is optional
+		}
+
 		AccountEnvelope* pEnvelope = new AccountEnvelope;
 		if (flags & FLAG_PAYS_CCS) {
 			pEnvelope->setId(ACCOUNT_ID_PAY_CC);
@@ -949,6 +959,7 @@ int ExcelSerializer::deserializeCategories(OpenXLSX::XLWorkbook& workbook, std::
 		pEnvelope->setDefaultTransactionAmount(defaultAmount);
 		pEnvelope->addBalance(balance);
 		pEnvelope->setIsVirtualAccount(true);
+		pEnvelope->setSavingsGoal(savingsGoal);
 
 		Account* pAccount = dynamic_cast<Account*>(AccountBase::lookupById(defPayerId));
 		if (pAccount) {

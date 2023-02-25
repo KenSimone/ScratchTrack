@@ -435,6 +435,7 @@ bool editEnvelope(AccountEnvelope* pEnvelope)
     dlg.setDefaultTransactionPayFromAccount(pEnvelope->getDefaultTransactionPayFromAccount());
     dlg.setDefaultTransactionAmount(pEnvelope->getDefaultTransactionAmount());
     dlg.setDefaultTransactionPayee(pEnvelope->getDefaultTransactionPayee());
+    dlg.setSavingsGoal(pEnvelope->getSavingsGoal());
     if (dlg.ShowDialog())
     {
         pEnvelope->setBudgeted(dlg.getBudget());
@@ -442,6 +443,7 @@ bool editEnvelope(AccountEnvelope* pEnvelope)
         pEnvelope->setDefaultTransactionAmount(dlg.getDefaultTransactionAmount());
         pEnvelope->setDefaultTransactionPayee(dlg.getDefaultTransactionPayee());
         pEnvelope->setName(dlg.getEnvelopeName());
+        pEnvelope->setSavingsGoal(dlg.getSavingsGoal());
         
         updateGuiValues();
 
@@ -464,6 +466,7 @@ bool doEnvelopeAdd(AccountGroup* pParent, HTREEITEM hParent)
         pEnvelope->setIsExpense(true);
         pEnvelope->setIsVirtualAccount(true);
         pEnvelope->setBudgeted(dlg.getBudget());
+        pEnvelope->setSavingsGoal(dlg.getSavingsGoal());
 
         pParent->addChild(pEnvelope);
         addTreeItem(hParent, pEnvelope);
