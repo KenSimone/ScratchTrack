@@ -484,7 +484,7 @@ bool doFundCategories(AccountGroup* pGroup)
         for (size_t i = 0; i < children.size(); i++) {
             AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(children[i]);
             if (pEnvelope) {
-                if (dlg.getResetBalance()) {
+                if (!pEnvelope->getSavingsGoal()) {
                     pEnvelope->addBalance(-pEnvelope->getBalance() + -pEnvelope->getBudgeted());
                 }
                 else {

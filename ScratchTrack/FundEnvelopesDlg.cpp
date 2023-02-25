@@ -52,7 +52,25 @@ void FundEnvelopesDlg::updateUi(HWND hDlg)
         totalBalance += pAccount->getBalance();
     }
 
-    // Get budgeted dollars
+    // Calc cost to fund
+    auto envelopes = _pGroup->getChildren();
+    int cost = 0;
+    for (size_t i = 0; i < envelopes.size(); i++) {
+        AccountEnvelope* pEnvelope = (AccountEnvelope*)envelopes[i];
+        int balance = pEnvelope->getBalance();
+        int budget = pEnvelope->getBudgeted();
+        int diff = budget + balance;
+
+        if (pEnvelope->getSavingsGoal()) {
+            cost += budget;
+        }
+        else
+        {
+            cost += diff;
+        }
+    }
+
+
     auto groups = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
     int totalEnvelopesBalance = 0;
     for (size_t i = 0; i < groups.size(); i++) {
@@ -70,24 +88,12 @@ void FundEnvelopesDlg::updateUi(HWND hDlg)
     // Total dollars available for categories
     int availabeDollars = totalBalance - totalEnvelopesBalance;
 
-    // Cost to top off accounts
-    int costToTopOff = 0;
-    int costToFullyFund = 0;
-
-    // Get balance of this group
-    auto envelopes = _pGroup->getChildren();
-    int myBalance = 0;
-    for (size_t i = 0; i < envelopes.size(); i++) {
-        myBalance += envelopes[i]->getBalance();
-        costToFullyFund += -envelopes[i]->getBudgeted();
-        costToTopOff += -envelopes[i]->getBudgeted() - envelopes[i]->getBalance();
-    }
 
     // No whip up some sort of smart statement
     wchar_t szBuff[1024] = { 0 };
 
-    swprintf(szBuff, 1024, L"Available dollars: %ls\nCost to top off: %ls\nCost to fully fund: %ls\n", 
-        Utils::penniesToDollarsString(availabeDollars).c_str(), Utils::penniesToDollarsString(costToTopOff).c_str(), Utils::penniesToDollarsString(costToFullyFund).c_str());
+    swprintf(szBuff, 1024, L"Available dollars: %ls\nCost to fully fund: %ls\n", 
+        Utils::penniesToDollarsString(availabeDollars).c_str(), Utils::penniesToDollarsString(-cost).c_str());
 
     SetDlgItemText(hDlg, IDC_STATIC_NOTES, szBuff);
 }
@@ -108,7 +114,7 @@ INT_PTR CALLBACK FundEnvelopesDlg::FundEnvelopesDlgProc(HWND hDlg, UINT message,
         {
             if (LOWORD(wParam) == IDOK)
             {
-                PTHIS->_resetBalance = !SendDlgItemMessage(hDlg, IDC_RADIO_ADD_TO_EXISTING_BALANCE, BM_GETCHECK, 0, 0);
+                //PTHIS->_resetBalance = !SendDlgItemMessage(hDlg, IDC_RADIO_ADD_TO_EXISTING_BALANCE, BM_GETCHECK, 0, 0);
             }
 
             EndDialog(hDlg, LOWORD(wParam));

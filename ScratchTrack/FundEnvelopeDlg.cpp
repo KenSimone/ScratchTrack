@@ -75,8 +75,11 @@ INT_PTR CALLBACK FundEnvelopeDlg::FundEnvelopeDlgProc(HWND hDlg, UINT message, W
 
             Utils::setDlgItemDollarText(hDlg, IDC_EDIT_CUR_BALANCE, pEnvelope->getBalance());
 
-            if (pEnvelope->getBudgeted()){
+            if (pEnvelope->getSavingsGoal()) {
                 SendDlgItemMessage(hDlg, IDC_ADD_BUDGETED_RADIO, BM_SETCHECK, BST_CHECKED, 0);
+            }
+            else if (pEnvelope->getBudgeted()){
+                SendDlgItemMessage(hDlg, IDC_ADD_TO_TOP_RADIO, BM_SETCHECK, BST_CHECKED, 0);
             }
             else {
                 SendDlgItemMessage(hDlg, IDC_SET_ANY_RADIO, BM_SETCHECK, BST_CHECKED, 0);

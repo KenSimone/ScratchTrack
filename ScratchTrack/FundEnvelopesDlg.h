@@ -8,17 +8,13 @@ class AccountGroup;
 class FundEnvelopesDlg
 {
 public:
-	FundEnvelopesDlg(AccountGroup* pGroups) : _pGroup(pGroups), _resetBalance(false)
+	FundEnvelopesDlg(AccountGroup* pGroups) : _pGroup(pGroups)
 	{
 	};
 
 	~FundEnvelopesDlg() {};
 
 	bool ShowDialog();
-
-	// If reset, then the new balance becomes the budgeted amount, otherwise add
-	// to any existing balance.
-	bool getResetBalance() { return _resetBalance; }
 
 protected:
 	static INT_PTR CALLBACK FundEnvelopesDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
@@ -27,7 +23,6 @@ protected:
 
 protected:
 	AccountGroup* _pGroup;
-	bool _resetBalance;
 
 	static FundEnvelopesDlg* PTHIS;
 
