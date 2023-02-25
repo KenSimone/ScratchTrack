@@ -56,7 +56,7 @@ public:
 	static void doBackups(); // ScratchTrack has rolling backup files (.xml, .xml.1, .xml2 and so on). This does the file roll
 
 // GDI stuff
-	static void drawSparkLink(HDC hdc, RECT rFullArea, int val, int maxVal, bool selected, const wchar_t* szText = nullptr);
+	static void drawSparkLink(HDC hdc, RECT rFullArea, int val, int maxVal, bool selected, const wchar_t* szText = nullptr, bool scaleToText = true);
 
 protected:
 	static unsigned __stdcall monitorFileChangeThreadFunc(void* parg); // File monitoring happens on a seprate thread, this is the thread proc

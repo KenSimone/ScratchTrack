@@ -693,7 +693,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
                     setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 0, false, false);
                     std::wstring savingsGoal = Utils::penniesToDollarsString(pEnvelope->getSavingsGoal());
                     wnsprintf(szInfotText, 1024, L"%ls saved towards goal of %ls", balance.c_str(), savingsGoal.c_str());
-                    Utils::drawSparkLink(pCustomDrawItem->nmcd.hdc, rText, pEnvelope->getBalance(), pEnvelope->getSavingsGoal(), selected, szInfotText);
+                    DrawText(pCustomDrawItem->nmcd.hdc, szInfotText, wcslen(szInfotText), &rText, dwDrawTextFlags);
                 }
             }
         } 
@@ -777,10 +777,22 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
 
             g_budgetTreeLinkSpots[GLB_ADD_FOLDER] = rText;
         }
+
+        AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(pItem);
+        if (pEnvelope && pEnvelope->getBudgeted()) {
+            setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 1, false, false);
+
+            if (pEnvelope->getSavingsGoal()) {
+                Utils::drawSparkLink(pCustomDrawItem->nmcd.hdc, rText, pItem->getBalance(), pEnvelope->getSavingsGoal(), selected, name.c_str(), false);
+            }
+            else {
+                Utils::drawSparkLink(pCustomDrawItem->nmcd.hdc, rText, pItem->getBalance(), -pItem->getBudgeted(), selected, name.c_str(), false);
+            }
+        }
         else {
             setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 1, selected, false);
+            DrawText(pCustomDrawItem->nmcd.hdc, name.c_str(), (int)name.length(), &rText, dwDrawTextFlags);
         }
-        DrawText(pCustomDrawItem->nmcd.hdc, name.c_str(), (int)name.length(), &rText, dwDrawTextFlags);
 
         // Clean up
 

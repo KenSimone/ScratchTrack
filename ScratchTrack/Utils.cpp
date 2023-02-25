@@ -801,9 +801,14 @@ uint32_t Utils::crc32_bitwise(const void* data, size_t length, uint32_t previous
 	return ~crc; // same as crc ^ 0xFFFFFFFF
 }
 
-void Utils::drawSparkLink(HDC hdc, RECT rFullArea, int val, int maxVal, bool selected, const wchar_t* szText)
+void Utils::drawSparkLink(HDC hdc, RECT rFullArea, int val, int maxVal, bool selected, const wchar_t* szText, bool scaleToText)
 {
-	if (szText) {
+	static const COLORREF SEL_COLOR = GetSysColor(COLOR_HIGHLIGHT);
+	static const COLORREF SEL_TEXT_COLOR = GetSysColor(COLOR_HIGHLIGHTTEXT);
+	static const COLORREF TEXT_COLOR = GetSysColor(COLOR_MENUTEXT);
+
+
+	if (szText && scaleToText ) {
 		SIZE size = { 0 };
 		GetTextExtentPoint32(hdc, szText, wcslen(szText), &size);
 		rFullArea.right = min(rFullArea.right, rFullArea.left + size.cx + 10);
@@ -813,34 +818,46 @@ void Utils::drawSparkLink(HDC hdc, RECT rFullArea, int val, int maxVal, bool sel
 
 	int width = rFullArea.right - rFullArea.left;
 	width = (int)(width * scale);
-	if (width < 10) {
-		width = 10;
+	if (width < 8) {
+		width = 8;
 	}
 
-	// Draw a hatch rect
-	HBRUSH hBackground = nullptr;
+	// Draw background rect
+	HBRUSH hBackground = nullptr, hBar = nullptr;
 	if (selected) {
-		hBackground = CreateSolidBrush(RGB(240, 240, 255));
+		hBackground = CreateSolidBrush(SEL_COLOR);
+
+		unsigned char red = GetRValue(SEL_COLOR);
+		unsigned char green = GetGValue(SEL_COLOR);
+		unsigned char blue = GetBValue(SEL_COLOR);
+
+		red = min(255, red + 30);
+		green = min(255, green + 30);
+		blue = min(255, blue + 30);
+
+		hBar = CreateSolidBrush(RGB(red,green,blue));
+		SetTextColor(hdc, SEL_TEXT_COLOR);
 	}
 	else {
-		hBackground = CreateHatchBrush(HS_BDIAGONAL, RGB(230, 230, 230));
+		hBackground = CreateSolidBrush(RGB(250, 250, 255));
+		hBar = CreateSolidBrush(RGB(240, 240, 255));
+		SetTextColor(hdc, TEXT_COLOR);
 	}
 
 	HBRUSH hOld = (HBRUSH)SelectObject(hdc, hBackground);
-	Rectangle(hdc, rFullArea.left, rFullArea.top, rFullArea.right, rFullArea.bottom);
+	//Rectangle(hdc, rFullArea.left, rFullArea.top, rFullArea.right, rFullArea.bottom);
 
-	COLORREF cr = RGB(220, 220, 255);
-	HBRUSH hSolid = CreateSolidBrush(cr);
-	SelectObject(hdc, hSolid);
+	SelectObject(hdc, hBar);
 
 	RECT rText = rFullArea;
 	rFullArea.right = min(rFullArea.left + width - 2, rFullArea.right - 2);
 	Rectangle(hdc, rFullArea.left + 2, rFullArea.top + 2, rFullArea.right, rFullArea.bottom - 2);
 	SelectObject(hdc, hOld);
-	DeleteObject(hSolid);
+	DeleteObject(hBar);
 	DeleteObject(hBackground);
 
 	if (szText) {
+		rText.left += 4;
 		static const DWORD dwDrawTextFlags = DT_NOPREFIX | DT_END_ELLIPSIS;
 		DrawText(hdc, szText, (int)wcslen(szText), &rText, dwDrawTextFlags);
 	}
