@@ -301,11 +301,6 @@ void AccountInfoDlg::printMasterSummary()
         }
     }
     appendText(szCaption, isError ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL, false, false, TEXT_SIZE);
-
-    if (!accounts.empty() || !envelopes.empty() || !folders.empty()) {
-        appendText(L"TIP: ", TEXT_COLOR_NORMAL, true, false, TEXT_SIZE);
-        appendText(L"Right click accounts, folders, envelopes and transactions for more options\n\n", TEXT_COLOR_NORMAL, false, false, TEXT_SIZE);
-    }
 }
 
 
@@ -384,6 +379,12 @@ void AccountInfoDlg::updateReport()
             swprintf(szBuff, 1024, L"Envelope '%ls' - Monthly expenses are over budget by %ls\n\n", envelope->getName(), diff.c_str());
             appendText(szBuff, error ? TEXT_COLOR_NEGATIVE : TEXT_COLOR_NORMAL, false, false, TEXT_SIZE);
         }
+    }
+
+    auto accounts = AccountBase::getAllAccountsOfType(AccountBase::ACCOUNT);
+    if (!accounts.empty() || !envelopes.empty() || !folders.empty()) {
+        appendText(L"TIP: ", TEXT_COLOR_NORMAL, true, false, TEXT_SIZE);
+        appendText(L"Right click accounts, folders, envelopes and transactions for more options\n\n", TEXT_COLOR_NORMAL, false, false, TEXT_SIZE);
     }
 
 }
