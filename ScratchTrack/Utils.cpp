@@ -800,3 +800,30 @@ uint32_t Utils::crc32_bitwise(const void* data, size_t length, uint32_t previous
 	}
 	return ~crc; // same as crc ^ 0xFFFFFFFF
 }
+
+void Utils::drawSparkLink(HDC hdc, RECT rFullArea, int val, int maxVal)
+{
+	double scale = val / (double)maxVal;
+	COLORREF cr = RGB(224, 255, 244);
+	if (scale < .75) {
+		cr = RGB(255, 255, 224);
+	}
+
+	if (scale < .25) {
+		cr = RGB(255, 224, 224);
+	}
+
+	int width = rFullArea.right - rFullArea.left;
+	width = (int)(width * scale);
+	if (width < 10) {
+		width = 10;
+	}
+
+	HBRUSH hSolid = CreateSolidBrush(cr);
+	HBRUSH hOld = (HBRUSH)SelectObject(hdc, hSolid);
+
+	rFullArea.right = min(rFullArea.left + width - 2, rFullArea.right - 2);
+	Rectangle(hdc, rFullArea.left + 2, rFullArea.top + 2, rFullArea.right, rFullArea.bottom - 2);
+	SelectObject(hdc, hOld);
+	DeleteObject(hSolid);
+}

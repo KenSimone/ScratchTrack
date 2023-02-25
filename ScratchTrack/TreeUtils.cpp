@@ -678,9 +678,20 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
         {
             AccountEnvelope* pEnvelope = (AccountEnvelope*)pItem;
             if (pEnvelope->isVirtualAccount()) {
+
+                // Draw balance
                 setTextColorForAmount(pCustomDrawItem->nmcd.hdc, iBalance, selected, true);
                 rText.left = balanceSpot; rText.right = infoSpot;
                 DrawText(pCustomDrawItem->nmcd.hdc, balance.c_str(), (int)balance.length(), &rText, dwDrawTextFlags);
+
+                // Draw spark line
+                if (pEnvelope->getBudgeted()) {
+                    rText.left = infoSpot; rText.right = infoSpot + g_columnSizes._info;
+                    //int width = rText.right - rText.left;
+                    //rText.right = rText.left + (width * .75);
+
+                    Utils::drawSparkLink(pCustomDrawItem->nmcd.hdc, rText, pEnvelope->getBalance(), abs(pEnvelope->getBudgeted()));
+                }
             }
         } 
         else if (itemType == AccountBase::GROUP && !pItem->getReadOnly())

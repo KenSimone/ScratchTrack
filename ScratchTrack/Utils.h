@@ -55,6 +55,9 @@ public:
 	static const char* getPersistFileXlsx(); // Gets the name of our data file
 	static void doBackups(); // ScratchTrack has rolling backup files (.xml, .xml.1, .xml2 and so on). This does the file roll
 
+// GDI stuff
+	static void drawSparkLink(HDC hdc, RECT rFullArea, int val, int maxVal);
+
 protected:
 	static unsigned __stdcall monitorFileChangeThreadFunc(void* parg); // File monitoring happens on a seprate thread, this is the thread proc
 	static uint32_t crc32_bitwise(const void* data, size_t length, uint32_t previousCrc32 = 0);

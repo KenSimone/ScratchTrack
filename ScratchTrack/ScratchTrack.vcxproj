@@ -187,6 +187,7 @@
     <ClInclude Include="TransactionImporter.h" />
     <ClInclude Include="TransferDlg.h" />
     <ClInclude Include="TreeUtils.h" />
+    <ClInclude Include="UnicodeChart.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="Version.h" />
   </ItemGroup>
