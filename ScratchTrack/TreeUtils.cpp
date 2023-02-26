@@ -690,7 +690,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
                     //int width = rText.right - rText.left;
                     //rText.right = rText.left + (width * .75);
 
-                    setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 0, false, false);
+                    setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 0, selected , false);
                     std::wstring savingsGoal = Utils::penniesToDollarsString(pEnvelope->getSavingsGoal());
                     wnsprintf(szInfotText, 1024, L"%ls saved towards goal of %ls", balance.c_str(), savingsGoal.c_str());
                     DrawText(pCustomDrawItem->nmcd.hdc, szInfotText, wcslen(szInfotText), &rText, dwDrawTextFlags);
