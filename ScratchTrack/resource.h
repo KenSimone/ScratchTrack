@@ -42,6 +42,7 @@
 #define IDB_BITMAP_SCRATCHTRACK         171
 #define IDD_DIALOG_TRANSACTION_IMPORT   172
 #define IDD_DIALOG_MAP_IMPORT           173
+#define IDD_DIALOG_REPORT               174
 #define IDC_ONE_INPUT_TEXT              1000
 #define IDC_EDIT_Transaction_AMOUNT     1001
 #define IDC_RADIO1                      1002
@@ -62,7 +63,6 @@
 #define IDC_COMBO_CAT_ACCOUNT           1013
 #define IDC_EDIT_CAT_AMOUNT             1014
 #define IDC_EDIT_ACCOUNT_NAME           1015
-#define IDC_EDIT_CAT_NAME2              1015
 #define IDC_EDIT_SAVINGS_GOAL           1015
 #define IDC_CHECK_BUDGETED              1016
 #define IDC_EDIT_ACCOUNT_BALANCE        1017
@@ -81,6 +81,7 @@
 #define IDC_EDIT_DEPOSIT_AMOUNT         1025
 #define IDC_BUTTON_UNHIDE               1025
 #define IDC_EDIT_DESCRIPTION            1026
+#define IDC_BUTTON_REPORTS              1026
 #define IDC_EDIT_AMOUNT                 1027
 #define IDC_EDIT_ACCOUNT                1028
 #define IDC_EDIT_ENVELOPE               1029
@@ -106,6 +107,11 @@
 #define IDC_STATIC_BALANCE              1051
 #define IDC_STATIC_LAST_IMPORT          1052
 #define IDC_CHECK_SAVINGS_GOAL          1053
+#define IDC_RICHEDIT_REPORT             1054
+#define IDC_COMBO_REPORT                1055
+#define IDC_COMBO_MONTH                 1056
+#define IDC_COMBO_YEAR                  1057
+#define IDC_STATIC_REPORT               1058
 #define YEAR                            2023
 #define ID_ROOT_ADD_GROUP               32771
 #define IDM_EDIT_FOLDER                 32772
@@ -162,9 +168,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        174
+#define _APS_NEXT_RESOURCE_VALUE        175
 #define _APS_NEXT_COMMAND_VALUE         33901
-#define _APS_NEXT_CONTROL_VALUE         1054
+#define _APS_NEXT_CONTROL_VALUE         1059
 #define _APS_NEXT_SYMED_VALUE           113
 #endif
 #endif

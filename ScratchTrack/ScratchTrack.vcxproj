@@ -173,8 +173,10 @@
     <ClInclude Include="FolderDlg.h" />
     <ClInclude Include="FundEnvelopeDlg.h" />
     <ClInclude Include="FundEnvelopesDlg.h" />
+    <ClInclude Include="GdiChart.h" />
     <ClInclude Include="ImportMapDlg.h" />
     <ClInclude Include="PayCCDlg.h" />
+    <ClInclude Include="ReportDlg.h" />
     <ClInclude Include="Transaction.h" />
     <ClInclude Include="TransactionDialog.h" />
     <ClInclude Include="framework.h" />
@@ -202,8 +204,10 @@
     <ClCompile Include="FolderDlg.cpp" />
     <ClCompile Include="FundEnvelopeDlg.cpp" />
     <ClCompile Include="FundEnvelopesDlg.cpp" />
+    <ClCompile Include="GdiChart.cpp" />
     <ClCompile Include="ImportMapDlg.cpp" />
     <ClCompile Include="PayCCDlg.cpp" />
+    <ClCompile Include="ReportDlg.cpp" />
     <ClCompile Include="Transaction.cpp" />
     <ClCompile Include="TransactionDialog.cpp" />
     <ClCompile Include="ScratchTrack.cpp" />

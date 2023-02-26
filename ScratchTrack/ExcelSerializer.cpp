@@ -641,7 +641,7 @@ std::string ExcelSerializer::transactionTypeToString(Transaction* pTransaction)
 {
 	switch (pTransaction->getType())
 	{
-	case Transaction::ENVELOPE:
+	case Transaction::EXPENSE:
 		return "Expense";
 	case Transaction::DEPOSIT:
 		return "Deposit";
@@ -658,7 +658,7 @@ std::string ExcelSerializer::transactionTypeToString(Transaction* pTransaction)
 Transaction::TRANSACTION_TYPE ExcelSerializer::transactionTypeFromString(const char* szTransactionType)
 {
 	if (_stricmp(szTransactionType, "Expense") == 0) {
-		return Transaction::ENVELOPE;
+		return Transaction::EXPENSE;
 	}
 	if (_stricmp(szTransactionType, "Deposit") == 0) {
 		return Transaction::DEPOSIT;
@@ -671,7 +671,7 @@ Transaction::TRANSACTION_TYPE ExcelSerializer::transactionTypeFromString(const c
 	}
 
 	assert(false);
-	return Transaction::ENVELOPE;
+	return Transaction::EXPENSE;
 }
 
 int ExcelSerializer::deserialize(const char* szFile, std::vector<AccountBase*>& topLevelItems)

@@ -8,7 +8,9 @@ static const wchar_t SOLID_BLOCK_CHAR = L'\u2588';
 //static const wchar_t LIGHT_BLOCK_CHAR = L'\u2592';
 static const wchar_t LIGHT_BLOCK_CHAR = L' ';
 
-// If you want to build the text yourself, implement this class and pass an instance to render.
+static const size_t BARWIDTH = 4, BARSPACE = 1;
+
+// If you want to build the text string yourself, implement this class and pass an instance to render.
 // This is useful for drawing colored bar charts inside a rich edit control (for instance).
 struct UnicodeRenderCallback
 {
@@ -40,7 +42,7 @@ protected:
 class UnicodeBarChart
 {
 public:
-    UnicodeBarChart() : _maxHeightInChars(40) {}
+    UnicodeBarChart() : _maxHeightInChars(40), _barWidth(BARWIDTH), _barSpace(BARSPACE) {}
 
     void addItem(const wchar_t* szName, double value, void* pUserData = nullptr)
     {
@@ -53,6 +55,11 @@ public:
 
     // The maximum height of the chart in characters. Think rows in a text edit
     void setMaxHeightInChars(size_t maxHeight) { _maxHeightInChars = maxHeight; }
+
+    void setBarWidth(size_t charWidth, size_t charBetween) {
+        _barWidth = charWidth;
+        _barSpace = charBetween;
+    }
 
     // Renders the bar chart to a string, optionally calls a callback for custom draw
     std::wstring render(UnicodeRenderCallback* pCallback = nullptr)
@@ -67,8 +74,7 @@ public:
         double scale = (double)range / (double)_maxHeightInChars;
 
         // Figur out our width in chars
-        static const size_t BARWIDTH = 4, BARSPACE = 1;
-        size_t width = _items.size() * (BARWIDTH + BARSPACE);
+        size_t width = _items.size() * (_barWidth + _barSpace);
 
         for (int y = (int)_maxHeightInChars - 1; y >= 0; y--)
         {
@@ -76,8 +82,8 @@ public:
             for (size_t x = 0; x < width; x++)
             {
                 bool blocked = false;
-                size_t barIndex = x / (BARWIDTH + BARSPACE);
-                if (x % (BARWIDTH + BARSPACE) && _items.size() > barIndex)
+                size_t barIndex = x / (_barWidth + _barSpace);
+                if (x % (_barWidth + _barSpace) && _items.size() > barIndex)
                 {
                     UnicodeBarItem item = _items[barIndex];
                     if (curY <= item._value) {
@@ -139,5 +145,8 @@ protected:
 
     std::vector<UnicodeBarItem> _items;
     size_t _maxHeightInChars;
+
+    size_t _barWidth;
+    size_t _barSpace;
 
 }; // class UnicodeBarChart

@@ -4,6 +4,7 @@
 #include "Utils.h"
 #include "TreeUtils.h"
 #include "Transaction.h"
+#include "ReportDlg.h"
 #include <richedit.h>
 
 
@@ -170,6 +171,13 @@ INT_PTR CALLBACK AccountInfoDlg::AccountInfoDlgProc(HWND hwnd, UINT Message, WPA
             case IDC_BUTTON_UNHIDE:
                 pThis->doUnhidePopup();
                 break;
+            case IDC_BUTTON_REPORTS:
+            {
+                MessageBox(g_hTopWindow, L"Pardon our dust. Reports are under construction. If you have a good idea for a report, submit it at https://scratchtrack.net", L"Under Construction", MB_OK);
+                ReportDlg dlg;
+                dlg.ShowDialog();
+                break;
+            }
             }
 
             if (message) {

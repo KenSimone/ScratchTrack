@@ -200,7 +200,7 @@ TEST(TestAccounts, TestExpense) {
 
 	pAccount->addBalance(500);
 
-	Transaction* pTrans = Transaction::addTransaction(Transaction::ENVELOPE, -99, pAccount->getId(), ACCOUNT_ID_INVALID, pExpense->getId(), nullptr, nullptr);
+	Transaction* pTrans = Transaction::addTransaction(Transaction::EXPENSE, -99, pAccount->getId(), ACCOUNT_ID_INVALID, pExpense->getId(), nullptr, nullptr);
 
 	EXPECT_EQ(500, pAccount->getBalance());
 	EXPECT_EQ(100, pExpense->getBalance());
@@ -227,7 +227,7 @@ TEST(TestAccounts, TestExpenseCC) {
 	pAccountCC->setIsCCAccount(true);
 	pAccountCC->setName(L"CC Account");
 
-	Transaction* pTrans = Transaction::addTransaction(Transaction::ENVELOPE, -99, pAccountCC->getId(), ACCOUNT_ID_INVALID, pExpense->getId(), nullptr, nullptr);
+	Transaction* pTrans = Transaction::addTransaction(Transaction::EXPENSE, -99, pAccountCC->getId(), ACCOUNT_ID_INVALID, pExpense->getId(), nullptr, nullptr);
 
 	EXPECT_EQ(500, pAccount->getBalance());
 	EXPECT_EQ(0, pAccountCC->getBalance());

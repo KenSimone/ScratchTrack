@@ -15,7 +15,7 @@ class Transaction
 public:
 	enum TRANSACTION_TYPE
 	{
-		ENVELOPE,
+		EXPENSE,
 		DEPOSIT,
 		TRANSFER,
 		CCPAYMENT

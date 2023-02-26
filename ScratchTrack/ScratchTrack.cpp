@@ -829,7 +829,7 @@ bool addEnvelope(HTREEITEM hItem)
 
     if (transactionDlg.ShowDialog())
     {
-        Transaction* pTransaction = Transaction::addTransaction(Transaction::ENVELOPE, transactionDlg.getAmount(), transactionDlg.getAccountFromId(), ACCOUNT_ID_INVALID, transactionDlg.getEnvelopeId(), transactionDlg.getPayee(), transactionDlg.getDescription());
+        Transaction* pTransaction = Transaction::addTransaction(Transaction::EXPENSE, transactionDlg.getAmount(), transactionDlg.getAccountFromId(), ACCOUNT_ID_INVALID, transactionDlg.getEnvelopeId(), transactionDlg.getPayee(), transactionDlg.getDescription());
         pTransaction->apply();
 
         updateGuiValues();
@@ -865,7 +865,7 @@ void editTransaction(Transaction* pTransaction, int listviewItemIndex)
     case Transaction::CCPAYMENT:
         editPayCC(pTransaction, listviewItemIndex);
         break;
-    case Transaction::ENVELOPE:
+    case Transaction::EXPENSE:
         editEnvelope(pTransaction, listviewItemIndex);
         break;
     case Transaction::DEPOSIT:
@@ -1010,7 +1010,7 @@ void doImportTransactions(Account* pAccount)
                 auto transactionsNew = dlg.transactionsOut();
                 for (size_t i = 0; i < transactionsNew.size(); i++) {
                     std::wstring payee = transactionsNew[i]._payeeMapped.empty() ? transactionsNew[i]._payee : transactionsNew[i]._payeeMapped;
-                    Transaction* pTransaction = Transaction::addTransaction(Transaction::ENVELOPE, transactionsNew[i]._amount, 
+                    Transaction* pTransaction = Transaction::addTransaction(Transaction::EXPENSE, transactionsNew[i]._amount, 
                         pAccount->getId(), ACCOUNT_ID_INVALID, transactionsNew[i]._envelopeId, payee.c_str(), nullptr, &transactionsNew[i]._date);
                     pTransaction->apply();
 
@@ -1714,7 +1714,7 @@ void populateTransactions()
         std::wstring payee = pTransaction->getPayee();
         AccountBase* pAccountTo = AccountBase::lookupById(pTransaction->getAccountToId());
 
-        if (pTransaction->getType() != Transaction::ENVELOPE) {
+        if (pTransaction->getType() != Transaction::EXPENSE) {
             AccountBase* pAccountFrom = AccountBase::lookupById(pTransaction->getAccountFromId());
             wchar_t szBuff[1024] = { 0 };
             if (pAccountFrom) {
@@ -1741,7 +1741,7 @@ void populateTransactions()
         {
             switch (pTransaction->getType())
             {
-            case Transaction::ENVELOPE:
+            case Transaction::EXPENSE:
                 ListView_SetItemText(g_hwndTransactionLV, 0, 2, const_cast<wchar_t*>(L"--envelope--"));
                 break;
             case Transaction::DEPOSIT:
