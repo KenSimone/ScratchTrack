@@ -168,7 +168,7 @@ void ReportDlg::initUi()
     HWND hYearCombo = GetDlgItem(_hDlg, IDC_COMBO_YEAR);
     for (int i = yearMin; i <= yearMax; i++) {
         swprintf(szTemp, 1024, L"%d", i);
-        SendMessage(hYearCombo, CB_ADDSTRING, 0, (LPARAM)szTemp);
+        iPos = SendMessage(hYearCombo, CB_ADDSTRING, 0, (LPARAM)szTemp);
         SendMessage(hYearCombo, CB_SETITEMDATA, iPos, i);
     }
 
