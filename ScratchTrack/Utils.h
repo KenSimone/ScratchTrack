@@ -22,7 +22,8 @@ public:
 
 // Date stuff
 	static unsigned int daysDiff(const SYSTEMTIME& t1, const SYSTEMTIME& t2);
-	static std::wstring formatDate(SYSTEMTIME ts);
+	static void subtractDays(SYSTEMTIME& timeDate, int daysToSubtract);
+	static std::wstring formatDate(SYSTEMTIME ts, DWORD dwFlags = DATE_SHORTDATE); // For flags, see https://learn.microsoft.com/en-us/windows/win32/api/datetimeapi/nf-datetimeapi-getdateformatex
 
 	// -1 a < b, 0 if a == b, 1 if a > b
 	static int compareDates(SYSTEMTIME a, SYSTEMTIME b);

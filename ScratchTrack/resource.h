@@ -111,7 +111,8 @@
 #define IDC_COMBO_MONTH                 1056
 #define IDC_COMBO_YEAR                  1057
 #define IDC_STATIC_REPORT               1058
-#define IDC_LIST2                       1060
+#define IDC_COMBO_YEAR2                 1059
+#define IDC_COMBO_STYLE                 1059
 #define IDC_LIST_REPORT                 1060
 #define YEAR                            2023
 #define ID_ROOT_ADD_GROUP               32771

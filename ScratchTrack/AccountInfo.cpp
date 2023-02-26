@@ -406,6 +406,73 @@ int Account::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppS
 	return ERROR_SUCCESS;
 }
 
+int AccountEnvelope::getAverageDailySpend(int& totalDaysRecorded, int& averageMonthly)
+{
+	auto transactions = Transaction::getAllTransactions();
+
+	SYSTEMTIME oldest = { 0 }, newest = { 0 };
+
+	// This is debatable, but newest is the last day of last month, which is bit of a hassle to get
+
+	// Get the current date/time
+	GetLocalTime(&newest);
+
+	// Clear all but year and month and set day to one
+	WORD year = newest.wYear; WORD month = newest.wMonth;
+	memset(&newest, 0, sizeof(newest));
+	newest.wMonth = month; newest.wYear = year; newest.wDay = 1;
+
+	// And subtract one day from that
+	Utils::subtractDays(newest, 1);
+
+	// Now spin through each tranbsaction and accumulate the amount
+	int total = 0;
+	for (auto itr = transactions.begin(); itr != transactions.end(); itr++) {
+		Transaction* pTrans = *itr;
+
+		if (pTrans->getEnvelopeId() == getId() && 
+			pTrans->getType() == Transaction::EXPENSE ) 
+		{
+			SYSTEMTIME ts = pTrans->getTimestamp();
+
+			// Don't include the current month in totals
+			if (Utils::compareDates(ts, newest) > 0) {
+				continue; 
+			}
+
+			if (oldest.wYear == 0) {
+				oldest = ts;
+			}
+			else if (Utils::compareDates(oldest, ts) > 0) {				
+				oldest = ts;
+			}
+
+			total += pTrans->getAmount();
+		}
+	} // for each transaction
+
+	// Figure out how many months we saw
+	int monthsSeen = 0;
+	for (int y = oldest.wYear; y < newest.wYear; y++) {
+		for (int m = oldest.wMonth; m <= 12; m++) {
+			monthsSeen++;
+		}
+	}
+	monthsSeen += newest.wMonth;
+
+
+	averageMonthly = (int)(total / (double)monthsSeen);
+	if (oldest.wYear && newest.wYear) {
+		totalDaysRecorded = Utils::daysDiff(oldest, newest);
+	}
+
+	if (totalDaysRecorded) {
+		total /= totalDaysRecorded;
+	}
+
+	return total;
+}
+
 AccountEnvelope* AccountEnvelope::getOrCreateCCEnvelope()
 {
 	AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(lookupById(ACCOUNT_ID_PAY_CC));

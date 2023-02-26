@@ -684,7 +684,8 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
                 rText.left = balanceSpot; rText.right = infoSpot;
                 DrawText(pCustomDrawItem->nmcd.hdc, balance.c_str(), (int)balance.length(), &rText, dwDrawTextFlags);
 
-                // Draw spark line
+                
+                rText.left = infoSpot; rText.right = infoSpot + g_columnSizes._info;
                 if (pEnvelope->getSavingsGoal()) {
                     rText.left = infoSpot; rText.right = infoSpot + g_columnSizes._info;
                     //int width = rText.right - rText.left;
@@ -694,6 +695,30 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
                     std::wstring savingsGoal = Utils::penniesToDollarsString(pEnvelope->getSavingsGoal());
                     wnsprintf(szInfotText, 1024, L"%ls saved towards goal of %ls", balance.c_str(), savingsGoal.c_str());
                     DrawText(pCustomDrawItem->nmcd.hdc, szInfotText, wcslen(szInfotText), &rText, dwDrawTextFlags);
+                } 
+                else {
+                    setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 0, selected, false);
+                    int totalDays = 0, monthlyAvg = 0;
+                    int avgPerDay = -pEnvelope->getAverageDailySpend(totalDays, monthlyAvg);
+                    std::wstring avgDaily = Utils::penniesToDollarsString(avgPerDay);
+                    double monthlyScaler = 30.437;
+                    double monthsSeen = totalDays / monthlyScaler;
+
+                    std::wstring avgMonthly = Utils::penniesToDollarsString(-monthlyAvg);
+
+                    if (totalDays) {
+                        SYSTEMTIME ts = { 0 };
+                        GetLocalTime(&ts);
+                        if (ts.wMonth == 1) {
+                            ts.wMonth = 12; ts.wYear--;
+                        }
+                        else {
+                            ts.wMonth--;
+                        }
+                        std::wstring lastMonth = Utils::formatDate(ts, DATE_YEARMONTH);
+                        wnsprintf(szInfotText, 1024, L"Monthly average through %ls is %ls", lastMonth.c_str(), avgMonthly.c_str());
+                        DrawText(pCustomDrawItem->nmcd.hdc, szInfotText, wcslen(szInfotText), &rText, dwDrawTextFlags);
+                    }
                 }
             }
         } 
@@ -790,7 +815,9 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
             }
         }
         else {
-            setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 1, selected, false);
+            if (pItem) {
+                setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 1, selected, false);
+            }
             DrawText(pCustomDrawItem->nmcd.hdc, name.c_str(), (int)name.length(), &rText, dwDrawTextFlags);
         }
 

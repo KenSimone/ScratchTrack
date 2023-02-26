@@ -2,11 +2,12 @@
 
 #include <windows.h>
 #include <string>
+#include <map>
 
 class ReportDlg
 {
 public:
-	ReportDlg(): _hDlg(nullptr)
+	ReportDlg(): _hDlg(nullptr), _displayed30dayWarn(false)
 	{
 	};
 
@@ -23,8 +24,17 @@ protected:
 
 	void positionConrtols();
 
+	void populateGrid();
+
+	std::map<unsigned int, int> getEnvelopeIdsToTotalSpentMap(int* pElapsedDays, int* pElapsedMonths);
+
 protected:
 	static ReportDlg* PTHIS;
 	HWND _hDlg;
+
+	static const unsigned int GRAPH_STYLE_BAR = 1;
+	static const unsigned int GRAPH_STYLE_GRID = 2;
+
+	bool _displayed30dayWarn;
 
 }; // class FolderDlg

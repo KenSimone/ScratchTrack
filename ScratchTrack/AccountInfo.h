@@ -355,6 +355,8 @@ public:
 
 	static AccountEnvelope* getOrCreateCCEnvelope();
 
+	int getAverageDailySpend(int& totalDaysRecorded, int& averageMonthly);
+
 protected:
 	std::wstring _defaultTransactionPayee;
 	Account* _pDefaultTransactionPayFromAccount;

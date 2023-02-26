@@ -768,13 +768,23 @@ int Utils::compareDates(SYSTEMTIME a, SYSTEMTIME b)
 	return 1;
 }
 
-std::wstring Utils::formatDate(SYSTEMTIME ts)
+// See https://learn.microsoft.com/en-us/windows/win32/api/datetimeapi/nf-datetimeapi-getdateformatex for flags
+std::wstring Utils::formatDate(SYSTEMTIME ts, DWORD dwFlags /*= DATE_SHORTDATE*/)
 {
 	wchar_t szBuff[1024] = { 0 };
-	GetDateFormatEx(LOCALE_NAME_USER_DEFAULT, DATE_SHORTDATE, &ts, nullptr, szBuff, 1024, nullptr);
+	GetDateFormatEx(LOCALE_NAME_USER_DEFAULT, dwFlags, &ts, nullptr, szBuff, 1024, nullptr);
 
 	std::wstring ret(szBuff);
 	return ret;
+}
+
+void Utils::subtractDays(SYSTEMTIME& timeDate, int daysToSubtract)
+{
+	double d;
+	SystemTimeToVariantTime(const_cast<SYSTEMTIME*>(&timeDate), &d);
+
+	d -= daysToSubtract;
+	VariantTimeToSystemTime(d, &timeDate);
 }
 
 unsigned int Utils::daysDiff(const SYSTEMTIME& t1, const SYSTEMTIME& t2)
