@@ -21,6 +21,8 @@ protected:
 	void paintExpenseByCategoryReport(HWND hWnd);
 	void initUi();
 
+	void positionConrtols();
+
 protected:
 	static ReportDlg* PTHIS;
 	HWND _hDlg;

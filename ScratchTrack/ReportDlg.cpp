@@ -61,9 +61,11 @@ INT_PTR CALLBACK ReportDlg::ReportDlgProc(HWND hDlg, UINT message, WPARAM wParam
             return (INT_PTR)TRUE;
         }
         break;
-    case WM_PAINT:
-        int x = 6;
+    case WM_SIZE:
+        InvalidateRect(hDlg, nullptr, false);
+        PTHIS->positionConrtols();
         break;
+
     }
     return (INT_PTR)FALSE;
 }
@@ -132,10 +134,6 @@ void ReportDlg::paintExpenseByCategoryReport(HWND hWnd)
 
 void ReportDlg::initUi()
 {
-    // IDC_COMBO_REPORT
-    // IDC_COMBO_MONTH
-    // IDC_COMBO_YEAR
-
     // Report combo
     HWND hReportCombo = GetDlgItem(_hDlg, IDC_COMBO_REPORT);
     int iPos = (int)SendMessage(hReportCombo, CB_ADDSTRING, 0, (LPARAM)L"Expenses by date");
@@ -177,4 +175,33 @@ void ReportDlg::initUi()
     SendMessage(hYearCombo, CB_SETITEMDATA, iPos, -1);
 
 
+    HWND hListReport = GetDlgItem(_hDlg, IDC_LIST_REPORT);
+    ShowWindow(hListReport, false);
+
+    PTHIS->positionConrtols();
+
+}
+
+void ReportDlg::positionConrtols()
+{
+    HWND hStaticReport = GetDlgItem(_hDlg, IDC_STATIC_REPORT);
+    HWND hListReport = GetDlgItem(_hDlg, IDC_LIST_REPORT);
+
+    RECT rMain, rStatic;
+
+    GetClientRect(_hDlg, &rMain);
+    GetClientRect(hStaticReport, &rStatic);
+
+    POINT ptTopRight;
+    ptTopRight.x = rStatic.left;
+    ptTopRight.y = rStatic.top;
+    ClientToScreen(hStaticReport, &ptTopRight);
+    ScreenToClient(_hDlg, &ptTopRight);
+
+    POINT ptBottomRight;
+    ptBottomRight.x = (rMain.right - ptTopRight.x) - ptTopRight.x;
+    ptBottomRight.y = (rMain.bottom - ptTopRight.y) - ptTopRight.x;
+
+    SetWindowPos(hStaticReport, nullptr, ptTopRight.x, ptTopRight.y, ptBottomRight.x, ptBottomRight.y, SWP_NOZORDER);
+    SetWindowPos(hListReport, nullptr, ptTopRight.x, ptTopRight.y, ptBottomRight.x, ptBottomRight.y, SWP_NOZORDER);
 }

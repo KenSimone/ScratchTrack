@@ -107,11 +107,12 @@
 #define IDC_STATIC_BALANCE              1051
 #define IDC_STATIC_LAST_IMPORT          1052
 #define IDC_CHECK_SAVINGS_GOAL          1053
-#define IDC_RICHEDIT_REPORT             1054
 #define IDC_COMBO_REPORT                1055
 #define IDC_COMBO_MONTH                 1056
 #define IDC_COMBO_YEAR                  1057
 #define IDC_STATIC_REPORT               1058
+#define IDC_LIST2                       1060
+#define IDC_LIST_REPORT                 1060
 #define YEAR                            2023
 #define ID_ROOT_ADD_GROUP               32771
 #define IDM_EDIT_FOLDER                 32772
@@ -170,7 +171,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        175
 #define _APS_NEXT_COMMAND_VALUE         33901
-#define _APS_NEXT_CONTROL_VALUE         1059
+#define _APS_NEXT_CONTROL_VALUE         1061
 #define _APS_NEXT_SYMED_VALUE           113
 #endif
 #endif
