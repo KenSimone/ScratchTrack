@@ -22,7 +22,9 @@ void GdiBarChart::render(HWND hWnd, HDC hdc)
     }
 
     // Figure out space per item (includes padding on both sides)
+    static const int MAX_ITEM_WIDTH = 100;
     int spacePerItem = (r.right - r.left) / (int)_items.size();
+    spacePerItem = min(MAX_ITEM_WIDTH, spacePerItem);
     //spacePerItem = max(spacePerItem, maxWidth + 10);
 
     // Figure out space per bar

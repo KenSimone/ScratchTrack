@@ -147,6 +147,9 @@ std::map<unsigned int, int> ReportDlg::getEnvelopeIdsToTotalSpentMap(int* pElaps
 
     }
 
+    if (oldest.wYear == 0) {
+        oldest = newest;
+    }
     int elapsedDays = Utils::daysDiff(oldest, newest);
     if (pElapsedDays) {
         *pElapsedDays = elapsedDays;
@@ -295,24 +298,33 @@ void ReportDlg::populateGrid()
     lvCol.pszText = const_cast<wchar_t*>(L"Budgeted");
     ListView_InsertColumn(hListControl, MAXINT, &lvCol);
 
-    lvCol.pszText = const_cast<wchar_t*>(L"Actual");
-    ListView_InsertColumn(hListControl, MAXINT, &lvCol);
-
     lvCol.pszText = const_cast<wchar_t*>(L"Avg per day");
     ListView_InsertColumn(hListControl, MAXINT, &lvCol);
 
     lvCol.pszText = const_cast<wchar_t*>(L"Avg per 30 days");
     ListView_InsertColumn(hListControl, MAXINT, &lvCol);
 
-    int elapsedDays = 0, elapsedMonths = 0;
-    auto mapEnvIdToSpend = getEnvelopeIdsToTotalSpentMap(&elapsedDays, &elapsedMonths);
+    HWND hMonthCombo = GetDlgItem(_hDlg, IDC_COMBO_MONTH);
+    HWND hYearCombo = GetDlgItem(_hDlg, IDC_COMBO_YEAR);
 
-    for (auto itr = mapEnvIdToSpend.begin(); itr != mapEnvIdToSpend.end(); itr++) {
-        AccountEnvelope* pEnvelope = (AccountEnvelope*)AccountBase::lookupById(itr->first);
+    int month = (int)ComboBox_GetCurSel(hMonthCombo);
+    int year = (int)ComboBox_GetCurSel(hYearCombo);
+
+    month = (int)ComboBox_GetItemData(hMonthCombo, month);
+    year = (int)ComboBox_GetItemData(hYearCombo, year);
+
+
+    auto envelopes = AccountBase::getAllAccountsOfType(AccountBase::ENVELOPE);
+    for (size_t i = 0; i < envelopes.size(); i++) {
+        AccountEnvelope* pEnvelope = (AccountEnvelope*)envelopes[i];
+
         LVITEM item = { 0 };
         item.mask = LVIF_PARAM | LVIF_TEXT;
         item.lParam = (LPARAM)pEnvelope;
         item.pszText = const_cast<wchar_t*>(pEnvelope->getName());
+
+        int elapsedDays = 0, monthlyAvg = 0;
+        int dailyAvg = pEnvelope->getAverageDailySpend(elapsedDays, monthlyAvg, false, month, year);
 
         // Name
         int iItem = ListView_InsertItem(hListControl, &item);
@@ -323,34 +335,21 @@ void ReportDlg::populateGrid()
         // Budgeted
         std::wstring text = Utils::penniesToDollarsString(-pEnvelope->getBudgeted());
         item.pszText = const_cast<wchar_t*>(text.c_str());
-        ListView_SetItemText(hListControl, iItem,++iSubItem, const_cast<wchar_t*>(text.c_str()));
-
-        // Actual
-        text = Utils::penniesToDollarsString(-itr->second);
-        item.pszText = const_cast<wchar_t*>(text.c_str());
         ListView_SetItemText(hListControl, iItem, ++iSubItem, const_cast<wchar_t*>(text.c_str()));
 
         // Avg per day
-        int totalSpend = -itr->second;
-        if (elapsedDays) {
-            totalSpend /= elapsedDays;
-        }
-
-        text = Utils::penniesToDollarsString(totalSpend);
+        text = Utils::penniesToDollarsString(-dailyAvg);
         item.pszText = const_cast<wchar_t*>(text.c_str());
         ListView_SetItemText(hListControl, iItem, ++iSubItem, const_cast<wchar_t*>(text.c_str()));
 
         // Avg per 30 days
-        totalSpend *= 30;
-        text = Utils::penniesToDollarsString(totalSpend);
+        text = Utils::penniesToDollarsString(-monthlyAvg);
         item.pszText = const_cast<wchar_t*>(text.c_str());
         ListView_SetItemText(hListControl, iItem, ++iSubItem, const_cast<wchar_t*>(text.c_str()));
-
     }
 
-
     int nCols = (int)Header_GetItemCount(hHeader);
-    for (size_t i = 0; i < nCols; i++) {
+    for (int i = 0; i < nCols; i++) {
         ListView_SetColumnWidth(hListControl, i, LVSCW_AUTOSIZE_USEHEADER);
     }
 

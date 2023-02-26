@@ -23,6 +23,10 @@ public:
 
 	static const char* libxslErrorToText(int error);
 
+	// This clean up values for newly added fields. You don't need to call this. Public so that old XML
+	// deserialization can call it too.
+	static void doSerializeFixups();
+
 protected:
 	static std::string accountTypeToString(AccountBase* pAccount);
 	static AccountBase::accountItemType accountTypeFromString(const char* szAccountType, bool& isCC);

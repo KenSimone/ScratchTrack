@@ -706,7 +706,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
 
                     std::wstring avgMonthly = Utils::penniesToDollarsString(-monthlyAvg);
 
-                    if (totalDays) {
+                    if (totalDays && monthlyAvg) {
                         SYSTEMTIME ts = { 0 };
                         GetLocalTime(&ts);
                         if (ts.wMonth == 1) {

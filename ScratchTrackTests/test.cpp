@@ -358,3 +358,65 @@ TEST(TestUtils, TestDateCompare) {
 
 	EXPECT_EQ(0, Utils::daysDiff(a, b));
 }
+
+TEST(TestReportig, TestDailySpend) {
+	deleteAllAccounts();
+	Account* pAccount = new Account;
+	pAccount->addBalance(500 * 100);
+	AccountEnvelope* pEnvelope = new AccountEnvelope();
+	pEnvelope->setName(L"Dude");
+
+	Transaction* pTrans = Transaction::addTransaction(Transaction::EXPENSE, 20000, pAccount->getId(), ACCOUNT_ID_INVALID, pEnvelope->getId(), L"Fred", nullptr, nullptr);
+	pTrans->apply();
+
+	int totalDays = 0, averageMonthly = 0;
+	int dailySpend = pEnvelope->getAverageDailySpend(totalDays, averageMonthly);
+
+	EXPECT_EQ(1, totalDays);
+	EXPECT_EQ(dailySpend, 0);
+	EXPECT_EQ(averageMonthly, 0);
+
+	dailySpend = pEnvelope->getAverageDailySpend(totalDays, averageMonthly, false);
+	EXPECT_EQ(1, totalDays);
+	EXPECT_EQ(dailySpend, 20000);
+	EXPECT_EQ(averageMonthly, 20000);
+
+
+	SYSTEMTIME ts = { 0 };
+	GetLocalTime(&ts);
+	Utils::subtractDays(ts, 99);
+	pEnvelope->setCreatedDate(ts);
+
+	dailySpend = pEnvelope->getAverageDailySpend(totalDays, averageMonthly, false);
+	EXPECT_EQ(100, totalDays);
+	EXPECT_EQ(dailySpend, 200);
+	EXPECT_EQ(averageMonthly, 5000);
+
+	dailySpend = pEnvelope->getAverageDailySpend(totalDays, averageMonthly, false, -1, 1950);
+	EXPECT_EQ(totalDays, 0);
+	EXPECT_EQ(dailySpend, 0);
+	EXPECT_EQ(averageMonthly, 0);
+
+	GetLocalTime(&ts);
+	dailySpend = pEnvelope->getAverageDailySpend(totalDays, averageMonthly, false, -1, ts.wYear);
+	EXPECT_EQ(totalDays, 1);
+	EXPECT_EQ(dailySpend, 20000);
+	EXPECT_EQ(averageMonthly, 20000);
+
+	dailySpend = pEnvelope->getAverageDailySpend(totalDays, averageMonthly, false, ts.wMonth, ts.wYear);
+	EXPECT_EQ(totalDays, 1);
+	EXPECT_EQ(dailySpend, 20000);
+	EXPECT_EQ(averageMonthly, 20000);
+
+	dailySpend = pEnvelope->getAverageDailySpend(totalDays, averageMonthly, false, ts.wMonth, ts.wYear-1);
+	EXPECT_EQ(totalDays, 0);
+	EXPECT_EQ(dailySpend, 0);
+	EXPECT_EQ(averageMonthly, 0);
+
+	ts.wMonth = (ts.wMonth == 12) ? 11 : ts.wMonth + 1;
+	dailySpend = pEnvelope->getAverageDailySpend(totalDays, averageMonthly, false, ts.wMonth, ts.wYear);
+	EXPECT_EQ(totalDays, 0);
+	EXPECT_EQ(dailySpend, 0);
+	EXPECT_EQ(averageMonthly, 0);
+
+}

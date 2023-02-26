@@ -3,7 +3,7 @@
 #include "Utils.h"
 #include "Version.h"
 #include "TransactionImporter.h"
-#include <map>
+#include "ExcelSerializer.h"
 #include <limits.h>
 
 std::map<unsigned int, AccountBase*> _idToItem;
@@ -208,6 +208,8 @@ int deserialize(const char* szFilename, std::vector<AccountBase*>& topLevelItems
 
 	AccountBase::stopDeserialize();
 
+	ExcelSerializer::doSerializeFixups();
+
 	return ERROR_SUCCESS;
 }
 
@@ -406,24 +408,38 @@ int Account::serialize(tinyxml2::XMLElement* pParent, tinyxml2::XMLElement** ppS
 	return ERROR_SUCCESS;
 }
 
-int AccountEnvelope::getAverageDailySpend(int& totalDaysRecorded, int& averageMonthly)
+int AccountEnvelope::getAverageDailySpend(int& totalDaysRecorded, int& averageMonthly, bool skipCurrentMonth /*= true*/, int monthFilter /*= -1*/, int yearFilter /*= -1*/)
 {
 	auto transactions = Transaction::getAllTransactions();
 
 	SYSTEMTIME oldest = { 0 }, newest = { 0 };
+	totalDaysRecorded = averageMonthly = 0;
+
+	// If not filtering, use the envelop "born on" date
+	if (monthFilter < 0 && yearFilter < 0) {
+		GetLocalTime(&newest);
+		oldest = getCreatedDate();
+	}
 
 	// This is debatable, but newest is the last day of last month, which is bit of a hassle to get
+	if (skipCurrentMonth) {
+		// Clear all but year and month and set day to one
+		WORD year = newest.wYear; WORD month = newest.wMonth;
+		memset(&newest, 0, sizeof(newest));
+		newest.wMonth = month; newest.wYear = year; newest.wDay = 1;
 
-	// Get the current date/time
-	GetLocalTime(&newest);
+		// And subtract one day from that
+		Utils::subtractDays(newest, 1);
+		newest.wHour = 23;
+		newest.wMinute = 59;
+		newest.wSecond = 59;
+	}
 
-	// Clear all but year and month and set day to one
-	WORD year = newest.wYear; WORD month = newest.wMonth;
-	memset(&newest, 0, sizeof(newest));
-	newest.wMonth = month; newest.wYear = year; newest.wDay = 1;
-
-	// And subtract one day from that
-	Utils::subtractDays(newest, 1);
+	// In the "slide back a month" case it's possible for oldest to end up newer than newest
+	// Fix that here.
+	if (Utils::compareDates(oldest, newest) > 0) {
+		oldest = newest;
+	}
 
 	// Now spin through each tranbsaction and accumulate the amount
 	int total = 0;
@@ -435,16 +451,33 @@ int AccountEnvelope::getAverageDailySpend(int& totalDaysRecorded, int& averageMo
 		{
 			SYSTEMTIME ts = pTrans->getTimestamp();
 
-			// Don't include the current month in totals
-			if (Utils::compareDates(ts, newest) > 0) {
+			// Skip things newer than newest (matters if we moved newest back a month)
+			if (skipCurrentMonth && Utils::compareDates(ts, newest) > 0) {
 				continue; 
+			}
+
+			if (yearFilter > 0 && yearFilter != ts.wYear) {
+				continue;
+			}
+
+			if (monthFilter > 0 && monthFilter != ts.wMonth) {
+				continue;
 			}
 
 			if (oldest.wYear == 0) {
 				oldest = ts;
 			}
-			else if (Utils::compareDates(oldest, ts) > 0) {				
+
+			if (newest.wYear == 0) {
+				newest = ts;
+			}
+
+			if (Utils::compareDates(oldest, ts) > 0) {
 				oldest = ts;
+			}
+
+			if (Utils::compareDates(newest, ts) < 0) {
+				newest = ts;
 			}
 
 			total += pTrans->getAmount();
@@ -458,12 +491,17 @@ int AccountEnvelope::getAverageDailySpend(int& totalDaysRecorded, int& averageMo
 			monthsSeen++;
 		}
 	}
-	monthsSeen += newest.wMonth;
 
+	if (oldest.wYear == newest.wYear) {
+		monthsSeen += newest.wMonth - oldest.wMonth + 1;
+	}
+	else {
+		monthsSeen += newest.wMonth;
+	}
 
 	averageMonthly = (int)(total / (double)monthsSeen);
 	if (oldest.wYear && newest.wYear) {
-		totalDaysRecorded = Utils::daysDiff(oldest, newest);
+		totalDaysRecorded = Utils::daysDiff(oldest, newest) + 1;
 	}
 
 	if (totalDaysRecorded) {

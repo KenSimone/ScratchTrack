@@ -315,8 +315,11 @@ protected:
 class AccountEnvelope : public AccountBase
 {
 public:
-	AccountEnvelope() : AccountBase(ENVELOPE), _pDefaultTransactionPayFromAccount(nullptr), _defaultTransactionAmount(0), 
-		_isExpense(true), _isVirtualAccount(false), _pDefaultTransactionPayToAccount(nullptr), _savingsGoal(0){};
+	AccountEnvelope() : AccountBase(ENVELOPE), _pDefaultTransactionPayFromAccount(nullptr), _defaultTransactionAmount(0),
+		_isExpense(true), _isVirtualAccount(false), _pDefaultTransactionPayToAccount(nullptr), _savingsGoal(0)
+	{
+		GetLocalTime(&_createdDate);
+	}
 
 	virtual accountItemType getType() { return AccountBase::ENVELOPE; }
 
@@ -337,6 +340,9 @@ public:
 	int getSavingsGoal() { return _savingsGoal; }
 	void setSavingsGoal(int savingsGoal) { _savingsGoal = savingsGoal;  }
 
+	SYSTEMTIME getCreatedDate() { return _createdDate; }
+	void setCreatedDate(SYSTEMTIME createdDate) { _createdDate = createdDate; }
+
 	virtual void addBalance(int balance) 
 	{ 
 		// A expense can't have negative money in it
@@ -355,7 +361,7 @@ public:
 
 	static AccountEnvelope* getOrCreateCCEnvelope();
 
-	int getAverageDailySpend(int& totalDaysRecorded, int& averageMonthly);
+	int getAverageDailySpend(int& totalDaysRecorded, int& averageMonthly, bool skipCurrentMonth = true, int monthFilter = -1, int yearFilter = -1);
 
 protected:
 	std::wstring _defaultTransactionPayee;
@@ -364,8 +370,8 @@ protected:
 	int _defaultTransactionAmount;
 	bool _isExpense;
 	bool _isVirtualAccount;
-
 	int _savingsGoal;
+	SYSTEMTIME _createdDate;
 }; // class AccountEnvelope
 
 int serialize(std::vector<AccountBase*>& topLevelItems, const char* szFilename);

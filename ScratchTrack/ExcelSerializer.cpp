@@ -267,7 +267,8 @@ int ExcelSerializer::serializeEnvelopes(lxw_workbook* workbook, std::vector<Acco
 	worksheet_write_string(worksheet, curRow, 8, "default Payer Id", formatHeader);
 	worksheet_write_string(worksheet, curRow, 9, "Flags", formatHeader);
 	worksheet_write_string(worksheet, curRow, 10, "Savings goal", formatHeader);
-	worksheet_set_column(worksheet, 0, 8, 15, nullptr);
+	worksheet_write_string(worksheet, curRow, 11, "Created Date", formatHeader);
+	worksheet_set_column(worksheet, 0, 11, 15, nullptr);
 
 
 	curRow++;
@@ -319,6 +320,7 @@ int ExcelSerializer::serializeEnvelopes(lxw_workbook* workbook, std::vector<Acco
 
 			worksheet_write_number(worksheet, curRow, 9, p->getId() == ACCOUNT_ID_PAY_CC ? FLAG_PAYS_CCS : FLAG_NO_FLAGS, formatLeft);
 			worksheet_write_number(worksheet, curRow, 10, _wtof(Utils::penniesToDollarsString(p->getSavingsGoal(), false).c_str()), formatMoney);
+			writeDate(p->getCreatedDate(), worksheet, curRow, 11, formatDate);
 
 			char szBuff[1024] = { 0 };
 			sprintf_s(szBuff, "=Categories!A%d", curRow + 1);
@@ -726,6 +728,7 @@ int ExcelSerializer::deserialize(const char* szFile, std::vector<AccountBase*>& 
 		goto end;
 	}
 
+	doSerializeFixups();
 
 end:
 	//AccountBase::stopDeserialize();
@@ -941,6 +944,12 @@ int ExcelSerializer::deserializeEnvelopes(OpenXLSX::XLWorkbook& workbook, std::v
 			// Field is optional
 		}
 
+		static const SYSTEMTIME noTime = { 0 };
+		SYSTEMTIME ts = readDate(worksheet, row, 12);
+		if (memcmp(&ts, &noTime, sizeof(SYSTEMTIME)) == 0) {
+			GetLocalTime(&ts);
+		}
+
 		AccountEnvelope* pEnvelope = new AccountEnvelope;
 		if (flags & FLAG_PAYS_CCS) {
 			pEnvelope->setId(ACCOUNT_ID_PAY_CC);
@@ -960,6 +969,7 @@ int ExcelSerializer::deserializeEnvelopes(OpenXLSX::XLWorkbook& workbook, std::v
 		pEnvelope->addBalance(balance);
 		pEnvelope->setIsVirtualAccount(true);
 		pEnvelope->setSavingsGoal(savingsGoal);
+		pEnvelope->setCreatedDate(ts);
 
 		Account* pAccount = dynamic_cast<Account*>(AccountBase::lookupById(defPayerId));
 		if (pAccount) {
@@ -1133,4 +1143,24 @@ SYSTEMTIME ExcelSerializer::readDate(OpenXLSX::XLWorksheet& worksheet, int row, 
 	catch (...) { }
 
 	return ts;
+}
+
+void ExcelSerializer::doSerializeFixups()
+{
+	auto envelopes = AccountBase::getAllAccountsOfType(AccountBase::ENVELOPE);
+	for (size_t i = 0; i < envelopes.size(); i++) {
+		AccountEnvelope* pEnvelope = (AccountEnvelope*)envelopes[i];
+		SYSTEMTIME createdDate = pEnvelope->getCreatedDate();
+
+		auto transactions = Transaction::getAllTransactions();
+		for (size_t j = 0; j < transactions.size(); j++) {
+					SYSTEMTIME createdDate = pEnvelope->getCreatedDate();
+			if (transactions[j]->getEnvelopeId() == pEnvelope->getId()) {
+				if (Utils::compareDates(createdDate, transactions[j]->getTimestamp()) > 0) {
+					pEnvelope->setCreatedDate(transactions[j]->getTimestamp());
+					createdDate = pEnvelope->getCreatedDate();
+				} // if trans date is older than create date
+			} // if transaction is for this envelope
+		} //for each transaction
+	} // for each envelope
 }
