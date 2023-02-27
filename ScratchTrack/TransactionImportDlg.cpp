@@ -11,6 +11,8 @@ extern HINSTANCE g_hInst;
 extern HWND g_hTopWindow;
 extern AccountInfoDlg g_accountInfoDlg;
 extern TransactionImporter g_transactionImporter;
+extern void setGuiFont(HWND hCtrl);
+
 
 TransactionImportDlg::TransactionImportDlg(Account* pAccount, std::vector<ImportedTransactionInfo>& transactions) : _transactions(transactions),
     _pAccount(pAccount)
@@ -117,6 +119,8 @@ INT_PTR CALLBACK TransactionImportDlg::TransactionImportDlgProc(HWND hDlg, UINT 
         break;
     case WM_INITDIALOG:
         hListView = GetDlgItem(hDlg, IDC_LIST_TRANS_IMPORT);
+        setGuiFont(hListView);
+
         ListView_SetExtendedListViewStyleEx(hListView, LVS_EX_CHECKBOXES, LVS_EX_CHECKBOXES);
 
         column.mask = LVCF_TEXT;
