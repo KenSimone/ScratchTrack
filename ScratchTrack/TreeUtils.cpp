@@ -609,7 +609,11 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
         int iTransactionSum = !pItem ? 0 : pItem->getCurrentMonthTransacationTotal();
         std::wstring transactionSum = Utils::penniesToDollarsString(iTransactionSum);
 
-        int iDiff = abs(iBudget) - abs(iTransactionSum);
+        // Difference between budgeted and actual. 
+        // Note that budgeted is negative, and so are expenses, so the math is a bit unintuitive. Negative budget + transactions produces the number we want.
+        // Example: Budget -$500, expenses -$450 == $500 + $-450 == $50.00
+        // Example: Budget -$500, refund $50 == $500 + $50 == $550
+        int iDiff = -iBudget + iTransactionSum;
         std::wstring diff = Utils::penniesToDollarsString(iDiff);
 
         // Calculate column positions
@@ -694,7 +698,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
                     setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 0, selected , false);
                     std::wstring savingsGoal = Utils::penniesToDollarsString(pEnvelope->getSavingsGoal());
                     wnsprintf(szInfotText, 1024, L"%ls saved towards goal of %ls", balance.c_str(), savingsGoal.c_str());
-                    DrawText(pCustomDrawItem->nmcd.hdc, szInfotText, wcslen(szInfotText), &rText, dwDrawTextFlags);
+                    DrawText(pCustomDrawItem->nmcd.hdc, szInfotText, (int)wcslen(szInfotText), &rText, dwDrawTextFlags);
                 } 
                 else {
                     setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 0, selected, false);
@@ -717,7 +721,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
                         }
                         std::wstring lastMonth = Utils::formatDate(ts, DATE_YEARMONTH);
                         wnsprintf(szInfotText, 1024, L"Monthly average through %ls is %ls", lastMonth.c_str(), avgMonthly.c_str());
-                        DrawText(pCustomDrawItem->nmcd.hdc, szInfotText, wcslen(szInfotText), &rText, dwDrawTextFlags);
+                        DrawText(pCustomDrawItem->nmcd.hdc, szInfotText, (int)wcslen(szInfotText), &rText, dwDrawTextFlags);
                     }
                 }
             }
@@ -898,7 +902,7 @@ void budgetTreeCreateTreeControl()
     item.cxy = g_columnSizes._budgeted;
     Header_InsertItem(g_hwndTreeHeader, 99, &item);
 
-    item.pszText = const_cast<wchar_t*>(L"Outflows");
+    item.pszText = const_cast<wchar_t*>(L"Actual");
     item.cxy = g_columnSizes._inCategories;
     Header_InsertItem(g_hwndTreeHeader, 99, &item);
 
