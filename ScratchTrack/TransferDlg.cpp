@@ -83,7 +83,7 @@ INT_PTR CALLBACK TransferDlg::TransferDlgProc(HWND hDlg, UINT message, WPARAM wP
     case WM_INITDIALOG:
         Utils::setDlgItemDollarText(hDlg, IDC_EDIT_AMOUNT, PTHIS->_amount);
         Utils::populateAccountCombo(hDlg, IDC_COMBO_ACCOUNT, PTHIS->getAccountFromId(), true);
-        Utils::populateAccountCombo(hDlg, IDC_COMBO_ACCOUNT_TO, ACCOUNT_ID_INVALID, true, PTHIS->getAccountFromId());
+        Utils::populateAccountCombo(hDlg, IDC_COMBO_ACCOUNT_TO, PTHIS->getAccountToId(), true, PTHIS->getAccountFromId());
         SetDlgItemText(hDlg, IDC_EDIT_DESCRIPTION, PTHIS->getDescription());
         PTHIS->validateSelections(hDlg);
 

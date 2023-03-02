@@ -1679,9 +1679,7 @@ void populateTransactions()
         Transaction* pCurTransaction = *itr;
 
         int iAmount = pTransaction->getAmount();
-        bool isFolder = pTransaction->getAccountToId() != ACCOUNT_ID_INVALID && pTransaction->getType() != Transaction::CCPAYMENT;
-        iAmount = abs(iAmount);
-        std::wstring amount = Utils::penniesToDollarsString(iAmount);
+        std::wstring amount = Utils::penniesToDollarsString(abs(iAmount));
 
         std::wstring filterText = g_transactionFilterDlg.filterText();
         if (!filterText.empty())
@@ -1754,7 +1752,10 @@ void populateTransactions()
 
         // Description
         ListView_SetItemText(g_hwndTransactionLV, 0, 3, const_cast<wchar_t*>(pTransaction->getDescription()));
-        ListView_SetItemText(g_hwndTransactionLV, 0, isFolder ? 5 : 4, const_cast<wchar_t*>(amount.c_str()));
+
+        // In flow or outflow
+        bool isInflow = iAmount > 0;
+        ListView_SetItemText(g_hwndTransactionLV, 0, isInflow ? 5 : 4, const_cast<wchar_t*>(amount.c_str()));
     }
 
     for (size_t i = 0; i < 6; i++) {
