@@ -808,7 +808,7 @@ LRESULT budgetTreeCustomDrawTreeItem(NMTVCUSTOMDRAW* pCustomDrawItem)
         }
 
         AccountEnvelope* pEnvelope = dynamic_cast<AccountEnvelope*>(pItem);
-        if (pEnvelope && pEnvelope->getBudgeted()) {
+        if (pEnvelope && (pEnvelope->getSavingsGoal()||pEnvelope->getBudgeted())) {
             setTextColorForAmount(pCustomDrawItem->nmcd.hdc, 1, false, false);
 
             if (pEnvelope->getSavingsGoal()) {

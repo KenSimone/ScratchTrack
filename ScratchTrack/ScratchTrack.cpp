@@ -1399,7 +1399,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                             std::vector<AccountBase*> groups = AccountBase::getAllAccountsOfType(AccountBase::GROUP);
                             HMENU groupMenu = CreatePopupMenu();
                             for (size_t i = 0; i < groups.size(); i++) {
-                                if (pParentItem && groups[i]->getId() != pParentItem->getId() && !groups[i]->getReadOnly()) {
+                                if (pParentItem && groups[i]->getId() != pParentItem->getId() && !groups[i]->getReadOnly() && !groups[i]->getHidden()) {
                                     AppendMenu(groupMenu, MF_STRING, ID_ROOT_ENVELOPE_MOVE_TO_START + groups[i]->getId(), groups[i]->getName());
                                     added = true;
                                 }
@@ -1434,14 +1434,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                             }
                             else if (!foundOurSelf) {
                                 AccountBase* pCurItem = accountFromTreeItem(hCur);
-                                if (pCurItem) {
+                                if (pCurItem && !pCurItem->getHidden()) {
                                     AppendMenu(siblingBeforeMenu, MF_STRING, ID_ROOT_MOVE_SIBLING_BEFORE_START + pCurItem->getId(), pCurItem->getName());
                                     addedBefore = true;
                                 }
                             }
                             else if (foundOurSelf) {
                                 AccountBase* pCurItem = accountFromTreeItem(hCur);
-                                if (pCurItem) {
+                                if (pCurItem && !pCurItem->getHidden()) {
                                     AppendMenu(siblingAfterMenu, MF_STRING, ID_ROOT_MOVE_SIBLING_AFTER_START + pCurItem->getId(), pCurItem->getName());
                                     addedAfter = true;
                                 }
