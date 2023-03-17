@@ -43,6 +43,7 @@
 #define IDD_DIALOG_TRANSACTION_IMPORT   172
 #define IDD_DIALOG_MAP_IMPORT           173
 #define IDD_DIALOG_REPORT               174
+#define IDD_DIALOG_PRINT                175
 #define IDC_ONE_INPUT_TEXT              1000
 #define IDC_EDIT_Transaction_AMOUNT     1001
 #define IDC_RADIO1                      1002
@@ -111,9 +112,9 @@
 #define IDC_COMBO_MONTH                 1056
 #define IDC_COMBO_YEAR                  1057
 #define IDC_STATIC_REPORT               1058
-#define IDC_COMBO_YEAR2                 1059
 #define IDC_COMBO_STYLE                 1059
 #define IDC_LIST_REPORT                 1060
+#define IDC_RICHEDIT_PRINT              1062
 #define YEAR                            2023
 #define ID_ROOT_ADD_GROUP               32771
 #define IDM_EDIT_FOLDER                 32772
@@ -163,6 +164,7 @@
 #define ID_ROOT_MOVE_SIBLING_AFTER_END  33500
 #define ID_ROOT_MOVE_SIBLING_BEFORE_START 33501
 #define ID_ROOT_MOVE_SIBLING_BEFORE_END 33900
+#define ID_FILE_PRINT                   33901
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -170,9 +172,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        175
-#define _APS_NEXT_COMMAND_VALUE         33901
-#define _APS_NEXT_CONTROL_VALUE         1061
+#define _APS_NEXT_RESOURCE_VALUE        176
+#define _APS_NEXT_COMMAND_VALUE         33902
+#define _APS_NEXT_CONTROL_VALUE         1063
 #define _APS_NEXT_SYMED_VALUE           113
 #endif
 #endif

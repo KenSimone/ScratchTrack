@@ -28,6 +28,7 @@
 #include "FundEnvelopeDlg.h"
 #include "FundEnvelopesDlg.h"
 #include "TransactionImportDlg.h"
+#include "PrintDlg.h"
 
 #include <commctrl.h>
 #include <Windows.h>
@@ -1079,6 +1080,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case ID_FILE_ADDENVELOPE:
             doAddFolder();
             break;
+        case ID_FILE_PRINT:
+        {
+            ScratchTrackPrintDlg dlg;
+            dlg.ShowDialog();
+            break;
+        }
         default:
             return DefWindowProc(hWnd, message, wParam, lParam);
         }

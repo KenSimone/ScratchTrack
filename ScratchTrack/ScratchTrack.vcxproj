@@ -176,6 +176,7 @@
     <ClInclude Include="GdiChart.h" />
     <ClInclude Include="ImportMapDlg.h" />
     <ClInclude Include="PayCCDlg.h" />
+    <ClInclude Include="PrintDlg.h" />
     <ClInclude Include="ReportDlg.h" />
     <ClInclude Include="Transaction.h" />
     <ClInclude Include="TransactionDialog.h" />
@@ -207,6 +208,7 @@
     <ClCompile Include="GdiChart.cpp" />
     <ClCompile Include="ImportMapDlg.cpp" />
     <ClCompile Include="PayCCDlg.cpp" />
+    <ClCompile Include="PrintDlg.cpp" />
     <ClCompile Include="ReportDlg.cpp" />
     <ClCompile Include="Transaction.cpp" />
     <ClCompile Include="TransactionDialog.cpp" />

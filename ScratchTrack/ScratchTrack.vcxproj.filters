@@ -120,6 +120,9 @@
     <ClInclude Include="GdiChart.h">
       <Filter>Header Files\Utility</Filter>
     </ClInclude>
+    <ClInclude Include="PrintDlg.h">
+      <Filter>Header Files\Dialogs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScratchTrack.cpp">
@@ -193,6 +196,9 @@
     </ClCompile>
     <ClCompile Include="GdiChart.cpp">
       <Filter>Source Files\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="PrintDlg.cpp">
+      <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
