@@ -177,7 +177,13 @@ BOOL ScratchTrackPrintDlg::PrintRTF(HWND hwnd, HDC hdc)
     fr.rcPage.bottom = MulDiv(cyPhys, 1440, GetDeviceCaps(hdc, LOGPIXELSY));
 
     // Set the rendering rectangle to the pintable area of the page.
-    fr.rc = fr.rcPage;
+    cxPhysOffset = MulDiv(cxPhysOffset, 1440, GetDeviceCaps(hdc, LOGPIXELSX));
+    cyPhysOffset = MulDiv(cyPhysOffset, 1440, GetDeviceCaps(hdc, LOGPIXELSY));
+
+    fr.rc.left = cxPhysOffset;
+    fr.rc.right = fr.rcPage.right - cxPhysOffset;
+    fr.rc.top = cyPhysOffset;
+    fr.rc.bottom = fr.rcPage.bottom - cyPhysOffset;
 
     SendMessage(hwnd, EM_SETSEL, 0, (LPARAM)-1);          // Select the entire contents.
     SendMessage(hwnd, EM_EXGETSEL, 0, (LPARAM)&fr.chrg);  // Get the selection into a CHARRANGE.

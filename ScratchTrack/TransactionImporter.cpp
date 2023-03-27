@@ -148,15 +148,17 @@ int TransactionImporter::deserialize(tinyxml2::XMLElement* pSettings)
 int TransactionImporter::bestGuessAtPayeeAndCat(const wchar_t* szPayeeIn, std::wstring& payeeOut, unsigned int& catIdOut)
 {
 	catIdOut = ACCOUNT_ID_INVALID;
+	payeeOut.clear();
 
-	// First see if we already know about this mapping
-	auto itr = _importMap.find(szPayeeIn);
-	if (itr != _importMap.end()) {
-		payeeOut = itr->second._payee;
-		catIdOut = itr->second._envelopeId;
-		return ERROR_SUCCESS;
+
+	for (auto itr = _importMap.begin(); itr != _importMap.end(); itr++) {
+		if (Utils::isGlobMatch(szPayeeIn, itr->first.c_str()))
+		{
+			payeeOut = itr->second._payee;
+			catIdOut = itr->second._envelopeId;
+			return ERROR_SUCCESS;
+		}
 	}
-
 
 	std::wstring origPayee(szPayeeIn);
 
@@ -166,16 +168,17 @@ int TransactionImporter::bestGuessAtPayeeAndCat(const wchar_t* szPayeeIn, std::w
 	Transaction* pCur = nullptr;
 	for (auto itr = transactions.begin(); itr != transactions.end(); itr++) {
 		std::wstring curPayee((*itr)->getPayee());
+		if (curPayee.length() > 5) {
+			curPayee = curPayee.substr(0, 4);
+		}
 
-		//unsigned int curDistance = Utils::stringDistance(origPayee, curPayee);
-		unsigned int curSimilarity = (unsigned int)Utils::looksSimilar(origPayee, curPayee);
-		if (curSimilarity > similarity) {
+		if (Utils::startsWith(origPayee.c_str(), curPayee.c_str())) {
 			pCur = *itr;
-			similarity = curSimilarity;
+			break;
 		}
 	}
 
-	if (pCur && similarity >= 3) {
+	if (pCur) {
 		payeeOut = pCur->getPayee();
 		AccountBase* pCat = AccountBase::lookupById(pCur->getEnvelopeId());
 		if (pCat) {

@@ -137,6 +137,29 @@ SYSTEMTIME Utils::dateStringToSysTime(const wchar_t* szDate)
 }
 
 
+bool Utils::startsWith(const wchar_t* szString, const wchar_t* szPrefixToCheck)
+{
+	if (!szString || !szPrefixToCheck) {
+		return false;
+	}
+
+	size_t lenPrefix = wcslen(szPrefixToCheck);
+	if (lenPrefix > wcslen(szString)) {
+		return false;
+	}
+
+	wchar_t oldVal = szString[lenPrefix];
+
+	wchar_t* szOrigString = const_cast<wchar_t*>(szString);
+	szOrigString[lenPrefix] = 0;
+
+	bool match = _wcsicmp(szOrigString, szPrefixToCheck) == 0;
+
+	szOrigString[lenPrefix] = oldVal;
+
+	return match;
+}
+
 bool Utils::searchText(const wchar_t* szString, const wchar_t* szSearchText)
 {
 	if (!szString || !szSearchText) {
@@ -221,6 +244,11 @@ std::wstring Utils::penniesToDollarsString(int money, bool formatted /*= true*/)
 
 	// And return it
 	return std::wstring(szBuff);
+}
+
+bool Utils::isGlobMatch(const wchar_t* szString, const wchar_t* szGlobPattern)
+{
+	return PathMatchSpec(szString, szGlobPattern);
 }
 
 size_t Utils::looksSimilar(std::wstring s1, std::wstring s2)

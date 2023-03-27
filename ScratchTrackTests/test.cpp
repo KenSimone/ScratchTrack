@@ -418,5 +418,13 @@ TEST(TestReportig, TestDailySpend) {
 	EXPECT_EQ(totalDays, 0);
 	EXPECT_EQ(dailySpend, 0);
 	EXPECT_EQ(averageMonthly, 0);
+}
 
+
+TEST(TestString, TestGlobMatchs) {
+	EXPECT_TRUE(Utils::isGlobMatch(L"LoWeS.Com", L"lo*"));
+	EXPECT_FALSE(Utils::isGlobMatch(L"LoWeS.Com", L"Zo*"));
+	EXPECT_FALSE(Utils::isGlobMatch(L"LoWeS.Com", L"li*"));
+	EXPECT_TRUE(Utils::isGlobMatch(L"LoWeS.Com", L"lo???????"));
+	EXPECT_TRUE(Utils::isGlobMatch(L"LoWeS.Com", L"?owes*"));
 }

@@ -4,8 +4,10 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <vector>
 #include "TinyXml2.h"
 #include "AccountInfo.h"
+#include "Utils.h"
 
 class Account;
 
@@ -20,6 +22,7 @@ struct ImportedTransactionInfo
 	}
 	std::wstring _payee;
 	std::wstring _payeeMapped;
+	std::wstring _payeeMatchString;
 	SYSTEMTIME _date;
 	int _amount;
 	unsigned int _envelopeId;
@@ -42,12 +45,31 @@ public:
 
 	Transaction* findDuplicate(Account* pAccount, const wchar_t* szPayee, int amount, SYSTEMTIME date, unsigned int maxDateDiff);
 
-	void addMapping(const wchar_t* szItemNameIn, std::wstring itemNameOut, unsigned int envelopeId)
+	void deleteMapping(const wchar_t* szMatchString)
+	{
+		size_t len = wcslen(szMatchString);
+		std::vector<std::wstring> toDelete;
+		for (auto itr = _importMap.begin(); itr != _importMap.end(); itr++) {
+			if (itr->first.length() != len) {
+				continue;
+			}
+
+			if (Utils::searchText(szMatchString, itr->first.c_str())) {
+				toDelete.push_back(itr->first);
+			}
+		}
+
+		for (size_t i = 0; i < toDelete.size(); i++) {
+			_importMap.erase(toDelete[i]);
+		}
+	}
+
+	void addMapping(const wchar_t* szMatchString, std::wstring itemNameOut, unsigned int envelopeId)
 	{
 		MAPPED_IMPORT_ITEM mii;
 		mii._envelopeId = envelopeId;
 		mii._payee = itemNameOut;
-		_importMap[szItemNameIn] = mii;
+		_importMap[szMatchString] = mii;
 	}
 
 	struct MAPPED_IMPORT_ITEM

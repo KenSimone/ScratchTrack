@@ -20,6 +20,13 @@ public:
 protected:
 	static INT_PTR CALLBACK TransactionImportDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 	void enableDisableUi(HWND hDlg);
+	void populateImports(HWND hDlg);
+	void initRuleMapper(HWND hDlg);
+	void populateRuleMapper(HWND hDlg);
+
+	void editMapRule(HWND hDlg);
+	void addMapRule(HWND hDlg);
+	void deleteMapRule(HWND hDlg);
 
 
 protected:

@@ -60,6 +60,8 @@ INT_PTR CALLBACK ImportMapDlg::ImportMapDlgProc(HWND hDlg, UINT message, WPARAM 
         std::vector< AccountBase*> cats;
 
         SetDlgItemText(hDlg, IDC_EDIT_ORIG_PAYEE, PTHIS->_pTransactionInfo->_payee.c_str());
+        SetDlgItemText(hDlg, IDC_EDIT_MATCH_STRING, PTHIS->_pTransactionInfo->_payee.c_str());
+        
         Utils::populatePayeeCombo(hDlg, IDC_COMBO_NEW_PAYEE, payee.c_str());
 
         cats = AccountBase::getAllAccountsOfType(AccountBase::ENVELOPE);
@@ -70,7 +72,6 @@ INT_PTR CALLBACK ImportMapDlg::ImportMapDlgProc(HWND hDlg, UINT message, WPARAM 
             if (cats[i]->getId() == envelopeId) {
                 ComboBox_SetCurSel(hCatCombo, pos);
             }
-
         }
     }
             
@@ -84,10 +85,17 @@ INT_PTR CALLBACK ImportMapDlg::ImportMapDlgProc(HWND hDlg, UINT message, WPARAM 
         {
             if (LOWORD(wParam) == IDOK)
             {
+                ImportedTransactionInfo* pInfo = PTHIS->_pTransactionInfo;
+                g_transactionImporter.deleteMapping(pInfo->_payeeMatchString.c_str());
+                g_transactionImporter.deleteMapping(pInfo->_payee.c_str());
+
                 // Get payee
                 wchar_t szBuff[1024] = { 0 };
                 GetDlgItemText(hDlg, IDC_COMBO_NEW_PAYEE, szBuff, 1024);
-                PTHIS->_pTransactionInfo->_payeeMapped = szBuff;
+
+                pInfo->_payeeMapped = szBuff;
+                pInfo->_payeeMatchString = Utils::getDlgItemText(hDlg, IDC_EDIT_MATCH_STRING);
+                pInfo->_payee = Utils::getDlgItemText(hDlg, IDC_EDIT_ORIG_PAYEE);
                 
                 // Get envelope
                 HWND hCatCombo = GetDlgItem(hDlg, IDC_COMBO_ENVELOPE);
@@ -95,9 +103,10 @@ INT_PTR CALLBACK ImportMapDlg::ImportMapDlgProc(HWND hDlg, UINT message, WPARAM 
                 if (iSel >= 0) {
                     AccountBase* pAccount = (AccountBase*)ComboBox_GetItemData(hCatCombo, iSel);
                     if (pAccount) {
-                        PTHIS->_pTransactionInfo->_envelopeId = pAccount->getId();
+                        pInfo->_envelopeId = pAccount->getId();
                     }
                 }
+                g_transactionImporter.addMapping(pInfo->_payeeMatchString.empty() ? pInfo->_payee.c_str() : pInfo->_payeeMatchString.c_str(), pInfo->_payeeMapped, pInfo->_envelopeId);
             }
 
             EndDialog(hDlg, LOWORD(wParam));
