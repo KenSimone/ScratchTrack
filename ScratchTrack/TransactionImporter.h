@@ -64,12 +64,16 @@ public:
 		}
 	}
 
-	void addMapping(const wchar_t* szMatchString, std::wstring itemNameOut, unsigned int envelopeId)
+	void addMapping(const wchar_t* szMatchString, std::wstring itemNameOut, unsigned int envelopeId, bool sanitizeMatchString = false)
 	{
 		MAPPED_IMPORT_ITEM mii;
 		mii._envelopeId = envelopeId;
 		mii._payee = itemNameOut;
-		_importMap[szMatchString] = mii;
+		std::wstring key(szMatchString);
+		if (sanitizeMatchString) {
+			sanitizePayee(key);
+		}
+		_importMap[key] = mii;
 	}
 
 	struct MAPPED_IMPORT_ITEM
@@ -81,6 +85,8 @@ public:
 	const std::map<std::wstring, MAPPED_IMPORT_ITEM>& map() { return _importMap; }
 
 protected:
+
+	void sanitizePayee(std::wstring& szPayee);
 
 	std::map<std::wstring, MAPPED_IMPORT_ITEM> _importMap;
 

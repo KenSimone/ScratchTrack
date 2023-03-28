@@ -27,7 +27,8 @@ protected:
 	void editMapRule(HWND hDlg);
 	void addMapRule(HWND hDlg);
 	void deleteMapRule(HWND hDlg);
-
+	bool haveUnmappedItems(HWND hDlg);
+	void updateImports(HWND hDlg);
 
 protected:
 	Account* _pAccount;

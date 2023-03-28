@@ -25,6 +25,26 @@ TransactionImportDlg::~TransactionImportDlg()
 
 }
 
+bool TransactionImportDlg::haveUnmappedItems(HWND hDlg)
+{
+    HWND hListView = GetDlgItem(hDlg, IDC_LIST_TRANS_IMPORT);
+    size_t entries = ListView_GetItemCount(hListView);
+    for (size_t i = 0; i < entries; i++)
+    {
+        LVITEM item = { 0 };
+        item.mask = LVIF_PARAM;
+        item.iItem = (int)i;
+        if (ListView_GetCheckState(hListView, i)) {
+            ListView_GetItem(hListView, &item);
+            ImportedTransactionInfo* pInfo = (ImportedTransactionInfo*)item.lParam;
+            if (pInfo->_envelopeId == ACCOUNT_ID_INVALID) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void TransactionImportDlg::enableDisableUi(HWND hDlg)
 {
     HWND hListView = GetDlgItem(hDlg, IDC_LIST_TRANS_IMPORT);
@@ -55,6 +75,9 @@ void TransactionImportDlg::enableDisableUi(HWND hDlg)
     EnableWindow(GetDlgItem(hDlg, IDC_BUTTON_EDIT_MAP_RULE), selCount == 1);
     EnableWindow(GetDlgItem(hDlg, IDC_BUTTON_DELETE_MAP_RULE), selCount);
 
+    EnableWindow(GetDlgItem(hDlg, IDOK), !haveUnmappedItems(hDlg));
+    
+
 }
 
 bool TransactionImportDlg::ShowDialog()
@@ -67,11 +90,49 @@ bool TransactionImportDlg::ShowDialog()
     return result == IDOK;
 }
 
+void TransactionImportDlg::updateImports(HWND hDlg)
+{
+    double lastImportDate = 0;
+    HWND hListView = GetDlgItem(hDlg, IDC_LIST_TRANS_IMPORT);
+    int iCount = ListView_GetItemCount(hListView);
+
+    ImportedTransactionInfo* pInfo = nullptr;
+    for (int i = 0; i < iCount; i++)
+    {
+        LVITEM item = { 0 };
+        item.mask = LVIF_TEXT | LVIF_PARAM;
+        wchar_t szBuff[1024] = { 0 };
+
+        //item.pszText = szBuff;
+        item.iItem = i;
+        ListView_GetItem(hListView, &item);
+        pInfo = (ImportedTransactionInfo*)item.lParam;
+
+        g_transactionImporter.bestGuessAtPayeeAndCat(pInfo->_payee.c_str(), pInfo->_payeeMapped, pInfo->_envelopeId);
+
+        ListView_SetItemText(hListView, i, 1, const_cast<wchar_t*>(pInfo->_payee.c_str()));
+        ListView_SetItemText(hListView, i, 2, const_cast<wchar_t*>(pInfo->_payeeMapped.c_str()));
+        AccountBase* pEnvelope = AccountBase::lookupById(pInfo->_envelopeId);
+        if (pEnvelope) {
+            ListView_SetItemText(hListView, i, 3, const_cast<wchar_t*>(pEnvelope->getName()));
+        }
+        else {
+            ListView_SetItemText(hListView, i, 3, const_cast<wchar_t*>(L""));
+        }
+    }
+
+    for (size_t i = 0; i < 5; i++) {
+        ListView_SetColumnWidth(hListView, i, LVSCW_AUTOSIZE_USEHEADER);
+    }
+    PTHIS->enableDisableUi(hDlg);
+}
+
 void TransactionImportDlg::populateImports(HWND hDlg)
 {
     double lastImportDate = 0;
     HWND hListView = GetDlgItem(hDlg, IDC_LIST_TRANS_IMPORT);
     ListView_DeleteAllItems(hListView);
+
     SYSTEMTIME lastImportTime = { 0 };
     DateTime_GetSystemtime(GetDlgItem(hDlg, IDC_DATETIMEPICKER_LAST_IMPORT), &lastImportTime);
 
@@ -132,7 +193,6 @@ void TransactionImportDlg::populateImports(HWND hDlg)
         ListView_SetColumnWidth(hListView, i, LVSCW_AUTOSIZE_USEHEADER);
     }
     PTHIS->enableDisableUi(hDlg);
-
 }
 
 void TransactionImportDlg::populateRuleMapper(HWND hDlg)
@@ -343,20 +403,26 @@ void TransactionImportDlg::editMapRule(HWND hDlg)
         item.mask = LVIF_PARAM | LVIF_TEXT;
 
         ListView_GetItem(hList, &item);
-        TransactionImporter::MAPPED_IMPORT_ITEM* pInfo = (TransactionImporter::MAPPED_IMPORT_ITEM*)item.lParam;
+        const TransactionImporter::MAPPED_IMPORT_ITEM* pInfo = (TransactionImporter::MAPPED_IMPORT_ITEM*)item.lParam;
         ImportedTransactionInfo it;
         it._payee = item.pszText;
         it._envelopeId = pInfo->_envelopeId;
         ImportMapDlg dlg(&it);
         if (dlg.ShowDialog(hDlg)) {
             auto& map = g_transactionImporter.map();
-            pInfo->_envelopeId = it._envelopeId;
-            pInfo->_payee = it._payeeMapped;
-            g_transactionImporter.addMapping(szBuff, it._payeeMapped, it._envelopeId);
+            auto itr = map.find(it._payeeMatchString);
+            pInfo = (itr == map.end()) ? nullptr : &itr->second;
+            
+            ListView_SetItemText(hList, iSel, 0, const_cast<wchar_t*>(it._payeeMatchString.c_str()));
             ListView_SetItemText(hList, iSel, 1, const_cast<wchar_t*>(it._payeeMapped.c_str()));
             auto acct = AccountBase::lookupById(it._envelopeId);
             ListView_SetItemText(hList, iSel, 2, const_cast<wchar_t*>(acct->getName()));
-            populateImports(hDlg);
+
+            item.mask = LVIF_PARAM;
+            item.lParam = (LPARAM)pInfo;
+            ListView_SetItem(hList, &item);
+            //populateImports(hDlg);
+            updateImports(hDlg);
         }
     }
 }
@@ -373,7 +439,8 @@ void TransactionImportDlg::addMapRule(HWND hDlg)
 
         // Insert
         populateRuleMapper(hDlg);
-        populateImports(hDlg);
+        //populateImports(hDlg);
+        updateImports(hDlg);
     }
 }
 

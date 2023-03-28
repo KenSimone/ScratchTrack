@@ -15,6 +15,14 @@ namespace OpenXLSX
 	class XLWorksheet;
 };
 
+struct SCRATCHTRACK_FILE_VERSION
+{
+	UINT major;
+	UINT minor;
+	UINT subminor;
+	UINT build;
+};
+
 class ExcelSerializer
 {
 public:
@@ -45,10 +53,11 @@ protected:
 	static int writeFrontSheetBudget(lxw_workbook* workbook, lxw_worksheet* worksheet, std::vector<AccountBase*>& topLevelItems);
 
 	// Deserialize stuff
+	static int deserializeFrontSheet(OpenXLSX::XLWorkbook& workbook, SCRATCHTRACK_FILE_VERSION* pVersion);
 	static int deserializeAccounts(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId);
 	static int deserializeFolders(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId);
 
-	static int deserializeSettings(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId);
+	static int deserializeSettings(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId, SCRATCHTRACK_FILE_VERSION version);
 	static int deserializeTransactions(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId);
 	static int deserializeEnvelopes(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId);
 

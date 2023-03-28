@@ -8,6 +8,19 @@
 #include <set>
 #include <vector>
 
+void TransactionImporter::sanitizePayee(std::wstring& szPayee)
+{
+	// Look for characters that conflict with our glob searching and swap them out
+	const wchar_t* szDisallowedChars = L"<>:\"\\/|?*";
+
+	for (size_t i = 0; i < szPayee.length(); i++) {
+		if (wcschr(szDisallowedChars, szPayee[i]))
+		{
+			szPayee[i] = L'_';
+		}
+	}
+}
+
 int TransactionImporter::readTransactions(const wchar_t* szFile, std::vector<ImportedTransactionInfo>& transactions)
 {
 	int ret = ERROR_SUCCESS;
@@ -55,6 +68,7 @@ int TransactionImporter::readTransactions(const wchar_t* szFile, std::vector<Imp
 				case 'P':
 				case 'p':
 					t._payee = Utils::multiByteToWide(line.substr(1).c_str());
+					sanitizePayee(t._payee);
 					break;
 				case 'T':
 				case 't':

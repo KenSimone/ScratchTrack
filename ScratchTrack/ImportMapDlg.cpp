@@ -106,7 +106,11 @@ INT_PTR CALLBACK ImportMapDlg::ImportMapDlgProc(HWND hDlg, UINT message, WPARAM 
                         pInfo->_envelopeId = pAccount->getId();
                     }
                 }
-                g_transactionImporter.addMapping(pInfo->_payeeMatchString.empty() ? pInfo->_payee.c_str() : pInfo->_payeeMatchString.c_str(), pInfo->_payeeMapped, pInfo->_envelopeId);
+
+                if (pInfo->_payeeMatchString.empty()) {
+                    pInfo->_payeeMatchString = pInfo->_payee;
+                }
+                g_transactionImporter.addMapping(pInfo->_payeeMatchString.c_str(), pInfo->_payeeMapped, pInfo->_envelopeId);
             }
 
             EndDialog(hDlg, LOWORD(wParam));

@@ -15,6 +15,8 @@ extern TransactionImporter g_transactionImporter;
 
 using namespace OpenXLSX;
 
+SCRATCHTRACK_FILE_VERSION _version = { 0 };
+
 int ExcelSerializer::serialize(const char* szFile, std::vector<AccountBase*>& topLevelItems)
 {
 	std::map<unsigned int, std::string> accountIdToCellRef;
@@ -700,10 +702,14 @@ int ExcelSerializer::deserialize(const char* szFile, std::vector<AccountBase*>& 
 
 	std::map<std::string, unsigned int> cellRefToAccountId;
 
-	//AccountBase::startDeserialize();
-
 	OpenXLSX::XLWorkbook wb = doc.workbook();
-	int err = deserializeAccounts(wb, topLevelItems, cellRefToAccountId);
+	SCRATCHTRACK_FILE_VERSION fv = { 0 };
+	int err = deserializeFrontSheet(wb, &fv);
+	if (err == ERROR_SUCCESS) {
+
+	}
+
+	err = deserializeAccounts(wb, topLevelItems, cellRefToAccountId);
 	if (err != ERROR_SUCCESS) {
 		goto end;
 	}
@@ -718,7 +724,7 @@ int ExcelSerializer::deserialize(const char* szFile, std::vector<AccountBase*>& 
 		goto end;
 	}
 
-	err = deserializeSettings(wb, topLevelItems, cellRefToAccountId);
+	err = deserializeSettings(wb, topLevelItems, cellRefToAccountId, fv);
 	if (err != ERROR_SUCCESS) {
 		goto end;
 	}
@@ -733,6 +739,49 @@ int ExcelSerializer::deserialize(const char* szFile, std::vector<AccountBase*>& 
 end:
 	//AccountBase::stopDeserialize();
 	return ret;
+}
+
+int ExcelSerializer::deserializeFrontSheet(OpenXLSX::XLWorkbook& workbook, SCRATCHTRACK_FILE_VERSION* pVersion)
+{
+	if (!pVersion) {
+		return ERROR_INVALID_PARAMETER;
+	}
+
+	if (!workbook.worksheetExists(FRONT_WORKSHEET_NAME)) {
+		return ERROR_INVALID_DATA;
+	}
+
+	OpenXLSX::XLWorksheet worksheet = workbook.worksheet(FRONT_WORKSHEET_NAME);
+	std::string str = worksheet.cell(6, 13).value();
+	if (!str.empty()) {
+		int dotsSeen = 0;
+		std::string curNum;
+		for (size_t i = 0; i < str.length(); i++) {
+			if (str[i] == '.') {
+				int ver = atoi(curNum.c_str());
+				curNum.clear();
+				switch (dotsSeen) {
+				case 0:
+					pVersion->major = ver;
+					break;
+				case 1:
+					pVersion->minor = ver;
+					break;
+				case 2:
+					pVersion->subminor = ver;
+					break;
+				}
+				dotsSeen++;
+			}
+			else {
+				curNum += str[i];
+			}
+		}
+		pVersion->build = atoi(curNum.c_str());
+
+		return ERROR_SUCCESS;
+	}
+	return ERROR_NOT_FOUND;
 }
 
 int ExcelSerializer::deserializeAccounts(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId)
@@ -837,13 +886,20 @@ int ExcelSerializer::deserializeFolders(OpenXLSX::XLWorkbook& workbook, std::vec
 	return ERROR_SUCCESS;
 }
 
-int ExcelSerializer::deserializeSettings(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, unsigned int>& cellRefToAccountId)
+int ExcelSerializer::deserializeSettings(OpenXLSX::XLWorkbook& workbook, std::vector<AccountBase*>& topLevelItems, std::map<std::string, 
+	unsigned int>& cellRefToAccountId, SCRATCHTRACK_FILE_VERSION version)
 {
 	if (!workbook.worksheetExists(SETTINGS_WORKSHEET_NAME)) {
 		return ERROR_INVALID_DATA;
 	}
 
 	OpenXLSX::XLWorksheet worksheet = workbook.worksheet(SETTINGS_WORKSHEET_NAME);
+
+	// TODO: Write a version compare function, because this is fragile
+	bool sanitizeMatchString = version.major <= 1 && 
+		version.minor == 0 &&
+		version.subminor <= 23 && 
+		version.build < 85;
 
 	int row = 2;
 	while (true) {
@@ -862,7 +918,7 @@ int ExcelSerializer::deserializeSettings(OpenXLSX::XLWorkbook& workbook, std::ve
 		std::string formulaText = formula.get();
 		auto itr = cellRefToAccountId.find(formulaText);
 		if (itr != cellRefToAccountId.end()) {
-			g_transactionImporter.addMapping(Utils::multiByteToWide(importName.c_str()).c_str(), Utils::multiByteToWide(payee.c_str()).c_str(), itr->second);
+			g_transactionImporter.addMapping(Utils::multiByteToWide(importName.c_str()).c_str(), Utils::multiByteToWide(payee.c_str()).c_str(), itr->second, sanitizeMatchString);
 		}
 
 		row++;
