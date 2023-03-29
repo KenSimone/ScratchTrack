@@ -15,7 +15,7 @@ extern void setGuiFont(HWND hCtrl);
 
 
 TransactionImportDlg::TransactionImportDlg(Account* pAccount, std::vector<ImportedTransactionInfo>& transactions) : _transactions(transactions),
-    _pAccount(pAccount)
+    _pAccount(pAccount), _disableUpdate(false)
 {
     memset(&_maxImportDate, 0, sizeof(_maxImportDate));
 }
@@ -47,6 +47,10 @@ bool TransactionImportDlg::haveUnmappedItems(HWND hDlg)
 
 void TransactionImportDlg::enableDisableUi(HWND hDlg)
 {
+    if (_disableUpdate) {
+        return;
+    }
+
     HWND hListView = GetDlgItem(hDlg, IDC_LIST_TRANS_IMPORT);
     unsigned int numItems =  ListView_GetItemCount(hListView);
 
@@ -76,8 +80,6 @@ void TransactionImportDlg::enableDisableUi(HWND hDlg)
     EnableWindow(GetDlgItem(hDlg, IDC_BUTTON_DELETE_MAP_RULE), selCount);
 
     EnableWindow(GetDlgItem(hDlg, IDOK), !haveUnmappedItems(hDlg));
-    
-
 }
 
 bool TransactionImportDlg::ShowDialog()
@@ -94,6 +96,8 @@ void TransactionImportDlg::updateImports(HWND hDlg)
 {
     double lastImportDate = 0;
     HWND hListView = GetDlgItem(hDlg, IDC_LIST_TRANS_IMPORT);
+    SendMessage(hListView, WM_SETREDRAW, FALSE, 0);
+
     int iCount = ListView_GetItemCount(hListView);
 
     ImportedTransactionInfo* pInfo = nullptr;
@@ -103,7 +107,6 @@ void TransactionImportDlg::updateImports(HWND hDlg)
         item.mask = LVIF_TEXT | LVIF_PARAM;
         wchar_t szBuff[1024] = { 0 };
 
-        //item.pszText = szBuff;
         item.iItem = i;
         ListView_GetItem(hListView, &item);
         pInfo = (ImportedTransactionInfo*)item.lParam;
@@ -124,6 +127,8 @@ void TransactionImportDlg::updateImports(HWND hDlg)
     for (size_t i = 0; i < 5; i++) {
         ListView_SetColumnWidth(hListView, i, LVSCW_AUTOSIZE_USEHEADER);
     }
+    SendMessage(hListView, WM_SETREDRAW, TRUE, 0);
+
     PTHIS->enableDisableUi(hDlg);
 }
 
@@ -131,6 +136,9 @@ void TransactionImportDlg::populateImports(HWND hDlg)
 {
     double lastImportDate = 0;
     HWND hListView = GetDlgItem(hDlg, IDC_LIST_TRANS_IMPORT);
+    SendMessage(hListView, WM_SETREDRAW, FALSE, 0);
+    _disableUpdate = true;
+
     ListView_DeleteAllItems(hListView);
 
     SYSTEMTIME lastImportTime = { 0 };
@@ -138,7 +146,7 @@ void TransactionImportDlg::populateImports(HWND hDlg)
 
     SystemTimeToVariantTime(&lastImportTime, &lastImportDate);
     
-    bool showOnlyUnmapped = SendDlgItemMessage(hDlg, IDC_CHECK_SHOW_UNMAPPED_ONLY, BM_GETCHECK, 0, 0);
+    //bool showOnlyUnmapped = SendDlgItemMessage(hDlg, IDC_CHECK_SHOW_UNMAPPED_ONLY, BM_GETCHECK, 0, 0);
 
     for (size_t i = 0; i < PTHIS->_transactions.size(); i++) {
         ImportedTransactionInfo& info = PTHIS->_transactions[i];
@@ -159,9 +167,9 @@ void TransactionImportDlg::populateImports(HWND hDlg)
         g_transactionImporter.bestGuessAtPayeeAndCat(info._payee.c_str(), info._payeeMapped, info._envelopeId);
         AccountBase* pEnvelope = nullptr;
         if (info._envelopeId != ACCOUNT_ID_INVALID) {
-            if (showOnlyUnmapped) {
-                continue;
-            }
+            //if (showOnlyUnmapped) {
+            //    continue;
+            //}
             pEnvelope = AccountBase::lookupById(info._envelopeId);
         } 
 
@@ -192,12 +200,18 @@ void TransactionImportDlg::populateImports(HWND hDlg)
     for (size_t i = 0; i < 5; i++) {
         ListView_SetColumnWidth(hListView, i, LVSCW_AUTOSIZE_USEHEADER);
     }
+
+    _disableUpdate = false;
+    SendMessage(hListView, WM_SETREDRAW, TRUE, 0);
     PTHIS->enableDisableUi(hDlg);
 }
 
 void TransactionImportDlg::populateRuleMapper(HWND hDlg)
 {
     HWND hListView = GetDlgItem(hDlg, IDC_LIST_TRANS_IMPORT_MAP);
+    _disableUpdate = true;
+    SendMessage(hListView, WM_SETREDRAW, FALSE, 0);
+
     ListView_DeleteAllItems(hListView);
 
     auto& map = g_transactionImporter.map();
@@ -224,6 +238,8 @@ void TransactionImportDlg::populateRuleMapper(HWND hDlg)
     for (size_t i = 0; i < 3; i++) {
         ListView_SetColumnWidth(hListView, i, LVSCW_AUTOSIZE_USEHEADER);
     }
+    _disableUpdate = false;
+    SendMessage(hListView, WM_SETREDRAW, TRUE, 0);
 
 }
 
@@ -278,6 +294,10 @@ INT_PTR CALLBACK TransactionImportDlg::TransactionImportDlgProc(HWND hDlg, UINT 
         {
             PTHIS->enableDisableUi(hDlg);
         }
+        else if (pHeader->idFrom == IDC_LIST_TRANS_IMPORT_MAP && pHeader->code == NM_DBLCLK)
+        {
+            PTHIS->editMapRule(hDlg);
+        }
         else if (pHeader->idFrom == IDC_LIST_TRANS_IMPORT  && pHeader->code == NM_DBLCLK)
         {
             hListView = GetDlgItem(hDlg, IDC_LIST_TRANS_IMPORT);
@@ -301,18 +321,8 @@ INT_PTR CALLBACK TransactionImportDlg::TransactionImportDlgProc(HWND hDlg, UINT 
                 ImportMapDlg dlg(pInfo);
                 if (dlg.ShowDialog(hDlg))
                 {
-                    // TODO: Just update and add
+                    PTHIS->updateImports(hDlg);
                     PTHIS->populateRuleMapper(hDlg);
-                    PTHIS->populateImports(hDlg);
-
-                    //hListView = GetDlgItem(hDlg, IDC_LIST_TRANS_IMPORT);
-                    //
-                    //ListView_SetItemText(hListView, hi.iItem, 2, const_cast<wchar_t*>(pInfo->_payeeMapped.c_str()));
-
-                    //auto pEnvelope = AccountBase::lookupById(pInfo->_envelopeId);
-                    //if (pEnvelope) {
-                    //    ListView_SetItemText(hListView, hi.iItem, 3, const_cast<wchar_t*>(pEnvelope->getName()));
-                    //}
                 }
             }
         }
@@ -356,9 +366,9 @@ INT_PTR CALLBACK TransactionImportDlg::TransactionImportDlgProc(HWND hDlg, UINT 
         else if (LOWORD(wParam) == IDC_BUTTON_DELETE_MAP_RULE && HIWORD(wParam) == BN_CLICKED) {
             PTHIS->deleteMapRule(hDlg);
         }
-        else if (LOWORD(wParam) == IDC_CHECK_SHOW_UNMAPPED_ONLY && HIWORD(wParam) == BN_CLICKED) {
-            PTHIS->populateImports(hDlg);
-        }
+        //else if (LOWORD(wParam) == IDC_CHECK_SHOW_UNMAPPED_ONLY && HIWORD(wParam) == BN_CLICKED) {
+        //    PTHIS->populateImports(hDlg);
+        //}
         else if (HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == CBN_EDITCHANGE)
         {
             PTHIS->enableDisableUi(hDlg);
@@ -421,7 +431,6 @@ void TransactionImportDlg::editMapRule(HWND hDlg)
             item.mask = LVIF_PARAM;
             item.lParam = (LPARAM)pInfo;
             ListView_SetItem(hList, &item);
-            //populateImports(hDlg);
             updateImports(hDlg);
         }
     }
@@ -439,7 +448,6 @@ void TransactionImportDlg::addMapRule(HWND hDlg)
 
         // Insert
         populateRuleMapper(hDlg);
-        //populateImports(hDlg);
         updateImports(hDlg);
     }
 }
@@ -466,7 +474,7 @@ void TransactionImportDlg::deleteMapRule(HWND hDlg)
             iSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
         }
         populateRuleMapper(hDlg);
-        populateImports(hDlg);
+        updateImports(hDlg);
     }
 
 }

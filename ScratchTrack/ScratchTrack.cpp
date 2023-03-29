@@ -1832,6 +1832,7 @@ int serializeState()
 
 void setGuiFont(HWND hCtrl)
 {
+#ifdef FONT_SCALING
     int screenWidth = GetSystemMetrics(SM_CXSCREEN);
     bool lowRes = screenWidth < 1920;
 
@@ -1854,6 +1855,7 @@ void setGuiFont(HWND hCtrl)
     //lf.lfHeight = (LONG)(lf.lfHeight * scaleFactor);
     HFONT hNewFont = CreateFontIndirect(&lf);
     SendMessage(hCtrl, WM_SETFONT, (WPARAM)hNewFont, true);
+#endif
 }
 
 void positionControls()

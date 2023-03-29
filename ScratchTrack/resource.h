@@ -107,7 +107,9 @@
 #define IDC_COMBO_NEW_PAYEE             1049
 #define IDC_EDIT_MATCH_STRING           1050
 #define IDC_STATIC_BALANCE              1051
+#define IDC_EDIT_MATCH_TEST             1051
 #define IDC_STATIC_LAST_IMPORT          1052
+#define IDC_EDIT_MATCH_STRING3          1052
 #define IDC_CHECK_SAVINGS_GOAL          1053
 #define IDC_COMBO_REPORT                1055
 #define IDC_COMBO_MONTH                 1056
@@ -118,10 +120,9 @@
 #define IDC_RICHEDIT_PRINT              1062
 #define IDC_DATETIMEPICKER_LAST_IMPORT  1064
 #define IDC_LIST_TRANS_IMPORT           1065
-#define IDC_CHECK_SHOW_UNMAPPED_ONLY    1066
 #define IDC_BUTTON_ADD_MAP_RULE         1067
 #define IDC_BUTTON_EDIT_MAP_RULE        1068
-#define IDC_BUTTON3                     1069
+#define IDC_STATIC_TEST_RESULTS         1068
 #define IDC_BUTTON_DELETE_MAP_RULE      1069
 #define YEAR                            2023
 #define ID_ROOT_ADD_GROUP               32771
@@ -182,7 +183,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        176
 #define _APS_NEXT_COMMAND_VALUE         33904
-#define _APS_NEXT_CONTROL_VALUE         1068
+#define _APS_NEXT_CONTROL_VALUE         1069
 #define _APS_NEXT_SYMED_VALUE           113
 #endif
 #endif

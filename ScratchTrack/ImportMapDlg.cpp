@@ -23,6 +23,52 @@ ImportMapDlg::~ImportMapDlg()
 
 void ImportMapDlg::enableDisableUi(HWND hDlg)
 {
+    bool enable = true;
+    std::wstring warning;
+    std::wstring matchString = Utils::getDlgItemText(hDlg, IDC_EDIT_MATCH_STRING);
+    if (matchString.empty()) {
+        enable = false;
+    }
+
+    std::wstring origPayee = Utils::getDlgItemText(hDlg, IDC_EDIT_ORIG_PAYEE);
+
+    // Get envelope
+    HWND hCatCombo = GetDlgItem(hDlg, IDC_COMBO_ENVELOPE);
+    int iSel = ComboBox_GetCurSel(hCatCombo);
+    if (iSel < 0) {
+        enable = false;
+    }
+
+    if (!origPayee.empty()) {
+        enable = Utils::isGlobMatch(origPayee.c_str(), matchString.c_str());
+        if (!enable) {
+            warning = L"ERROR! The pattern DOES NOT match the original payee [";
+            warning += origPayee;
+            warning += L"].";
+        }
+    }
+
+    std::wstring testText = Utils::getDlgItemText(hDlg, IDC_EDIT_MATCH_TEST);
+    if (!testText.empty()) {
+        if (!Utils::isGlobMatch(testText.c_str(), matchString.c_str()))
+        {
+            if (!warning.empty()) {
+                warning = L"\n";
+            }
+            warning += L"Warning! The pattern DOES NOT match the test payee [";
+            warning += testText;
+            warning += L"]";
+        }
+    }
+
+    if (warning.empty()) {
+        warning = L"The match string matches the current test text";
+    }
+    
+    SetDlgItemText(hDlg, IDC_STATIC_TEST_RESULTS, warning.c_str());
+
+    EnableWindow(GetDlgItem(hDlg, IDOK), enable);
+
 }
 
 bool ImportMapDlg::ShowDialog(HWND hParent)
@@ -59,7 +105,14 @@ INT_PTR CALLBACK ImportMapDlg::ImportMapDlgProc(HWND hDlg, UINT message, WPARAM 
         HWND hCatCombo = nullptr;
         std::vector< AccountBase*> cats;
 
-        SetDlgItemText(hDlg, IDC_EDIT_ORIG_PAYEE, PTHIS->_pTransactionInfo->_payee.c_str());
+        std::wstring temp(PTHIS->_pTransactionInfo->_payee);
+        g_transactionImporter.sanitizePayee(temp);
+        if (PTHIS->_pTransactionInfo->_payee == temp) {
+            SetDlgItemText(hDlg, IDC_EDIT_ORIG_PAYEE, PTHIS->_pTransactionInfo->_payee.c_str());
+        }
+        else {
+            SetDlgItemText(hDlg, IDC_EDIT_MATCH_TEST, temp.c_str());
+        }
         SetDlgItemText(hDlg, IDC_EDIT_MATCH_STRING, PTHIS->_pTransactionInfo->_payee.c_str());
         
         Utils::populatePayeeCombo(hDlg, IDC_COMBO_NEW_PAYEE, payee.c_str());
@@ -73,11 +126,13 @@ INT_PTR CALLBACK ImportMapDlg::ImportMapDlgProc(HWND hDlg, UINT message, WPARAM 
                 ComboBox_SetCurSel(hCatCombo, pos);
             }
         }
+
+        PTHIS->enableDisableUi(hDlg);
     }
             
         return (INT_PTR)TRUE;
     case WM_COMMAND:
-        if (HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == CBN_EDITCHANGE)
+        if (HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == CBN_EDITCHANGE || HIWORD(wParam) == EN_CHANGE )
         {
             PTHIS->enableDisableUi(hDlg);
         }
@@ -120,6 +175,5 @@ INT_PTR CALLBACK ImportMapDlg::ImportMapDlgProc(HWND hDlg, UINT message, WPARAM 
     }
     return (INT_PTR)FALSE;
 }
-
 
 ImportMapDlg* ImportMapDlg::PTHIS = nullptr;

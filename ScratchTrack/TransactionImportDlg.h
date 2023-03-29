@@ -36,6 +36,7 @@ protected:
 	std::vector<ImportedTransactionInfo>& _transactions;
 	std::vector<ImportedTransactionInfo> _transactionsOut;
 	SYSTEMTIME _maxImportDate;
+	bool _disableUpdate;
 
 }; // class TransactionImportDlg
 

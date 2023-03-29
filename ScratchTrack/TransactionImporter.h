@@ -83,10 +83,10 @@ public:
 	};
 
 	const std::map<std::wstring, MAPPED_IMPORT_ITEM>& map() { return _importMap; }
+	void sanitizePayee(std::wstring& szPayee);
+
 
 protected:
-
-	void sanitizePayee(std::wstring& szPayee);
 
 	std::map<std::wstring, MAPPED_IMPORT_ITEM> _importMap;
 
