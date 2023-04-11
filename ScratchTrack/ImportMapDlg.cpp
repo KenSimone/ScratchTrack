@@ -39,9 +39,16 @@ void ImportMapDlg::enableDisableUi(HWND hDlg)
         enable = false;
     }
 
+    // New payee
+    std::wstring newPayee = Utils::getDlgItemText(hDlg, IDC_COMBO_NEW_PAYEE);
+    if (newPayee.empty()) {
+        enable = false;
+    }
+
     if (!origPayee.empty()) {
-        enable = Utils::isGlobMatch(origPayee.c_str(), matchString.c_str());
-        if (!enable) {
+        bool isGlobMatch = Utils::isGlobMatch(origPayee.c_str(), matchString.c_str());
+        enable = enable && isGlobMatch;
+        if (!isGlobMatch) {
             warning = L"ERROR! The pattern DOES NOT match the original payee [";
             warning += origPayee;
             warning += L"].";

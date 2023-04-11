@@ -1832,6 +1832,7 @@ int serializeState()
 
 void setGuiFont(HWND hCtrl)
 {
+#define FONT_SCALING
 #ifdef FONT_SCALING
     int screenWidth = GetSystemMetrics(SM_CXSCREEN);
     bool lowRes = screenWidth < 1920;

@@ -248,6 +248,14 @@ std::wstring Utils::penniesToDollarsString(int money, bool formatted /*= true*/)
 
 bool Utils::isGlobMatch(const wchar_t* szString, const wchar_t* szGlobPattern)
 {
+	if (!szString || !szGlobPattern) {
+		return false;
+	}
+
+	if (szString[0] == 0 || szGlobPattern[0] == 0) {
+		return false;
+	}
+
 	return PathMatchSpec(szString, szGlobPattern);
 }
 
