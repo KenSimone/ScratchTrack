@@ -1,11 +1,11 @@
 #pragma once
 
-#define YEAR 2023
+#define YEAR 2026
 
 #define VER_MAJOR 1
 #define VER_MINOR 0
-#define VER_SUBMINOR 23
-#define VER_BUILD 88
+#define VER_SUBMINOR 26
+#define VER_BUILD 301
 
 #define _STR(x) #x
 #define STR(x) _STR(x)

@@ -50,6 +50,10 @@ void FundEnvelopeDlg::calcNewBalance(HWND hDlg)
     {
         _newBalance = Utils::getDlgItemDollarText(hDlg, IDC_EDIT_SET_ARBITRARY);
     }
+    else if (SendDlgItemMessage(hDlg, IDC_ADD_ARBITRARY_RADIO, BM_GETCHECK, 0, 0))
+    {
+        _newBalance = _pEnvelope->getBalance() + Utils::getDlgItemDollarText(hDlg, IDC_EDIT_ADD_ARBITRARY);
+    }
 
 }
 
@@ -72,6 +76,8 @@ INT_PTR CALLBACK FundEnvelopeDlg::FundEnvelopeDlgProc(HWND hDlg, UINT message, W
             Utils::setDlgItemDollarText(hDlg, IDC_EDIT_ADD_BUDGETED, abs(pEnvelope->getBudgeted()));
             Utils::setDlgItemDollarText(hDlg, IDC_EDIT_FILL_TO_BUDGETED, abs(pEnvelope->getBudgeted()) - pEnvelope->getBalance());
             Utils::setDlgItemDollarText(hDlg, IDC_EDIT_SET_ARBITRARY, 0);
+            Utils::setDlgItemDollarText(hDlg, IDC_EDIT_ADD_ARBITRARY, 0);
+            
 
             Utils::setDlgItemDollarText(hDlg, IDC_EDIT_CUR_BALANCE, pEnvelope->getBalance());
 
@@ -91,10 +97,10 @@ INT_PTR CALLBACK FundEnvelopeDlg::FundEnvelopeDlgProc(HWND hDlg, UINT message, W
 
         return (INT_PTR)TRUE;
     case WM_COMMAND:
-        if (LOWORD(wParam) == IDC_EDIT_SET_ARBITRARY && HIWORD(wParam) == EN_CHANGE) {
+        if ((LOWORD(wParam) == IDC_EDIT_SET_ARBITRARY||LOWORD(wParam) == IDC_EDIT_ADD_ARBITRARY) && HIWORD(wParam) == EN_CHANGE) {
             PTHIS->updateUi(hDlg);
         }
-        if (LOWORD(wParam) == IDC_ADD_BUDGETED_RADIO || LOWORD(wParam) == IDC_ADD_TO_TOP_RADIO || LOWORD(wParam) == IDC_SET_ANY_RADIO) {
+        if (LOWORD(wParam) == IDC_ADD_BUDGETED_RADIO || LOWORD(wParam) == IDC_ADD_TO_TOP_RADIO || LOWORD(wParam) == IDC_SET_ANY_RADIO || LOWORD(wParam) == IDC_ADD_ARBITRARY_RADIO) {
             PTHIS->updateUi(hDlg);
         }
         else if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)

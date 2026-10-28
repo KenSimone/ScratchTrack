@@ -92,12 +92,12 @@
 #define IDC_ADD_TO_TOP_RADIO            1035
 #define IDC_ADD_BUDGETED_RADIO          1036
 #define IDC_EDIT_FILL_TO_BUDGETED       1037
-#define IDC_EDIT_ADD_ARBITRARY          1038
 #define IDC_EDIT_SET_ARBITRARY          1038
 #define IDC_EDIT_ADD_BUDGETED           1039
 #define IDC_EDIT_CUR_BALANCE            1040
 #define IDC_EDIT_NEW_BALANCE            1041
 #define IDC_RADIO_SET_BALANCE_TO_BUDGETED 1041
+#define IDC_EDIT_ADD_ARBITRARY          1042
 #define IDC_STATIC_NOTES                1043
 #define IDC_STATIC_WARN                 1044
 #define IDC_VERSION                     1045
@@ -124,7 +124,7 @@
 #define IDC_BUTTON_EDIT_MAP_RULE        1068
 #define IDC_STATIC_TEST_RESULTS         1068
 #define IDC_BUTTON_DELETE_MAP_RULE      1069
-#define YEAR                            2023
+#define IDC_ADD_ARBITRARY_RADIO         1070
 #define ID_ROOT_ADD_GROUP               32771
 #define IDM_EDIT_FOLDER                 32772
 #define ID_ROOT_SETBALANCE              32773
