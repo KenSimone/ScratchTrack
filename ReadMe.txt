@@ -1,4 +1,4 @@
-This is a YNAB replacement I whipped up an eternity ago. 
+This is an envelope budgeting app I whipped up an eternity ago when YNAB went subscription/cloud.
 
 Every now and then I try other options. 
 
