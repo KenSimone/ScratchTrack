@@ -13,6 +13,7 @@ Pros:
 * No adds. No telemetry. 
 * It's fast.
 * It's Free.
+* Cloud-free. All local.
 
 Cons:
 * Windows only
