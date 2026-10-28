@@ -1,4 +1,10 @@
-This is a YNAB replacement I whipped up an eternity ago. Every now and then I try other options. It's October 2026 and I still don't really like the workflows of the alternatives.
+This is a YNAB replacement I whipped up an eternity ago. 
+
+Every now and then I try other options. 
+
+It's October 2026 and I still don't really like the workflows of the alternatives.
+
+I still use this daily but I've mostly stopped working on the code. Feel free to run with it for non-commercial use.
 
 Pros:
 
@@ -18,7 +24,5 @@ Cons:
 Build with VS2022
 
 Here's your documentation: https://youtu.be/UiiUf94v070?si=jQ4zf5lgE8r25imJ
-
-I still use this daily but I've mostly stopped working on the code. If someone else wants to play with it for non-commercial use, go for it.
 
 Third party libraries are OpenXSLX and zlib
