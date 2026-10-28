@@ -7,7 +7,6 @@ It's October 2026 and I still don't really like the workflows of the alternative
 I still use this daily but I've mostly stopped working on the code. Feel free to run with it for non-commercial use.
 
 Pros:
-
 * Straight Win32 C++. Totally self contained. A single EXE is all you need. 
 * The native file format is xlsx, and I spent a fair bit of time making the xlsx look good and work well. 
 * No adds. No telemetry. 
