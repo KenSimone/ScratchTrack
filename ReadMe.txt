@@ -20,7 +20,7 @@ Cons:
 * No cloud sync. Throw ScratchTrack.exe in a dropbox folder. There's your cloud sync. The XLSX is saved next to the exe.
 * The importer is a limited. It works with the QIF exported from Chase bank.
 * Reporting is dubious
-* It looks like your grandpa's Windows app, because 1990 was when I last did GUI stuff professionally.
+* It looks like your grandpa's Windows app, because 1990 was when I last did GUI stuff professionally (shout out Micrografx).
 
 Build with VS2022
 
