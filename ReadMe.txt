@@ -1,14 +1,22 @@
-Thank you for downloading ScratchTrack 0.5!
+This is a YNAB replacement I whipped up an eternity ago. Every now and then I try other options. It's October 2026 and I still don't really like the workflows of the alternatives.
 
-To use ScratchTrack, simply extract ScratchTrack.exe from this zip file and run it. 
+Pros:
 
-ScratchTrack.exe is a single executable and there is no installer.
+* Straight Win32 C++. Totally self contained. A single EXE is all you need. 
+* The native file format is xlsx, and I spent a fair bit of time making the xlsx look good and work well. 
+* No adds. No telemetry. 
+* It's fast.
+* It's Free.
 
-If you'd like to add it to your start menu, right click ScratchTrack.exe and select "Pin to start".
+Cons:
+* Windows only
+* No bank integration
+* No cloud sync (throw ScratchTrack.exe into a dropbox folder. There's your cloud sync. The data file (ScratchTrack.xlsx) is saved next to the exe)
+* The importer is a limited. It works with QIF with Chase bank. Anything else, you're on your own.
+* Reporting is dubious
 
-For usage, see the quickstart guide here: https://scratchtrack.net/quickstart.html
+Build with VS2022
 
-For additonal documentation, bug reporting or to donate, visit https://scratchtrack.net.
+I still use this daily but I've mostly stopped working on the code. If someone else wants to play with it for non-commercial use, go for it.
 
-If you downloaded this zip from anywhere other than scratchtrack.net, please delete it, and download it from https://scratchtrack.net/assets/scratchtrack.zip.
-
+Third party libraries are OpenXSLX and zlib
