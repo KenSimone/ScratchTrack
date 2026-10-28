@@ -17,7 +17,7 @@ Pros:
 Cons:
 * Windows only
 * No bank integration
-* No cloud sync. Throw ScratchTrack.exe into a dropbox folder. There's your cloud sync. The data file is saved next to the exe.
+* No cloud sync. Throw ScratchTrack.exe in a dropbox folder. There's your cloud sync. The XLSX is saved next to the exe.
 * The importer is a limited. It works with the QIF exported from Chase bank.
 * Reporting is dubious
 
